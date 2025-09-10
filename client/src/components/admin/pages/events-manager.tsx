@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, Trash2, Calendar, Clock, MapPin } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye } from "lucide-react";
 
 interface Event {
   id: string;
@@ -23,6 +24,8 @@ interface Event {
 export function EventsManager() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(true);
+  const [isPreview, setIsPreview] = useState(false);
 
   // Mock data - in real app this would come from API
   const mockEvents: Event[] = [
@@ -83,6 +86,15 @@ export function EventsManager() {
     setSelectedEvent(null);
   };
 
+  const handlePageSave = () => {
+    // Implementation for saving page settings
+    console.log('Saving events page settings, enabled:', isEnabled);
+  };
+
+  const togglePreview = () => {
+    setIsPreview(!isPreview);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -103,11 +115,46 @@ export function EventsManager() {
           <h1 className="text-2xl font-bold">Events Manager</h1>
           <p className="text-muted-foreground">Manage your exhibitions, workshops, and events</p>
         </div>
-        <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Event
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Badge variant={isEnabled ? "default" : "secondary"}>
+              {isEnabled ? "Enabled" : "Disabled"}
+            </Badge>
+          </div>
+          <Button onClick={togglePreview} variant="outline" className="flex items-center gap-2">
+            {isPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {isPreview ? 'Edit' : 'Preview'}
+          </Button>
+          <Button onClick={handlePageSave} className="flex items-center gap-2">
+            <Save className="h-4 w-4" />
+            Save Changes
+          </Button>
+        </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Page Settings</CardTitle>
+              <CardDescription>Configure the visibility and content of this page</CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="events-enabled">Enable this page</Label>
+              <Switch
+                id="events-enabled"
+                checked={isEnabled}
+                onCheckedChange={setIsEnabled}
+              />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2 mb-6">
+        <Plus className="h-4 w-4" />
+        Add Event
+      </Button>
 
       {isEditing && (
         <Card>
@@ -244,6 +291,19 @@ export function EventsManager() {
           </Card>
         ))}
       </div>
+
+      {!isEnabled && (
+        <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <EyeOff className="h-5 w-5 text-orange-600" />
+              <p className="text-orange-800 dark:text-orange-200">
+                This events page is currently disabled and will not appear on your live site. Enable it in the page settings to make it visible to visitors.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

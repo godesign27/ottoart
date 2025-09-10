@@ -90,6 +90,13 @@ export const siteSettings = pgTable("site_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const pageSettings = pgTable("page_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  page: text("page", { enum: ["bio", "gallery", "events", "cv", "contact"] }).notNull().unique(),
+  enabled: boolean("enabled").default(true).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -128,6 +135,11 @@ export const insertSiteSettingsSchema = createInsertSchema(siteSettings).omit({
   updatedAt: true,
 });
 
+export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -149,3 +161,6 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type InsertSiteSettings = z.infer<typeof insertSiteSettingsSchema>;
+
+export type PageSettings = typeof pageSettings.$inferSelect;
+export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;

@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { 
   LayoutDashboard, 
   Package, 
@@ -43,27 +44,27 @@ const pageItems = [
   {
     title: "Bio",
     href: "/admin/bio",
-    active: true
+    enabled: true
   },
   {
     title: "Gallery", 
     href: "/admin/gallery",
-    active: true
+    enabled: true
   },
   {
     title: "Events",
     href: "/admin/events",
-    active: true
+    enabled: true
   },
   {
     title: "CV",
     href: "/admin/cv", 
-    active: true
+    enabled: true
   },
   {
     title: "Contact",
     href: "/admin/contact",
-    active: false
+    enabled: false
   }
 ];
 
@@ -152,9 +153,9 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
                   data-testid={`page-${page.title.toLowerCase()}`}
                 >
                   {page.title}
-                  <div className={`w-6 h-3 rounded-full relative ${page.active ? 'bg-primary' : 'bg-muted'}`}>
-                    <div className={`w-2 h-2 bg-white rounded-full absolute top-0.5 shadow-sm ${page.active ? 'right-0.5' : 'left-0.5'}`}></div>
-                  </div>
+                  <Badge variant={page.enabled ? "default" : "secondary"} className="text-xs">
+                    {page.enabled ? "Enabled" : "Disabled"}
+                  </Badge>
                 </div>
               ))}
             </div>

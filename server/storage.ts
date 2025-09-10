@@ -12,7 +12,9 @@ import {
   type Message,
   type InsertMessage,
   type SiteSettings,
-  type InsertSiteSettings
+  type InsertSiteSettings,
+  type PageSettings,
+  type InsertPageSettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -62,6 +64,11 @@ export interface IStorage {
   getSiteSettings(): Promise<SiteSettings[]>;
   getSiteSetting(key: string): Promise<SiteSettings | undefined>;
   setSiteSetting(setting: InsertSiteSettings): Promise<SiteSettings>;
+
+  // Page Settings
+  getPageSettings(): Promise<PageSettings[]>;
+  getPageSetting(page: string): Promise<PageSettings | undefined>;
+  setPageSetting(setting: InsertPageSettings): Promise<PageSettings>;
 }
 
 export class MemStorage implements IStorage {
@@ -72,9 +79,11 @@ export class MemStorage implements IStorage {
   private orders: Map<string, Order> = new Map();
   private messages: Map<string, Message> = new Map();
   private siteSettings: Map<string, SiteSettings> = new Map();
+  private pageSettings: Map<string, PageSettings> = new Map();
 
   constructor() {
     this.initializeData();
+    this.initializePageSettings();
   }
 
   private initializeData() {
@@ -182,6 +191,20 @@ export class MemStorage implements IStorage {
 
     products.forEach(product => {
       this.products.set(product.id, product);
+    });
+  }
+
+  private initializePageSettings() {
+    const defaultPages = ["bio", "gallery", "events", "cv", "contact"];
+    
+    defaultPages.forEach(page => {
+      const pageSetting: PageSettings = {
+        id: randomUUID(),
+        page,
+        enabled: page === "contact" ? false : true, // Contact disabled by default
+        updatedAt: new Date(),
+      };
+      this.pageSettings.set(page, pageSetting);
     });
   }
 
@@ -412,6 +435,37 @@ export class MemStorage implements IStorage {
         updatedAt: new Date(),
       };
       this.siteSettings.set(setting.id, setting);
+      return setting;
+    }
+  }
+
+  // Page Settings
+  async getPageSettings(): Promise<PageSettings[]> {
+    return Array.from(this.pageSettings.values());
+  }
+
+  async getPageSetting(page: string): Promise<PageSettings | undefined> {
+    return this.pageSettings.get(page);
+  }
+
+  async setPageSetting(insertSetting: InsertPageSettings): Promise<PageSettings> {
+    const existing = this.pageSettings.get(insertSetting.page);
+    
+    if (existing) {
+      const updated: PageSettings = {
+        ...existing,
+        enabled: insertSetting.enabled,
+        updatedAt: new Date(),
+      };
+      this.pageSettings.set(insertSetting.page, updated);
+      return updated;
+    } else {
+      const setting: PageSettings = {
+        ...insertSetting,
+        id: randomUUID(),
+        updatedAt: new Date(),
+      };
+      this.pageSettings.set(insertSetting.page, setting);
       return setting;
     }
   }
