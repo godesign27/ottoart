@@ -63,6 +63,7 @@ export function ImageUploader({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-admin-key": "dev-admin-key-2024", // Development API key
         },
       });
 
@@ -90,6 +91,7 @@ export function ImageUploader({
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "x-admin-key": "dev-admin-key-2024", // Development API key
         },
         body: JSON.stringify({
           imageURL: uploadURL,
