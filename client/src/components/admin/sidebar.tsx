@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import type { PageSettings } from "@shared/schema";
 import { 
   LayoutDashboard, 
   Package, 
@@ -44,27 +46,27 @@ const pageItems = [
   {
     title: "Bio",
     href: "/admin/bio",
-    enabled: true
+    page: "bio"
   },
   {
     title: "Gallery", 
     href: "/admin/gallery",
-    enabled: true
+    page: "gallery"
   },
   {
     title: "Events",
     href: "/admin/events",
-    enabled: true
+    page: "events"
   },
   {
     title: "CV",
     href: "/admin/cv", 
-    enabled: true
+    page: "cv"
   },
   {
     title: "Contact",
     href: "/admin/contact",
-    enabled: false
+    page: "contact"
   }
 ];
 
@@ -76,6 +78,17 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [settingsExpanded, setSettingsExpanded] = useState(false);
+
+  // Fetch page settings
+  const { data: pageSettings = [] } = useQuery({
+    queryKey: ['/api/page-settings'],
+    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+  });
+
+  const getPageEnabled = (page: string) => {
+    const setting = pageSettings.find(p => p.page === page);
+    return setting?.enabled ?? true;
+  };
 
   const settingsItems = [
     {
@@ -145,19 +158,22 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
               Pages
             </div>
             <div className="ml-6 space-y-1">
-              {pageItems.map((page) => (
-                <div 
-                  key={page.href}
-                  className="w-full flex items-center justify-between px-3 py-1 text-sm text-foreground hover:bg-accent rounded-md cursor-pointer"
-                  onClick={() => onNavigate(page.href)}
-                  data-testid={`page-${page.title.toLowerCase()}`}
-                >
-                  {page.title}
-                  <Badge variant={page.enabled ? "default" : "secondary"} className="text-xs">
-                    {page.enabled ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-              ))}
+              {pageItems.map((page) => {
+                const isEnabled = getPageEnabled(page.page);
+                return (
+                  <div 
+                    key={page.href}
+                    className="w-full flex items-center justify-between px-3 py-1 text-sm text-foreground hover:bg-accent rounded-md cursor-pointer"
+                    onClick={() => onNavigate(page.href)}
+                    data-testid={`page-${page.title.toLowerCase()}`}
+                  >
+                    {page.title}
+                    <Badge variant={isEnabled ? "default" : "secondary"} className="text-xs">
+                      {isEnabled ? "Enabled" : "Disabled"}
+                    </Badge>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

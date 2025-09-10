@@ -43,6 +43,7 @@ export function EventsManager() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/page-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/page-settings', 'events'] });
     }
   });
 
