@@ -8,14 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { GripVertical } from "lucide-react";
-import type { Category } from "@shared/schema";
+import { CategoryDrawer } from "@/components/admin/category-drawer";
+import { TagDrawer } from "@/components/admin/tag-drawer";
+import type { Category, Tag } from "@shared/schema";
 
 export default function AdminCategories() {
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('admin');
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
+  const [tagDrawerOpen, setTagDrawerOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
 
-  const { data: categories, isLoading } = useQuery<Category[]>({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+  });
+
+  const { data: tags, isLoading: tagsLoading } = useQuery<Tag[]>({
+    queryKey: ['/api/tags'],
   });
 
   const handleNavigate = (href: string) => {
@@ -29,10 +39,35 @@ export default function AdminCategories() {
     }
   };
 
-  // Mock tags data
-  const tags = [
-    "Abstract", "Modern", "Contemporary", "Colorful", "Minimalist", "Landscape"
-  ];
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setCategoryDrawerOpen(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryDrawerOpen(true);
+  };
+
+  const handleAddTag = () => {
+    setEditingTag(null);
+    setTagDrawerOpen(true);
+  };
+
+  const handleEditTag = (tag: Tag) => {
+    setEditingTag(tag);
+    setTagDrawerOpen(true);
+  };
+
+  const handleCloseCategoryDrawer = () => {
+    setCategoryDrawerOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleCloseTagDrawer = () => {
+    setTagDrawerOpen(false);
+    setEditingTag(null);
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -55,12 +90,16 @@ export default function AdminCategories() {
               <Card className="shadow-sm">
                 <CardHeader className="border-b border-border flex flex-row items-center justify-between">
                   <CardTitle className="text-lg font-semibold text-foreground">Categories</CardTitle>
-                  <Button size="sm" data-testid="add-category-button">
+                  <Button 
+                    size="sm" 
+                    onClick={handleAddCategory}
+                    data-testid="add-category-button"
+                  >
                     Add Category
                   </Button>
                 </CardHeader>
                 <div className="divide-y divide-border">
-                  {isLoading ? (
+                  {categoriesLoading ? (
                     <div className="p-4">
                       <div className="animate-pulse space-y-4">
                         {[...Array(3)].map((_, i) => (
@@ -105,6 +144,7 @@ export default function AdminCategories() {
                             variant="ghost" 
                             size="sm" 
                             className="text-primary hover:text-primary/80"
+                            onClick={() => handleEditCategory(category)}
                             data-testid={`edit-category-${category.id}`}
                           >
                             Edit
@@ -120,35 +160,56 @@ export default function AdminCategories() {
               <Card className="shadow-sm">
                 <CardHeader className="border-b border-border flex flex-row items-center justify-between">
                   <CardTitle className="text-lg font-semibold text-foreground">Tags</CardTitle>
-                  <Button size="sm" data-testid="add-tag-button">
+                  <Button 
+                    size="sm" 
+                    onClick={handleAddTag}
+                    data-testid="add-tag-button"
+                  >
                     Add Tag
                   </Button>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag, index) => (
-                      <Badge 
-                        key={index}
-                        variant="secondary" 
-                        className="inline-flex items-center px-3 py-1 text-sm"
-                        data-testid={`tag-${tag.toLowerCase()}`}
-                      >
-                        {tag}
-                        <button 
-                          className="ml-2 text-muted-foreground hover:text-destructive"
-                          data-testid={`remove-tag-${tag.toLowerCase()}`}
+                  {tagsLoading ? (
+                    <div className="animate-pulse space-y-2">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="h-6 bg-muted rounded w-20 inline-block mr-2"></div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {tags?.map((tag) => (
+                        <Badge 
+                          key={tag.id}
+                          variant="secondary" 
+                          className="inline-flex items-center px-3 py-1 text-sm cursor-pointer hover:bg-secondary/80"
+                          onClick={() => handleEditTag(tag)}
+                          data-testid={`tag-${tag.slug}`}
                         >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
         </main>
       </div>
+
+      {/* Category Drawer */}
+      <CategoryDrawer
+        isOpen={categoryDrawerOpen}
+        onClose={handleCloseCategoryDrawer}
+        editCategory={editingCategory}
+      />
+
+      {/* Tag Drawer */}
+      <TagDrawer
+        isOpen={tagDrawerOpen}
+        onClose={handleCloseTagDrawer}
+        editTag={editingTag}
+      />
     </div>
   );
 }
