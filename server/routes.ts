@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertOrderSchema, insertMessageSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Products
@@ -156,6 +156,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Message marked as read" });
     } catch (error) {
       res.status(500).json({ message: "Failed to update message" });
+    }
+  });
+
+  // Page Settings
+  app.get("/api/page-settings", async (req, res) => {
+    try {
+      const pageSettings = await storage.getPageSettings();
+      res.json(pageSettings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch page settings" });
+    }
+  });
+
+  app.get("/api/page-settings/:page", async (req, res) => {
+    try {
+      const pageSetting = await storage.getPageSetting(req.params.page);
+      if (!pageSetting) {
+        return res.status(404).json({ message: "Page setting not found" });
+      }
+      res.json(pageSetting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch page setting" });
+    }
+  });
+
+  app.put("/api/page-settings/:page", async (req, res) => {
+    try {
+      const validatedData = insertPageSettingsSchema.parse({
+        page: req.params.page,
+        enabled: req.body.enabled
+      });
+      const pageSetting = await storage.setPageSetting(validatedData);
+      res.json(pageSetting);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid page setting data" });
     }
   });
 
