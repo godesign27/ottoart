@@ -10,6 +10,7 @@ import type { Product } from "@shared/schema";
 
 export function ProductGrid() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   
   const { data: products, isLoading } = useQuery<Product[]>({
@@ -103,7 +104,16 @@ export function ProductGrid() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Stock: {product.stock}</span>
                 <div className="flex space-x-2">
-                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80" data-testid={`edit-product-${product.id}`}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-primary hover:text-primary/80" 
+                    onClick={() => {
+                      setEditingProduct(product);
+                      setIsDrawerOpen(true);
+                    }}
+                    data-testid={`edit-product-${product.id}`}
+                  >
                     Edit
                   </Button>
                   <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" data-testid={`delete-product-${product.id}`}>
@@ -127,7 +137,11 @@ export function ProductGrid() {
 
       <ProductDrawer 
         isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setEditingProduct(null);
+        }}
+        editProduct={editingProduct}
       />
     </div>
   );

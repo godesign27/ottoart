@@ -14,12 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertProductSchema, type Category, type Tag } from "@shared/schema";
+import { insertProductSchema, type Category, type Tag, type Product } from "@shared/schema";
 
 interface ProductDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  editProduct?: any; // For future edit functionality
+  editProduct?: Product | null;
 }
 
 // Pricing tier schema
@@ -43,6 +43,7 @@ const productFormSchema = insertProductSchema.extend({
 type ProductFormData = z.infer<typeof productFormSchema>;
 
 export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerProps) {
+  const isEditing = !!editProduct;
   const [activeTab, setActiveTab] = useState("content");
   const [imageUrl, setImageUrl] = useState("");
   const { toast } = useToast();
@@ -57,10 +58,22 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
     queryKey: ['/api/tags'],
   });
 
-  // Form setup with default values
+  // Form setup with default values or edit values
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
-    defaultValues: {
+    defaultValues: editProduct ? {
+      name: editProduct.name || "",
+      sku: editProduct.sku || "",
+      description: editProduct.description || "",
+      price: parseFloat(editProduct.price.toString()) || 0,
+      status: editProduct.status || "active",
+      stock: editProduct.stock || 0,
+      isFeatured: editProduct.isFeatured || false,
+      images: editProduct.images || [],
+      tags: editProduct.tags || [],
+      categoryId: editProduct.categoryId || undefined,
+      pricingTiers: editProduct.pricingTiers || [],
+    } : {
       name: "",
       sku: "",
       description: "",
@@ -77,13 +90,20 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
 
   // Mutation for creating/updating products
   const createProductMutation = useMutation({
-    mutationFn: (data: any) => 
-      apiRequest('POST', '/api/products', data),
+    mutationFn: (data: any) => {
+      if (isEditing && editProduct) {
+        return apiRequest('PUT', `/api/products/${editProduct.id}`, data);
+      } else {
+        return apiRequest('POST', '/api/products', data);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       toast({
-        title: "Product added",
-        description: "The product has been successfully added to your catalog.",
+        title: isEditing ? "Product updated" : "Product added",
+        description: isEditing 
+          ? "The product has been successfully updated."
+          : "The product has been successfully added to your catalog.",
         variant: "default",
       });
       onClose();
@@ -92,7 +112,9 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to add product. Please try again.",
+        description: isEditing 
+          ? "Failed to update product. Please try again."
+          : "Failed to add product. Please try again.",
         variant: "destructive",
       });
     },
@@ -137,7 +159,9 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">
-            <h2 className="text-xl font-semibold text-foreground">Add Product</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              {isEditing ? "Edit Product" : "Add Product"}
+            </h2>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -208,7 +232,10 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                     disabled={createProductMutation.isPending}
                     data-testid="add-product-submit"
                   >
-                    {createProductMutation.isPending ? "Adding..." : "Add Product"}
+                    {createProductMutation.isPending 
+                      ? (isEditing ? "Updating..." : "Adding...") 
+                      : (isEditing ? "Update Product" : "Add Product")
+                    }
                   </Button>
                 </div>
               </form>
@@ -587,9 +614,9 @@ function ImagesTab({
               input.onchange = (e) => {
                 const file = (e.target as HTMLInputElement).files?.[0];
                 if (file) {
-                  // For now, we'll create a placeholder URL
+                  // For now, we'll use a real working Unsplash image
                   // In a real app, you'd upload to a storage service
-                  const placeholderUrl = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=400&fit=crop`;
+                  const placeholderUrl = `https://picsum.photos/400/400?random=${Date.now()}`;
                   const currentImages = form.getValues('images');
                   form.setValue('images', [...currentImages, placeholderUrl]);
                 }
