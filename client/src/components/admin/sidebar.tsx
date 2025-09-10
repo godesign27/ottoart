@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,13 @@ import {
   Tags, 
   FileText, 
   Settings,
-  Star
+  Star,
+  ChevronDown,
+  ChevronRight,
+  User,
+  Building,
+  Palette,
+  Share2
 } from "lucide-react";
 
 const navItems = [
@@ -67,6 +74,30 @@ interface AdminSidebarProps {
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
+
+  const settingsItems = [
+    {
+      title: "Artist Account",
+      href: "/admin/settings/artist",
+      icon: User
+    },
+    {
+      title: "Business",
+      href: "/admin/settings/business", 
+      icon: Building
+    },
+    {
+      title: "Theme",
+      href: "/admin/settings/theme",
+      icon: Palette
+    },
+    {
+      title: "Social Media",
+      href: "/admin/settings/social",
+      icon: Share2
+    }
+  ];
 
   return (
     <div className="admin-sidebar w-64 bg-card border-r border-border flex flex-col shadow-sm">
@@ -130,14 +161,46 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
           </div>
 
           {/* Settings */}
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-foreground hover:bg-accent mt-4"
-            data-testid="nav-settings"
-          >
-            <Settings className="mr-3 h-4 w-4" />
-            Site Settings
-          </Button>
+          <div className="mt-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-between text-foreground hover:bg-accent"
+              onClick={() => setSettingsExpanded(!settingsExpanded)}
+              data-testid="nav-settings"
+            >
+              <div className="flex items-center">
+                <Settings className="mr-3 h-4 w-4" />
+                Site Settings
+              </div>
+              {settingsExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+            
+            {settingsExpanded && (
+              <div className="ml-6 mt-1 space-y-1">
+                {settingsItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location === item.href;
+                  
+                  return (
+                    <Button
+                      key={item.href}
+                      variant={isActive ? "secondary" : "ghost"}
+                      className={`w-full justify-start text-sm ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}
+                      onClick={() => onNavigate(item.href)}
+                      data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
+                    >
+                      <Icon className="mr-3 h-3 w-3" />
+                      {item.title}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
