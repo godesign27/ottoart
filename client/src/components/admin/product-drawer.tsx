@@ -77,7 +77,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
 
   // Mutation for creating/updating products
   const createProductMutation = useMutation({
-    mutationFn: (data: ProductFormData) => 
+    mutationFn: (data: any) => 
       apiRequest('POST', '/api/products', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
@@ -102,6 +102,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
     // Clean up data before submission
     const cleanedData = {
       ...data,
+      price: data.price.toString(), // Convert number to string for decimal field
       categoryId: data.categoryId || undefined, // Convert empty string to undefined
       sku: data.sku || undefined, // Convert empty string to undefined 
     };
