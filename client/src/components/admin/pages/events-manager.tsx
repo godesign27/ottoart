@@ -37,10 +37,7 @@ export function EventsManager() {
   // Mutation for updating page settings
   const updatePageSettingsMutation = useMutation({
     mutationFn: (enabled: boolean) => 
-      apiRequest('/api/page-settings/events', {
-        method: 'PUT',
-        body: { enabled }
-      }),
+      apiRequest('PUT', '/api/page-settings/events', { enabled }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/page-settings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/page-settings', 'events'] });

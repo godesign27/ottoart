@@ -36,10 +36,7 @@ export function GalleryManager() {
   // Mutation for updating page settings
   const updatePageSettingsMutation = useMutation({
     mutationFn: (enabled: boolean) => 
-      apiRequest('/api/page-settings/gallery', {
-        method: 'PUT',
-        body: { enabled }
-      }),
+      apiRequest('PUT', '/api/page-settings/gallery', { enabled }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/page-settings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/page-settings', 'gallery'] });
