@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { PageSettings } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +26,25 @@ interface Event {
 export function EventsManager() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isEnabled, setIsEnabled] = useState(true);
   const [isPreview, setIsPreview] = useState(false);
+
+  // Fetch page settings
+  const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['/api/page-settings', 'events'],
+    queryFn: () => fetch('/api/page-settings/events').then(res => res.json()) as Promise<PageSettings>
+  });
+
+  // Mutation for updating page settings
+  const updatePageSettingsMutation = useMutation({
+    mutationFn: (enabled: boolean) => 
+      apiRequest('/api/page-settings/events', {
+        method: 'PUT',
+        body: { enabled }
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/page-settings'] });
+    }
+  });
 
   // Mock data - in real app this would come from API
   const mockEvents: Event[] = [
@@ -87,8 +106,9 @@ export function EventsManager() {
   };
 
   const handlePageSave = () => {
-    // Implementation for saving page settings
-    console.log('Saving events page settings, enabled:', isEnabled);
+    if (pageSettings) {
+      updatePageSettingsMutation.mutate(!pageSettings.enabled);
+    }
   };
 
   const togglePreview = () => {
@@ -117,8 +137,8 @@ export function EventsManager() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Badge variant={isEnabled ? "default" : "secondary"}>
-              {isEnabled ? "Enabled" : "Disabled"}
+            <Badge variant={pageSettings?.enabled ? "default" : "secondary"}>
+              {pageSettings?.enabled ? "Enabled" : "Disabled"}
             </Badge>
           </div>
           <Button onClick={togglePreview} variant="outline" className="flex items-center gap-2">
@@ -143,8 +163,9 @@ export function EventsManager() {
               <Label htmlFor="events-enabled">Enable this page</Label>
               <Switch
                 id="events-enabled"
-                checked={isEnabled}
-                onCheckedChange={setIsEnabled}
+                checked={pageSettings?.enabled ?? true}
+                onCheckedChange={() => handlePageSave()}
+                disabled={updatePageSettingsMutation.isPending}
               />
             </div>
           </div>
@@ -292,7 +313,7 @@ export function EventsManager() {
         ))}
       </div>
 
-      {!isEnabled && (
+      {!pageSettings?.enabled && (
         <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
