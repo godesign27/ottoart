@@ -8,6 +8,11 @@ import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
 import AdminCategories from "@/pages/admin/categories";
+import AdminGallery from "@/pages/admin/gallery";
+import AdminEvents from "@/pages/admin/events";
+import AdminCV from "@/pages/admin/cv";
+import AdminContact from "@/pages/admin/contact";
+import AdminBio from "@/pages/admin/bio";
 import LiveSiteHome from "@/pages/live-site/home";
 import ShopAllPage from "@/pages/live-site/shop-all";
 import OriginalsPage from "@/pages/live-site/originals";
@@ -36,6 +41,11 @@ function Router() {
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/products" component={AdminProducts} />
       <Route path="/admin/categories" component={AdminCategories} />
+      <Route path="/admin/gallery" component={AdminGallery} />
+      <Route path="/admin/events" component={AdminEvents} />
+      <Route path="/admin/cv" component={AdminCV} />
+      <Route path="/admin/contact" component={AdminContact} />
+      <Route path="/admin/bio" component={AdminBio} />
       <Route component={NotFound} />
     </Switch>
   );

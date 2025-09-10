@@ -46,6 +46,16 @@ const pageItems = [
   {
     title: "Events",
     href: "/admin/events",
+    active: true
+  },
+  {
+    title: "CV",
+    href: "/admin/cv", 
+    active: true
+  },
+  {
+    title: "Contact",
+    href: "/admin/contact",
     active: false
   }
 ];
@@ -107,6 +117,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
                 <div 
                   key={page.href}
                   className="w-full flex items-center justify-between px-3 py-1 text-sm text-foreground hover:bg-accent rounded-md cursor-pointer"
+                  onClick={() => onNavigate(page.href)}
                   data-testid={`page-${page.title.toLowerCase()}`}
                 >
                   {page.title}
