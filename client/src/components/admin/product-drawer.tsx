@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -120,6 +120,41 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       });
     },
   });
+
+  // Reset form when editProduct changes
+  useEffect(() => {
+    if (editProduct) {
+      // Reset form with edit product data
+      form.reset({
+        name: editProduct.name || "",
+        sku: editProduct.sku || "",
+        description: editProduct.description || "",
+        price: parseFloat(editProduct.price.toString()) || 0,
+        status: editProduct.status || "active",
+        stock: editProduct.stock || 0,
+        isFeatured: editProduct.isFeatured || false,
+        images: editProduct.images || [],
+        tags: editProduct.tags || [],
+        categoryId: editProduct.categoryId || undefined,
+        pricingTiers: editProduct.pricingTiers || [],
+      });
+    } else {
+      // Reset form with empty values for new product
+      form.reset({
+        name: "",
+        sku: "",
+        description: "",
+        price: 0,
+        status: "active",
+        stock: 0,
+        isFeatured: false,
+        images: [],
+        tags: [],
+        categoryId: undefined,
+        pricingTiers: [],
+      });
+    }
+  }, [editProduct, form]);
 
   const handleSubmit = (data: ProductFormData) => {
     // Clean up data before submission
