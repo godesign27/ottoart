@@ -1,6 +1,8 @@
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Search, User } from "lucide-react";
+import type { PageSettings } from "@shared/schema";
 
 interface LiveSiteNavigationProps {
   viewMode?: 'admin' | 'live';
@@ -10,16 +12,36 @@ interface LiveSiteNavigationProps {
 export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: LiveSiteNavigationProps) {
   const [location] = useLocation();
 
-  const navItems = [
+  // Fetch page settings
+  const { data: pageSettings = [] } = useQuery({
+    queryKey: ['/api/page-settings'],
+    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+  });
+
+  const getPageEnabled = (page: string) => {
+    const setting = pageSettings.find(p => p.page === page);
+    return setting?.enabled ?? true;
+  };
+
+  // Static navigation items (always shown)
+  const staticNavItems = [
     { href: "/", label: "Home" },
     { href: "/shop-all", label: "Shop All" },
     { href: "/originals", label: "Originals" },
     { href: "/prints", label: "Prints" },
-    { href: "/accessories", label: "Accessories" },
-    { href: "/bio", label: "Bio" },
-    { href: "/gallery", label: "Gallery" },
-    { href: "/events", label: "Events" }
+    { href: "/accessories", label: "Accessories" }
   ];
+
+  // Page-based navigation items (filtered by page settings)
+  const pageNavItems = [
+    { href: "/bio", label: "Bio", page: "bio" },
+    { href: "/gallery", label: "Gallery", page: "gallery" },
+    { href: "/events", label: "Events", page: "events" },
+    { href: "/cv", label: "CV", page: "cv" }
+  ].filter(item => getPageEnabled(item.page));
+
+  // Combine all navigation items
+  const navItems = [...staticNavItems, ...pageNavItems];
 
   return (
     <nav className="h-16 border-b border-border bg-background px-6 flex items-center justify-between shadow-sm">
