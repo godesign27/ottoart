@@ -15,6 +15,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertProductSchema, type Category, type Tag, type Product } from "@shared/schema";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 interface ProductDrawerProps {
   isOpen: boolean;
@@ -600,33 +601,23 @@ function ImagesTab({
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Product Images</h3>
         
-        {/* Image Upload Area */}
-        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-          <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground mb-4">Drag and drop an image here, or click to select</p>
-          <Button 
-            variant="outline" 
-            type="button"
-            onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = 'image/*';
-              input.onchange = (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (file) {
-                  // For now, we'll use a real working Unsplash image
-                  // In a real app, you'd upload to a storage service
-                  const placeholderUrl = `https://picsum.photos/400/400?random=${Date.now()}`;
-                  const currentImages = form.getValues('images');
-                  form.setValue('images', [...currentImages, placeholderUrl]);
-                }
-              };
-              input.click();
+        {/* Real Image Upload */}
+        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
+          <div className="text-center mb-4">
+            <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50 mb-2" />
+            <p className="text-muted-foreground">Upload product images</p>
+          </div>
+          <ImageUploader
+            onImageUploaded={(imageUrl) => {
+              const currentImages = form.getValues('images');
+              form.setValue('images', [...currentImages, imageUrl]);
             }}
-            data-testid="select-image-button"
+            maxFiles={1}
+            maxFileSize={10 * 1024 * 1024} // 10MB
+            data-testid="image-uploader"
           >
-            Select Image
-          </Button>
+            Select Image File
+          </ImageUploader>
         </div>
 
         {/* Image URL Input */}

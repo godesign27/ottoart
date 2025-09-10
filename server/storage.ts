@@ -14,9 +14,18 @@ import {
   type SiteSettings,
   type InsertSiteSettings,
   type PageSettings,
-  type InsertPageSettings
+  type InsertPageSettings,
+  users,
+  products,
+  categories,
+  tags,
+  orders,
+  messages,
+  siteSettings,
+  pageSettings
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -71,404 +80,271 @@ export interface IStorage {
   setPageSetting(setting: InsertPageSettings): Promise<PageSettings>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User> = new Map();
-  private products: Map<string, Product> = new Map();
-  private categories: Map<string, Category> = new Map();
-  private tags: Map<string, Tag> = new Map();
-  private orders: Map<string, Order> = new Map();
-  private messages: Map<string, Message> = new Map();
-  private siteSettings: Map<string, SiteSettings> = new Map();
-  private pageSettings: Map<string, PageSettings> = new Map();
-
+export class DatabaseStorage implements IStorage {
   constructor() {
     this.initializeData();
-    this.initializePageSettings();
   }
 
-  private initializeData() {
-    // Initialize default categories
-    const originals: Category = {
-      id: randomUUID(),
-      name: "Originals",
-      description: "Original paintings and canvas works",
-      slug: "originals",
-      isActive: true,
-      isFeatured: true,
-      sortOrder: 0,
-      createdAt: new Date(),
-    };
+  private async initializeData() {
+    try {
+      // Check if data already exists
+      const existingCategories = await db.select().from(categories).limit(1);
+      if (existingCategories.length > 0) {
+        return; // Data already initialized
+      }
 
-    const prints: Category = {
-      id: randomUUID(),
-      name: "Art Prints",
-      description: "High-quality reproduction prints",
-      slug: "art-prints",
-      isActive: true,
-      isFeatured: false,
-      sortOrder: 1,
-      createdAt: new Date(),
-    };
+      // Initialize default categories
+      const defaultCategories = [
+        {
+          name: "Originals",
+          description: "Original paintings and canvas works",
+          slug: "originals",
+          isActive: true,
+          isFeatured: true,
+          sortOrder: 0,
+        },
+        {
+          name: "Art Prints",
+          description: "High-quality reproduction prints",
+          slug: "art-prints",
+          isActive: true,
+          isFeatured: false,
+          sortOrder: 1,
+        },
+        {
+          name: "Accessories",
+          description: "Art-related accessories and items",
+          slug: "accessories",
+          isActive: true,
+          isFeatured: false,
+          sortOrder: 2,
+        },
+      ];
 
-    const accessories: Category = {
-      id: randomUUID(),
-      name: "Accessories",
-      description: "Art-related accessories and items",
-      slug: "accessories",
-      isActive: true,
-      isFeatured: false,
-      sortOrder: 2,
-      createdAt: new Date(),
-    };
-
-    this.categories.set(originals.id, originals);
-    this.categories.set(prints.id, prints);
-    this.categories.set(accessories.id, accessories);
-
-    // Initialize default products
-    const products: Product[] = [
-      {
-        id: randomUUID(),
-        name: "Abstract Harmony",
-        description: "A vibrant exploration of color and form, this piece captures the dynamic energy of contemporary expression.",
-        shortDescription: "Vibrant abstract painting with bold colors",
-        price: "1200.00",
-        categoryId: originals.id,
-        sku: "ABS-001",
-        status: "active",
-        isFeatured: true,
-        stock: 1,
-        images: ["https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"],
-        dimensions: "24\" × 36\"",
-        medium: "Acrylic on Canvas",
-        year: 2024,
-        isOriginal: true,
-        tags: ["abstract", "contemporary", "colorful"],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        name: "Geometric Dreams",
-        description: "Clean geometric forms meet bold color palettes in this striking contemporary composition.",
-        shortDescription: "Contemporary geometric art",
-        price: "85.00",
-        categoryId: prints.id,
-        sku: "GEO-001",
-        status: "active",
-        isFeatured: true,
-        stock: 12,
-        images: ["https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"],
-        dimensions: "18\" × 24\"",
-        medium: "Digital Print",
-        year: 2024,
-        isOriginal: false,
-        tags: ["geometric", "modern", "minimalist"],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        name: "Nature's Palette",
-        description: "An interpretation of natural landscapes through the lens of contemporary artistic vision.",
-        shortDescription: "Expressive landscape painting",
-        price: "950.00",
-        categoryId: originals.id,
-        sku: "NAT-001",
-        status: "active",
-        isFeatured: true,
-        stock: 1,
-        images: ["https://images.unsplash.com/photo-1578321272176-b7bbc0679853?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"],
-        dimensions: "30\" × 24\"",
-        medium: "Oil on Canvas",
-        year: 2024,
-        isOriginal: true,
-        tags: ["landscape", "nature", "colorful"],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-
-    products.forEach(product => {
-      this.products.set(product.id, product);
-    });
-  }
-
-  private initializePageSettings() {
-    const defaultPages = ["bio", "gallery", "events", "cv", "contact"];
-    
-    defaultPages.forEach(page => {
-      const pageSetting: PageSettings = {
-        id: randomUUID(),
+      const insertedCategories = await db.insert(categories).values(defaultCategories).returning();
+      
+      // Initialize default page settings
+      const defaultPages = ["bio", "gallery", "events", "cv", "contact"];
+      const defaultPageSettings = defaultPages.map(page => ({
         page,
-        enabled: page === "contact" ? false : true, // Contact disabled by default
-        updatedAt: new Date(),
-      };
-      this.pageSettings.set(page, pageSetting);
-    });
+        enabled: page !== "contact", // Contact disabled by default
+      }));
+      
+      await db.insert(pageSettings).values(defaultPageSettings);
+      
+      console.log("✅ Database initialized with default data");
+    } catch (error) {
+      console.error("Error initializing database:", error);
+    }
   }
 
   // Users
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const user: User = {
-      ...insertUser,
-      id: randomUUID(),
-      createdAt: new Date(),
-    };
-    this.users.set(user.id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Products
   async getProducts(): Promise<Product[]> {
-    return Array.from(this.products.values());
+    return await db.select().from(products).orderBy(desc(products.createdAt));
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
-    return this.products.get(id);
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product || undefined;
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const product: Product = {
-      ...insertProduct,
-      id: randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.products.set(product.id, product);
+    const [product] = await db.insert(products).values(insertProduct).returning();
     return product;
   }
 
   async updateProduct(id: string, updateData: Partial<InsertProduct>): Promise<Product | undefined> {
-    const product = this.products.get(id);
-    if (!product) return undefined;
-
-    const updatedProduct: Product = {
-      ...product,
-      ...updateData,
-      updatedAt: new Date(),
-    };
-    this.products.set(id, updatedProduct);
-    return updatedProduct;
+    const [product] = await db.update(products)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return product || undefined;
   }
 
   async deleteProduct(id: string): Promise<boolean> {
-    return this.products.delete(id);
+    const result = await db.delete(products).where(eq(products.id, id));
+    return result.rowCount > 0;
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
-    return Array.from(this.products.values()).filter(product => product.isFeatured);
+    return await db.select().from(products).where(eq(products.isFeatured, true));
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
-    return Array.from(this.products.values()).filter(product => product.categoryId === categoryId);
+    return await db.select().from(products).where(eq(products.categoryId, categoryId));
   }
 
   // Categories
   async getCategories(): Promise<Category[]> {
-    return Array.from(this.categories.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    return await db.select().from(categories).orderBy(categories.sortOrder);
   }
 
   async getCategory(id: string): Promise<Category | undefined> {
-    return this.categories.get(id);
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
   }
 
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
-    return Array.from(this.categories.values()).find(category => category.slug === slug);
+    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
+    return category || undefined;
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
-    const category: Category = {
-      ...insertCategory,
-      id: randomUUID(),
-      createdAt: new Date(),
-    };
-    this.categories.set(category.id, category);
+    const [category] = await db.insert(categories).values(insertCategory).returning();
     return category;
   }
 
   async updateCategory(id: string, updateData: Partial<InsertCategory>): Promise<Category | undefined> {
-    const category = this.categories.get(id);
-    if (!category) return undefined;
-
-    const updatedCategory: Category = {
-      ...category,
-      ...updateData,
-    };
-    this.categories.set(id, updatedCategory);
-    return updatedCategory;
+    const [category] = await db.update(categories)
+      .set(updateData)
+      .where(eq(categories.id, id))
+      .returning();
+    return category || undefined;
   }
 
   async deleteCategory(id: string): Promise<boolean> {
-    return this.categories.delete(id);
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount > 0;
   }
 
   // Tags
   async getTags(): Promise<Tag[]> {
-    return Array.from(this.tags.values());
+    return await db.select().from(tags).orderBy(tags.name);
   }
 
   async getTag(id: string): Promise<Tag | undefined> {
-    return this.tags.get(id);
+    const [tag] = await db.select().from(tags).where(eq(tags.id, id));
+    return tag || undefined;
   }
 
   async createTag(insertTag: InsertTag): Promise<Tag> {
-    const tag: Tag = {
-      ...insertTag,
-      id: randomUUID(),
-      createdAt: new Date(),
-    };
-    this.tags.set(tag.id, tag);
+    const [tag] = await db.insert(tags).values(insertTag).returning();
     return tag;
   }
 
   async updateTag(id: string, updateData: Partial<InsertTag>): Promise<Tag | undefined> {
-    const tag = this.tags.get(id);
-    if (!tag) return undefined;
-
-    const updatedTag: Tag = {
-      ...tag,
-      ...updateData,
-    };
-    this.tags.set(id, updatedTag);
-    return updatedTag;
+    const [tag] = await db.update(tags)
+      .set(updateData)
+      .where(eq(tags.id, id))
+      .returning();
+    return tag || undefined;
   }
 
   async deleteTag(id: string): Promise<boolean> {
-    return this.tags.delete(id);
+    const result = await db.delete(tags).where(eq(tags.id, id));
+    return result.rowCount > 0;
   }
 
   // Orders
   async getOrders(): Promise<Order[]> {
-    return Array.from(this.orders.values()).sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+    return await db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
   async getOrder(id: string): Promise<Order | undefined> {
-    return this.orders.get(id);
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
   }
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const order: Order = {
-      ...insertOrder,
-      id: randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.orders.set(order.id, order);
+    const [order] = await db.insert(orders).values(insertOrder).returning();
     return order;
   }
 
   async updateOrder(id: string, updateData: Partial<InsertOrder>): Promise<Order | undefined> {
-    const order = this.orders.get(id);
-    if (!order) return undefined;
-
-    const updatedOrder: Order = {
-      ...order,
-      ...updateData,
-      updatedAt: new Date(),
-    };
-    this.orders.set(id, updatedOrder);
-    return updatedOrder;
+    const [order] = await db.update(orders)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    return order || undefined;
   }
 
   // Messages
   async getMessages(): Promise<Message[]> {
-    return Array.from(this.messages.values()).sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+    return await db.select().from(messages).orderBy(desc(messages.createdAt));
   }
 
   async getMessage(id: string): Promise<Message | undefined> {
-    return this.messages.get(id);
+    const [message] = await db.select().from(messages).where(eq(messages.id, id));
+    return message || undefined;
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const message: Message = {
-      ...insertMessage,
-      id: randomUUID(),
-      isRead: false,
-      createdAt: new Date(),
-    };
-    this.messages.set(message.id, message);
+    const [message] = await db.insert(messages).values(insertMessage).returning();
     return message;
   }
 
   async markMessageAsRead(id: string): Promise<boolean> {
-    const message = this.messages.get(id);
-    if (!message) return false;
-
-    message.isRead = true;
-    this.messages.set(id, message);
-    return true;
+    const result = await db.update(messages)
+      .set({ isRead: true })
+      .where(eq(messages.id, id));
+    return result.rowCount > 0;
   }
 
   // Site Settings
   async getSiteSettings(): Promise<SiteSettings[]> {
-    return Array.from(this.siteSettings.values());
+    return await db.select().from(siteSettings);
   }
 
   async getSiteSetting(key: string): Promise<SiteSettings | undefined> {
-    return Array.from(this.siteSettings.values()).find(setting => setting.key === key);
+    const [setting] = await db.select().from(siteSettings).where(eq(siteSettings.key, key));
+    return setting || undefined;
   }
 
   async setSiteSetting(insertSetting: InsertSiteSettings): Promise<SiteSettings> {
     const existing = await this.getSiteSetting(insertSetting.key);
     
     if (existing) {
-      const updated: SiteSettings = {
-        ...existing,
-        value: insertSetting.value,
-        updatedAt: new Date(),
-      };
-      this.siteSettings.set(existing.id, updated);
+      const [updated] = await db.update(siteSettings)
+        .set({ value: insertSetting.value, updatedAt: new Date() })
+        .where(eq(siteSettings.id, existing.id))
+        .returning();
       return updated;
     } else {
-      const setting: SiteSettings = {
-        ...insertSetting,
-        id: randomUUID(),
-        updatedAt: new Date(),
-      };
-      this.siteSettings.set(setting.id, setting);
+      const [setting] = await db.insert(siteSettings).values(insertSetting).returning();
       return setting;
     }
   }
 
   // Page Settings
   async getPageSettings(): Promise<PageSettings[]> {
-    return Array.from(this.pageSettings.values());
+    return await db.select().from(pageSettings);
   }
 
   async getPageSetting(page: string): Promise<PageSettings | undefined> {
-    return this.pageSettings.get(page);
+    const [setting] = await db.select().from(pageSettings).where(eq(pageSettings.page, page));
+    return setting || undefined;
   }
 
   async setPageSetting(insertSetting: InsertPageSettings): Promise<PageSettings> {
-    const existing = this.pageSettings.get(insertSetting.page);
+    const existing = await this.getPageSetting(insertSetting.page);
     
     if (existing) {
-      const updated: PageSettings = {
-        ...existing,
-        enabled: insertSetting.enabled,
-        updatedAt: new Date(),
-      };
-      this.pageSettings.set(insertSetting.page, updated);
+      const [updated] = await db.update(pageSettings)
+        .set({ enabled: insertSetting.enabled, updatedAt: new Date() })
+        .where(eq(pageSettings.id, existing.id))
+        .returning();
       return updated;
     } else {
-      const setting: PageSettings = {
-        ...insertSetting,
-        id: randomUUID(),
-        updatedAt: new Date(),
-      };
-      this.pageSettings.set(insertSetting.page, setting);
+      const [setting] = await db.insert(pageSettings).values(insertSetting).returning();
       return setting;
     }
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

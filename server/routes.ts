@@ -2,6 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema } from "@shared/schema";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+
+// Type declarations for global rate limiting
+declare global {
+  var uploadRateLimit: Map<string, number[]> | undefined;
+  var finalizeRateLimit: Map<string, number[]> | undefined;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Products
@@ -239,6 +246,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Object Storage Routes
+  // Serve public assets
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    const filePath = req.params.filePath;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const file = await objectStorageService.searchPublicObject(filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Serve private objects (for uploaded images) - with ACL enforcement
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      
+      // Check if the user has permission to access this object
+      // No userId is provided since this is an unauthenticated route
+      // This means only public objects will be accessible
+      const hasAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        // userId is intentionally omitted for unauthenticated requests
+        // This allows public objects but denies private ones
+      });
+
+      if (!hasAccess) {
+        console.warn(`Access denied to object: ${req.path}`);
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error accessing object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  // Get upload URL for new image - secured endpoint
+  app.post("/api/objects/upload", async (req, res) => {
+    // Basic security check - require admin API key for uploads
+    const adminApiKey = process.env.ADMIN_API_KEY || "dev-admin-key-2024"; // Development fallback
+    if (!adminApiKey) {
+      console.error("ADMIN_API_KEY not configured - upload endpoint disabled for security");
+      return res.status(503).json({ error: "Upload service unavailable - not configured" });
+    }
+
+    const providedKey = req.headers['x-admin-key'] || req.headers['authorization']?.replace('Bearer ', '');
+    if (!providedKey || providedKey !== adminApiKey) {
+      console.warn(`Unauthorized upload attempt from ${req.ip}`);
+      return res.status(401).json({ error: "Unauthorized - Admin API key required" });
+    }
+
+    // Rate limiting - simple in-memory protection
+    const clientIp = req.ip;
+    const now = Date.now();
+    const rateLimitKey = `upload_${clientIp}`;
+    const rateLimitWindow = 60 * 1000; // 1 minute
+    const maxRequests = 10;
+
+    // Simple rate limiting (in production, use Redis or proper rate limiting)
+    if (!global.uploadRateLimit) {
+      global.uploadRateLimit = new Map<string, number[]>();
+    }
+
+    const requests = global.uploadRateLimit.get(rateLimitKey) || [];
+    const recentRequests = requests.filter((time: number) => now - time < rateLimitWindow);
+    
+    if (recentRequests.length >= maxRequests) {
+      return res.status(429).json({ error: "Too many requests - try again later" });
+    }
+
+    recentRequests.push(now);
+    global.uploadRateLimit.set(rateLimitKey, recentRequests);
+
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // Set ACL policy for uploaded image - secured endpoint
+  app.put("/api/objects/finalize", async (req, res) => {
+    // Basic security check - require admin API key for finalize
+    const adminApiKey = process.env.ADMIN_API_KEY || "dev-admin-key-2024"; // Development fallback
+    if (!adminApiKey) {
+      console.error("ADMIN_API_KEY not configured - finalize endpoint disabled for security");
+      return res.status(503).json({ error: "Finalize service unavailable - not configured" });
+    }
+
+    const providedKey = req.headers['x-admin-key'] || req.headers['authorization']?.replace('Bearer ', '');
+    if (!providedKey || providedKey !== adminApiKey) {
+      console.warn(`Unauthorized finalize attempt from ${req.ip}`);
+      return res.status(401).json({ error: "Unauthorized - Admin API key required" });
+    }
+
+    // Enhanced input validation
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+
+    const { imageURL, visibility = "public", owner = "system" } = req.body;
+
+    if (!imageURL || typeof imageURL !== 'string' || imageURL.trim() === '') {
+      return res.status(400).json({ error: "imageURL is required and must be a non-empty string" });
+    }
+
+    // Validate visibility setting
+    if (!['public', 'private'].includes(visibility)) {
+      return res.status(400).json({ error: "visibility must be either 'public' or 'private'" });
+    }
+
+    // Validate owner
+    if (!owner || typeof owner !== 'string' || owner.trim() === '') {
+      return res.status(400).json({ error: "owner is required and must be a non-empty string" });
+    }
+
+    // Rate limiting - reuse the same mechanism as upload
+    const clientIp = req.ip;
+    const now = Date.now();
+    const rateLimitKey = `finalize_${clientIp}`;
+    const rateLimitWindow = 60 * 1000; // 1 minute
+    const maxRequests = 20; // Higher limit since finalize is usually called after upload
+
+    if (!global.finalizeRateLimit) {
+      global.finalizeRateLimit = new Map<string, number[]>();
+    }
+
+    const requests = global.finalizeRateLimit.get(rateLimitKey) || [];
+    const recentRequests = requests.filter((time: number) => now - time < rateLimitWindow);
+    
+    if (recentRequests.length >= maxRequests) {
+      return res.status(429).json({ error: "Too many requests - try again later" });
+    }
+
+    recentRequests.push(now);
+    global.finalizeRateLimit.set(rateLimitKey, recentRequests);
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(imageURL.trim());
+
+      // Set ACL policy with validated parameters
+      await objectStorageService.trySetObjectEntityAclPolicy(imageURL.trim(), {
+        owner: owner.trim(),
+        visibility: visibility as "public" | "private",
+      });
+
+      res.status(200).json({
+        objectPath: objectPath,
+        url: objectPath,
+        visibility: visibility,
+        owner: owner.trim()
+      });
+    } catch (error) {
+      console.error("Error finalizing image upload:", error);
+      
+      // Don't expose internal error details to client
+      if (error instanceof Error && error.message && error.message.includes("Object not found")) {
+        return res.status(404).json({ error: "Object not found" });
+      }
+      
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

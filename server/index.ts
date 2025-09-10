@@ -2,6 +2,55 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Validate required environment variables for object storage
+function validateObjectStorageEnvironment() {
+  const publicPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
+  const privateDir = process.env.PRIVATE_OBJECT_DIR || "";
+
+  if (!publicPaths || publicPaths.trim() === "") {
+    throw new Error(
+      "PUBLIC_OBJECT_SEARCH_PATHS environment variable is not set. " +
+      "Please create a bucket in the 'Object Storage' tool pane and configure the environment variable."
+    );
+  }
+
+  if (!privateDir || privateDir.trim() === "") {
+    throw new Error(
+      "PRIVATE_OBJECT_DIR environment variable is not set. " +
+      "Please create a bucket in the 'Object Storage' tool pane and configure the environment variable."
+    );
+  }
+
+  // Validate that paths are properly formatted
+  const paths = publicPaths.split(",").map(p => p.trim()).filter(p => p.length > 0);
+  if (paths.length === 0) {
+    throw new Error(
+      "PUBLIC_OBJECT_SEARCH_PATHS contains no valid paths. " +
+      "Provide comma-separated bucket paths (e.g., '/bucket1/public,/bucket2/assets')"
+    );
+  }
+
+  for (const path of paths) {
+    if (!path.startsWith("/")) {
+      throw new Error(
+        `Invalid path in PUBLIC_OBJECT_SEARCH_PATHS: "${path}". ` +
+        "Paths must start with '/' and follow the format '/bucket-name/object-path'"
+      );
+    }
+  }
+
+  if (!privateDir.startsWith("/")) {
+    throw new Error(
+      `Invalid PRIVATE_OBJECT_DIR: "${privateDir}". ` +
+      "Path must start with '/' and follow the format '/bucket-name/object-path'"
+    );
+  }
+
+  log(`Object storage environment validated:`);
+  log(`  PUBLIC_OBJECT_SEARCH_PATHS: ${publicPaths}`);
+  log(`  PRIVATE_OBJECT_DIR: ${privateDir}`);
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -37,6 +86,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Validate object storage environment before starting server
+  try {
+    validateObjectStorageEnvironment();
+  } catch (error) {
+    console.error("Environment validation failed:", error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
