@@ -78,9 +78,13 @@ export function ProductGrid() {
         {products?.map((product) => (
           <Card key={product.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow" data-testid={`product-card-${product.id}`}>
             <img 
-              src={product.images?.[0] || "/placeholder.svg"} 
+              src={product.images?.[0] ? decodeURIComponent(product.images[0].replace(/&amp;/g, '&')) : "/placeholder.svg"} 
               alt={product.name} 
               className="w-full h-48 object-cover" 
+              onError={(e) => {
+                console.log('Image failed to load:', product.images?.[0]);
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
             />
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
