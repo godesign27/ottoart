@@ -13,8 +13,6 @@ import {
   FileText, 
   Settings,
   Star,
-  ChevronDown,
-  ChevronRight,
   User,
   Building,
   Palette,
@@ -77,7 +75,6 @@ interface AdminSidebarProps {
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
 
   // Fetch page settings
   const { data: pageSettings = [] } = useQuery({
@@ -177,46 +174,31 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
             </div>
           </div>
 
-          {/* Settings */}
-          <div className="mt-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-between text-foreground hover:bg-accent"
-              onClick={() => setSettingsExpanded(!settingsExpanded)}
-              data-testid="nav-settings"
-            >
-              <div className="flex items-center">
-                <Settings className="mr-3 h-4 w-4" />
-                Site Settings
-              </div>
-              {settingsExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </Button>
-            
-            {settingsExpanded && (
-              <div className="ml-6 mt-1 space-y-1">
-                {settingsItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location === item.href;
-                  
-                  return (
-                    <Button
-                      key={item.href}
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={`w-full justify-start text-sm ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}
-                      onClick={() => onNavigate(item.href)}
-                      data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
-                    >
-                      <Icon className="mr-3 h-3 w-3" />
-                      {item.title}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
+          {/* Site Settings */}
+          <div className="space-y-1 mt-6">
+            <div className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground">
+              <Settings className="mr-3 h-4 w-4" />
+              Site Settings
+            </div>
+            <div className="ml-6 space-y-1">
+              {settingsItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.href;
+                
+                return (
+                  <Button
+                    key={item.href}
+                    variant={isActive ? "secondary" : "ghost"}
+                    className={`w-full justify-start text-sm ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}
+                    onClick={() => onNavigate(item.href)}
+                    data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
+                  >
+                    <Icon className="mr-3 h-3 w-3" />
+                    {item.title}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </nav>
