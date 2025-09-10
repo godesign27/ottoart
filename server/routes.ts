@@ -122,6 +122,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/categories/reorder", async (req, res) => {
+    try {
+      const { categoryIds } = req.body;
+      if (!Array.isArray(categoryIds)) {
+        return res.status(400).json({ message: "categoryIds must be an array" });
+      }
+      const categories = await storage.reorderCategories(categoryIds);
+      res.json(categories);
+    } catch (error) {
+      console.error("Failed to reorder categories:", error);
+      res.status(400).json({ message: "Failed to reorder categories" });
+    }
+  });
+
   // Tags
   app.get("/api/tags", async (req, res) => {
     try {

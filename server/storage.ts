@@ -49,6 +49,7 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: string): Promise<boolean>;
+  reorderCategories(categoryIds: string[]): Promise<Category[]>;
 
   // Tags
   getTags(): Promise<Tag[]>;
@@ -216,6 +217,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(categories.id, id))
       .returning();
     return category || undefined;
+  }
+
+  async reorderCategories(categoryIds: string[]): Promise<Category[]> {
+    // Update each category's sortOrder based on its position in the array
+    for (let i = 0; i < categoryIds.length; i++) {
+      await db.update(categories)
+        .set({ sortOrder: i })
+        .where(eq(categories.id, categoryIds[i]));
+    }
+    
+    // Return the updated categories in the new order
+    return await this.getCategories();
   }
 
   async deleteCategory(id: string): Promise<boolean> {

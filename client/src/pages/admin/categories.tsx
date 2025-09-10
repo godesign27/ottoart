@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { GripVertical } from "lucide-react";
 import { CategoryDrawer } from "@/components/admin/category-drawer";
 import { TagDrawer } from "@/components/admin/tag-drawer";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Category, Tag } from "@shared/schema";
 
 export default function AdminCategories() {
@@ -19,6 +21,9 @@ export default function AdminCategories() {
   const [tagDrawerOpen, setTagDrawerOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
@@ -69,6 +74,50 @@ export default function AdminCategories() {
     setEditingTag(null);
   };
 
+  // Reorder categories mutation
+  const reorderCategoriesMutation = useMutation({
+    mutationFn: (categoryIds: string[]) => apiRequest('POST', '/api/categories/reorder', { categoryIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: "Categories reordered",
+        description: "Category order has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reorder categories. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedItem(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedItem === null || !categories) return;
+
+    const newCategories = [...categories];
+    const draggedCategory = newCategories[draggedItem];
+    newCategories.splice(draggedItem, 1);
+    newCategories.splice(dropIndex, 0, draggedCategory);
+
+    // Update order values and reorder
+    const categoryIds = newCategories.map(cat => cat.id);
+    reorderCategoriesMutation.mutate(categoryIds);
+    setDraggedItem(null);
+  };
+
   return (
     <div className="flex h-screen bg-background">
       <AdminSidebar onNavigate={handleNavigate} />
@@ -114,10 +163,14 @@ export default function AdminCategories() {
                       </div>
                     </div>
                   ) : (
-                    categories?.map((category) => (
+                    categories?.map((category, index) => (
                       <div 
                         key={category.id} 
                         className="p-4 flex items-center justify-between hover:bg-accent cursor-move"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, index)}
                         data-testid={`category-${category.id}`}
                       >
                         <div className="flex items-center space-x-3">
@@ -137,7 +190,7 @@ export default function AdminCategories() {
                         <div className="flex items-center space-x-4">
                           <span className="text-sm text-muted-foreground">12 products</span>
                           <Switch 
-                            checked={category.isActive} 
+                            checked={category.isActive ?? true} 
                             data-testid={`category-toggle-${category.id}`}
                           />
                           <Button 
