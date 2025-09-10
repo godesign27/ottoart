@@ -1,14 +1,26 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { ProductDrawer } from "@/components/admin/product-drawer";
 import type { Product } from "@shared/schema";
 
 export function ProductGrid() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
+    select: (data) => {
+      if (!searchQuery) return data;
+      return data?.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
   });
 
   if (isLoading) {
@@ -47,11 +59,16 @@ export function ProductGrid() {
             <Input 
               type="text" 
               placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-64" 
               data-testid="product-search"
             />
           </div>
-          <Button data-testid="add-product-button">
+          <Button 
+            onClick={() => setIsDrawerOpen(true)}
+            data-testid="add-product-button"
+          >
             Add Product
           </Button>
         </div>
@@ -94,6 +111,20 @@ export function ProductGrid() {
           </Card>
         ))}
       </div>
+
+      {!products?.length && !isLoading && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">No products found.</p>
+          <Button onClick={() => setIsDrawerOpen(true)}>
+            Add your first product
+          </Button>
+        </div>
+      )}
+
+      <ProductDrawer 
+        isOpen={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+      />
     </div>
   );
 }
