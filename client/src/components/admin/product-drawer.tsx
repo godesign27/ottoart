@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Upload, Image as ImageIcon } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +22,22 @@ interface ProductDrawerProps {
   editProduct?: any; // For future edit functionality
 }
 
+// Pricing tier schema
+const pricingTierSchema = z.object({
+  id: z.string(),
+  size: z.string().min(1, "Size is required"),
+  price: z.coerce.number().positive("Price must be greater than 0"),
+  type: z.string().min(1, "Type is required"),
+  stock: z.coerce.number().nonnegative("Stock must be 0 or greater"),
+  description: z.string().min(1, "Description is required"),
+});
+
 // Form schema based on the product schema with proper coercion
 const productFormSchema = insertProductSchema.extend({
   price: z.coerce.number().nonnegative(),
   images: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]), // Will store tag IDs
+  pricingTiers: z.array(pricingTierSchema).default([]),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -59,7 +70,8 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       isFeatured: false,
       images: [],
       tags: [],
-      categoryId: "",
+      categoryId: undefined,
+      pricingTiers: [],
     },
   });
 
@@ -87,7 +99,13 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
   });
 
   const handleSubmit = (data: ProductFormData) => {
-    createProductMutation.mutate(data);
+    // Clean up data before submission
+    const cleanedData = {
+      ...data,
+      categoryId: data.categoryId || undefined, // Convert empty string to undefined
+      sku: data.sku || undefined, // Convert empty string to undefined 
+    };
+    createProductMutation.mutate(cleanedData);
   };
 
   const handleAddImage = () => {
@@ -355,7 +373,22 @@ function ContentTab({ form }: { form: any }) {
 // Pricing Tab Component
 function PricingTab({ form }: { form: any }) {
   const price = form.watch("price");
-  
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "pricingTiers"
+  });
+
+  const addTier = () => {
+    append({
+      id: `tier-${Date.now()}`,
+      size: "",
+      price: 0,
+      type: "Original",
+      stock: 0,
+      description: ""
+    });
+  };
+
   return (
     <>
       <div className="space-y-4">
@@ -374,13 +407,145 @@ function PricingTab({ form }: { form: any }) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Pricing Tiers</h3>
-          <Button variant="outline" size="sm" disabled>
-            + Add Tier
+          <Button 
+            variant="outline" 
+            size="sm" 
+            type="button"
+            onClick={addTier}
+            data-testid="add-tier-button"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Tier
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Pricing tiers coming soon - currently showing base price only.
-        </p>
+        
+        {fields.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Add pricing tiers to offer different sizes, types, or framing options.
+          </p>
+        )}
+
+        <div className="space-y-4">
+          {fields.map((field, index) => (
+            <div key={field.id} className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Tier {index + 1}</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => remove(index)}
+                  data-testid={`remove-tier-${index}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name={`pricingTiers.${index}.size`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Size</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., 42x42"
+                          {...field}
+                          data-testid={`tier-size-${index}`}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name={`pricingTiers.${index}.price`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price ($)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          data-testid={`tier-price-${index}`}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name={`pricingTiers.${index}.type`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid={`tier-type-${index}`}>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Original">Original</SelectItem>
+                          <SelectItem value="Canvas">Canvas</SelectItem>
+                          <SelectItem value="Print">Print</SelectItem>
+                          <SelectItem value="Framed">Framed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name={`pricingTiers.${index}.stock`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stock</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          data-testid={`tier-stock-${index}`}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name={`pricingTiers.${index}.description`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., 42x42 original"
+                        {...field}
+                        data-testid={`tier-description-${index}`}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );
@@ -411,7 +576,27 @@ function ImagesTab({
         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
           <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground mb-4">Drag and drop an image here, or click to select</p>
-          <Button variant="outline" disabled data-testid="select-image-button">
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) {
+                  // For now, we'll create a placeholder URL
+                  // In a real app, you'd upload to a storage service
+                  const placeholderUrl = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=400&fit=crop`;
+                  const currentImages = form.getValues('images');
+                  form.setValue('images', [...currentImages, placeholderUrl]);
+                }
+              };
+              input.click();
+            }}
+            data-testid="select-image-button"
+          >
             Select Image
           </Button>
         </div>
@@ -498,7 +683,7 @@ function CategoriesTab({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Category</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger data-testid="select-category">
                   <SelectValue placeholder="Select a category" />

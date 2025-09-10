@@ -49,6 +49,14 @@ export const products = pgTable("products", {
   year: integer("year"),
   isOriginal: boolean("is_original").default(false),
   tags: jsonb("tags").$type<string[]>().default([]),
+  pricingTiers: jsonb("pricing_tiers").$type<Array<{
+    id: string;
+    size: string;
+    price: number;
+    type: string;
+    stock: number;
+    description: string;
+  }>>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
