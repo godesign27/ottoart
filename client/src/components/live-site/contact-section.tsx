@@ -159,7 +159,7 @@ export function ContactSection() {
                   <Button 
                     size="icon" 
                     className="rounded-full"
-                    data-testId="social-instagram"
+                    data-testid="social-instagram"
                   >
                     <Instagram className="h-5 w-5" />
                   </Button>

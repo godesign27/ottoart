@@ -9,11 +9,29 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
 import AdminCategories from "@/pages/admin/categories";
 import LiveSiteHome from "@/pages/live-site/home";
+import ShopAllPage from "@/pages/live-site/shop-all";
+import OriginalsPage from "@/pages/live-site/originals";
+import PrintsPage from "@/pages/live-site/prints";
+import AccessoriesPage from "@/pages/live-site/accessories";
+import BioPage from "@/pages/live-site/bio";
+import GalleryPage from "@/pages/live-site/gallery";
+import EventsPage from "@/pages/live-site/events";
+import CVPage from "@/pages/live-site/cv";
+import ProductDetailPage from "@/pages/live-site/product-detail";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LiveSiteHome} />
+      <Route path="/shop-all" component={ShopAllPage} />
+      <Route path="/originals" component={OriginalsPage} />
+      <Route path="/prints" component={PrintsPage} />
+      <Route path="/accessories" component={AccessoriesPage} />
+      <Route path="/bio" component={BioPage} />
+      <Route path="/gallery" component={GalleryPage} />
+      <Route path="/events" component={EventsPage} />
+      <Route path="/cv" component={CVPage} />
+      <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/products" component={AdminProducts} />
