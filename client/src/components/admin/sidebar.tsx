@@ -113,7 +113,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   return (
     <div className="admin-sidebar w-64 bg-card border-r border-border flex flex-col shadow-sm">
       {/* User Profile Section */}
-      <div className="p-6 border-b border-border">
+      <div className="px-6 py-12 border-b border-border">
         <div className="flex items-center space-x-3">
           <img 
             src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150" 
