@@ -12,21 +12,22 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: ProductGridProps) {
+  // Convert category name to slug for API call
+  const categorySlug = category ? category.toLowerCase().replace(/\s+/g, '-') : undefined;
+  
   const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products', { category, featured: undefined }],
+    queryKey: ['/api/products', { category: categorySlug }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (categorySlug) {
+        params.append('category', categorySlug);
+      }
+      const url = `/api/products${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url);
+      return response.json();
+    },
     select: (data) => {
       let filtered = data || [];
-      
-      // Filter by category if specified
-      if (category) {
-        filtered = filtered.filter(product => 
-          product.categoryId === category || 
-          // Handle category name matching for mock data compatibility
-          (category === "Originals" && product.categoryId?.includes("originals")) ||
-          (category === "Art Prints" && product.categoryId?.includes("prints")) ||
-          (category === "Accessories" && product.categoryId?.includes("accessories"))
-        );
-      }
       
       // Filter by search query
       if (searchQuery) {
