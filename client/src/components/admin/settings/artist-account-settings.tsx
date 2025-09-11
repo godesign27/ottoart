@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Upload, User } from "lucide-react";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export function ArtistAccountSettings() {
+  const [showImageUploader, setShowImageUploader] = useState(false);
   const [formData, setFormData] = useState({
     artistName: "Otto Art",
     email: "hello@ottoart.com", 
@@ -24,6 +26,15 @@ export function ArtistAccountSettings() {
   const handleSave = () => {
     console.log('Saving artist settings:', formData);
     // Implementation for saving settings
+  };
+
+  const handleImageUpload = (imageUrl: string) => {
+    setFormData(prev => ({ ...prev, profileImage: imageUrl }));
+    setShowImageUploader(false);
+  };
+
+  const handleUploadClick = () => {
+    setShowImageUploader(true);
   };
 
   return (
@@ -50,7 +61,12 @@ export function ArtistAccountSettings() {
                 alt="Artist Profile" 
                 className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
               />
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={handleUploadClick}
+                data-testid="upload-profile-image"
+              >
                 <Upload className="h-4 w-4" />
                 Upload New Photo
               </Button>
@@ -166,6 +182,29 @@ export function ArtistAccountSettings() {
           Save Changes
         </Button>
       </div>
+
+      {/* Image Uploader Modal */}
+      {showImageUploader && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Upload Profile Image</h3>
+            <ImageUploader
+              onImageUploaded={handleImageUpload}
+              accept="image/*"
+              maxFiles={1}
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowImageUploader(false)}
+                data-testid="cancel-upload"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
