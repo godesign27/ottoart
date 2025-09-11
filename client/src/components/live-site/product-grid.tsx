@@ -95,8 +95,8 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: P
                         {product.isFeatured && (
                           <Badge variant="secondary">Featured</Badge>
                         )}
-                        <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                          {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                        <Badge variant={(product.stock ?? 0) > 0 ? "default" : "destructive"}>
+                          {(product.stock ?? 0) > 0 ? 'In Stock' : 'Out of Stock'}
                         </Badge>
                       </div>
                     </div>
@@ -135,8 +135,8 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: P
                 </p>
                 <div className="flex items-center justify-between">
                   <p className="text-xl font-bold">${product.price}</p>
-                  <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                    {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                  <Badge variant={(product.stock ?? 0) > 0 ? "default" : "destructive"}>
+                    {(product.stock ?? 0) > 0 ? 'In Stock' : 'Out of Stock'}
                   </Badge>
                 </div>
               </div>

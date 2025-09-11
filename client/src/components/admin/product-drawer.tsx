@@ -39,6 +39,7 @@ const productFormSchema = insertProductSchema.extend({
   images: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]), // Will store tag IDs
   pricingTiers: z.array(pricingTierSchema).default([]),
+  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -64,6 +65,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
     resolver: zodResolver(productFormSchema),
     defaultValues: editProduct ? {
       name: editProduct.name || "",
+      slug: editProduct.slug || "",
       sku: editProduct.sku || "",
       description: editProduct.description || "",
       price: parseFloat(editProduct.price.toString()) || 0,
@@ -76,6 +78,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       pricingTiers: editProduct.pricingTiers || [],
     } : {
       name: "",
+      slug: "",
       sku: "",
       description: "",
       price: 0,
@@ -300,6 +303,27 @@ function ContentTab({ form }: { form: any }) {
                 data-testid="input-product-name"
               />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="slug"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>URL Slug</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="e.g., abstract-art-painting"
+                {...field} 
+                data-testid="input-product-slug"
+              />
+            </FormControl>
+            <FormDescription>
+              Used in the product URL. Only lowercase letters, numbers, and hyphens allowed.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
