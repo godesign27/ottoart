@@ -114,13 +114,13 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
     <div className="admin-sidebar w-64 bg-card border-r border-border flex flex-col shadow-sm">
       {/* User Profile Section */}
       <div className="px-6 py-12 border-b border-border">
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col items-center space-y-3">
           <img 
             src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150" 
             alt="Otto Art Profile" 
-            className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" 
+            className="h-24 w-24 rounded-full object-cover border-2 border-primary/20" 
           />
-          <div>
+          <div className="text-center">
             <h2 className="font-semibold text-foreground">Otto Art</h2>
             <p className="text-sm text-muted-foreground">Artist & Creator</p>
           </div>
