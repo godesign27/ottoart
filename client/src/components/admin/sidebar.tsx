@@ -56,6 +56,11 @@ const navItems = [
 
 const pageItems = [
   {
+    title: "Home",
+    href: "/admin/home",
+    page: "home"
+  },
+  {
     title: "Bio",
     href: "/admin/bio",
     page: "bio"

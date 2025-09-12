@@ -15,6 +15,7 @@ import AdminEvents from "@/pages/admin/events";
 import AdminCV from "@/pages/admin/cv";
 import AdminContact from "@/pages/admin/contact";
 import AdminBio from "@/pages/admin/bio";
+import AdminHome from "@/pages/admin/home";
 import ArtistSettingsPage from "@/pages/admin/settings/artist";
 import BusinessSettingsPage from "@/pages/admin/settings/business";
 import ThemeSettingsPage from "@/pages/admin/settings/theme";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/home" component={AdminHome} />
       <Route path="/admin/products" component={AdminProducts} />
       <Route path="/admin/customers" component={AdminCustomers} />
       <Route path="/admin/orders" component={AdminOrders} />

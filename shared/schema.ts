@@ -101,7 +101,7 @@ export const siteSettings = pgTable("site_settings", {
 
 export const pageSettings = pgTable("page_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  page: text("page", { enum: ["bio", "gallery", "events", "cv", "contact"] }).notNull().unique(),
+  page: text("page", { enum: ["home", "bio", "gallery", "events", "cv", "contact"] }).notNull().unique(),
   enabled: boolean("enabled").default(true).notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
