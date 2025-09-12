@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { AdminSidebar } from "@/components/admin/sidebar";
+import { AdminHeader } from "@/components/admin/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +27,20 @@ interface Customer {
 }
 
 export default function AdminCustomers() {
+  const [, setLocation] = useLocation();
+  const [viewMode, setViewMode] = useState<'admin' | 'live'>('admin');
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleNavigate = (href: string) => {
+    setLocation(href);
+  };
+
+  const handleViewModeChange = (mode: 'admin' | 'live') => {
+    setViewMode(mode);
+    if (mode === 'live') {
+      setLocation('/');
+    }
+  };
 
   // Fetch orders data to derive customer information
   const { data: orders = [], isLoading } = useQuery<Order[]>({
@@ -118,7 +134,14 @@ export default function AdminCustomers() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-background text-foreground">
+    <div className="flex h-screen bg-background">
+      <AdminSidebar onNavigate={handleNavigate} />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <AdminHeader viewMode={viewMode} onViewModeChange={handleViewModeChange} />
+        
+        <main className="flex-1 overflow-auto p-6 bg-background">
+          <div className="max-w-7xl mx-auto space-y-6 fade-in">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -239,5 +262,8 @@ export default function AdminCustomers() {
         </div>
       )}
     </div>
+  </main>
+</div>
+</div>
   );
 }
