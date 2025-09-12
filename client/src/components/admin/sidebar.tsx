@@ -9,6 +9,8 @@ import type { PageSettings } from "@shared/schema";
 import { 
   LayoutDashboard, 
   Package, 
+  Users,
+  ShoppingCart,
   Tags, 
   FileText, 
   Settings,
@@ -31,6 +33,18 @@ const navItems = [
     icon: Package,
     href: "/admin/products",
     view: "products"
+  },
+  {
+    title: "Customers",
+    icon: Users,
+    href: "/admin/customers",
+    view: "customers"
+  },
+  {
+    title: "Orders",
+    icon: ShoppingCart,
+    href: "/admin/orders",
+    view: "orders"
   },
   {
     title: "Categories & Tags",
