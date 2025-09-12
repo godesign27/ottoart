@@ -7,6 +7,8 @@ import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
+import AdminCustomers from "@/pages/admin/customers";
+import AdminOrders from "@/pages/admin/orders";
 import AdminCategories from "@/pages/admin/categories";
 import AdminGallery from "@/pages/admin/gallery";
 import AdminEvents from "@/pages/admin/events";
@@ -44,6 +46,8 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/products" component={AdminProducts} />
+      <Route path="/admin/customers" component={AdminCustomers} />
+      <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/gallery" component={AdminGallery} />
       <Route path="/admin/events" component={AdminEvents} />
