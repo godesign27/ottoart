@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertSiteSettingsSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Type declarations for global rate limiting
@@ -240,6 +240,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(pageSetting);
     } catch (error) {
       res.status(400).json({ message: "Invalid page setting data" });
+    }
+  });
+
+  // Site Settings
+  app.get("/api/site-settings", async (req, res) => {
+    try {
+      const siteSettings = await storage.getSiteSettings();
+      res.json(siteSettings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch site settings" });
+    }
+  });
+
+  app.get("/api/site-settings/:key", async (req, res) => {
+    try {
+      const siteSetting = await storage.getSiteSetting(req.params.key);
+      if (!siteSetting) {
+        return res.status(404).json({ message: "Site setting not found" });
+      }
+      res.json(siteSetting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch site setting" });
+    }
+  });
+
+  app.post("/api/site-settings/:key", async (req, res) => {
+    try {
+      const validatedData = insertSiteSettingsSchema.parse({
+        key: req.params.key,
+        value: req.body.value
+      });
+      const siteSetting = await storage.setSiteSetting(validatedData);
+      res.json(siteSetting);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid site setting data" });
     }
   });
 

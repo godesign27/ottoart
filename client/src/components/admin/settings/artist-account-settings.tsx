@@ -6,9 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Upload, User } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export function ArtistAccountSettings() {
   const [showImageUploader, setShowImageUploader] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     artistName: "Otto Art",
     email: "hello@ottoart.com", 
@@ -23,9 +28,40 @@ export function ArtistAccountSettings() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Mutation for saving artist profile settings
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      // Save each field as a separate site setting
+      const savePromises = Object.entries(data).map(([key, value]) => 
+        apiRequest('POST', `/api/site-settings/artist_${key}`, { value })
+      );
+      await Promise.all(savePromises);
+      return data;
+    },
+    onSuccess: () => {
+      setShowSuccessBanner(true);
+      // Hide success banner after 5 seconds
+      setTimeout(() => setShowSuccessBanner(false), 5000);
+      toast({
+        title: "Profile updated",
+        description: "Your artist profile has been successfully saved.",
+        variant: "default",
+      });
+      // Trigger a custom event to update the sidebar profile image
+      window.dispatchEvent(new CustomEvent('profileImageUpdated', { detail: { profileImage: formData.profileImage } }));
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
     console.log('Saving artist settings:', formData);
-    // Implementation for saving settings
+    saveSettingsMutation.mutate(formData);
   };
 
   const handleImageUpload = (imageUrl: string) => {
@@ -43,6 +79,26 @@ export function ArtistAccountSettings() {
         <h1 className="text-2xl font-bold">Artist Account Settings</h1>
         <p className="text-muted-foreground">Manage your personal artist information and profile</p>
       </div>
+
+      {/* Success Banner */}
+      {showSuccessBanner && (
+        <div className="w-full bg-green-500 text-white px-6 py-3 rounded-md flex items-center justify-between" data-testid="success-banner">
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span className="font-medium">Profile successfully updated!</span>
+          </div>
+          <button 
+            onClick={() => setShowSuccessBanner(false)}
+            className="text-white hover:text-gray-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Image */}
@@ -177,9 +233,14 @@ export function ArtistAccountSettings() {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} className="flex items-center gap-2">
+        <Button 
+          onClick={handleSave} 
+          className="flex items-center gap-2" 
+          disabled={saveSettingsMutation.isPending}
+          data-testid="save-changes"
+        >
           <Save className="h-4 w-4" />
-          Save Changes
+          {saveSettingsMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
