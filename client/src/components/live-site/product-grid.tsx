@@ -88,7 +88,6 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: P
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold text-lg">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
                         <p className="text-lg font-bold mt-2">${product.price}</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -130,9 +129,6 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: P
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg">{product.name}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {product.description}
-                </p>
                 <div className="flex items-center justify-between">
                   <p className="text-xl font-bold">${product.price}</p>
                   <Badge variant={(product.stock ?? 0) > 0 ? "default" : "destructive"}>

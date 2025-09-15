@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@shared/schema";
 
@@ -47,53 +48,47 @@ export function FeaturedArtworks() {
 
         <div className="product-grid">
           {products?.map((product) => (
-            <div 
-              key={product.id} 
-              className="artwork-card bg-card border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
-              data-testid={`featured-artwork-${product.id}`}
-            >
-              <img 
-                src={product.images?.[0] || "/placeholder.svg"} 
-                alt={product.name} 
-                className="w-full h-64 object-cover" 
-              />
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-xl font-semibold text-foreground mb-1">{product.name}</h3>
-                    <p className="text-muted-foreground">
-                      {product.isOriginal ? 'Original Painting' : 'Art Print'} • {product.dimensions}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-foreground">${product.price}</p>
-                    <p className="text-sm text-green-600">
-                      {product.stock > 0 ? (product.stock === 1 ? 'In Stock' : `${product.stock} Available`) : 'Out of Stock'}
-                    </p>
+            <Link key={product.id} href={`/product/${product.id}`}>
+              <div 
+                className="artwork-card bg-card border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+                data-testid={`featured-artwork-${product.id}`}
+              >
+                <img 
+                  src={product.images?.[0] || "/placeholder.svg"} 
+                  alt={product.name} 
+                  className="w-full h-64 object-cover" 
+                />
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-1">{product.name}</h3>
+                      <p className="text-muted-foreground">
+                        {product.isOriginal ? 'Original Painting' : 'Art Print'} • {product.dimensions}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-foreground">${product.price}</p>
+                      <p className="text-sm text-green-600">
+                        {(product.stock ?? 0) > 0 ? ((product.stock ?? 0) === 1 ? 'In Stock' : `${product.stock} Available`) : 'Out of Stock'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-muted-foreground mb-4">
-                  {product.description}
-                </p>
-                <Button 
-                  className="w-full"
-                  data-testid={`view-details-${product.id}`}
-                >
-                  View Details
-                </Button>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <Button 
-            variant="outline" 
-            className="px-8 py-3 font-medium"
-            data-testid="view-all-artworks"
-          >
-            View All Artworks
-          </Button>
+          <Link href="/shop-all">
+            <Button 
+              variant="outline" 
+              className="px-8 py-3 font-medium"
+              data-testid="view-all-artworks"
+            >
+              View All Artworks
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
