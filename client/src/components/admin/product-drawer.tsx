@@ -160,6 +160,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
   }, [editProduct, form]);
 
   const handleSubmit = (data: ProductFormData) => {
+    console.log('Form submitted successfully with data:', data);
     // Clean up data before submission
     const cleanedData = {
       ...data,
@@ -214,7 +215,14 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
           {/* Form Content */}
           <div className="flex-1 overflow-hidden">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="h-full flex flex-col">
+              <form onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+                console.log('Form validation errors:', errors);
+                toast({
+                  title: "Validation Error",
+                  description: "Please check all fields for errors.",
+                  variant: "destructive",
+                });
+              })} className="h-full flex flex-col">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                   {/* Tab Navigation */}
                   <div className="px-6 pt-4">
@@ -469,11 +477,11 @@ function PricingTab({ form }: { form: any }) {
   const addTier = () => {
     append({
       id: `tier-${Date.now()}`,
-      size: "",
-      price: 0,
+      size: "42x42",
+      price: 100,
       type: "Original",
-      stock: 0,
-      description: ""
+      stock: 1,
+      description: "Enter description"
     });
   };
 
