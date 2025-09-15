@@ -106,6 +106,18 @@ export const pageSettings = pgTable("page_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const cartItems = pgTable("cart_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").notNull().references(() => products.id),
+  tierId: text("tier_id"), // null for base product, tier id for pricing tiers
+  productName: text("product_name").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  image: text("image"),
+  tierDisplayName: text("tier_display_name"), // "Original" or "8x10 print", etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -149,6 +161,11 @@ export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({
   updatedAt: true,
 });
 
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -173,3 +190,6 @@ export type InsertSiteSettings = z.infer<typeof insertSiteSettingsSchema>;
 
 export type PageSettings = typeof pageSettings.$inferSelect;
 export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;
+
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;

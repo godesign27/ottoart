@@ -15,6 +15,8 @@ import {
   type InsertSiteSettings,
   type PageSettings,
   type InsertPageSettings,
+  type CartItem,
+  type InsertCartItem,
   users,
   products,
   categories,
@@ -22,7 +24,8 @@ import {
   orders,
   messages,
   siteSettings,
-  pageSettings
+  pageSettings,
+  cartItems
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -79,6 +82,14 @@ export interface IStorage {
   getPageSettings(): Promise<PageSettings[]>;
   getPageSetting(page: string): Promise<PageSettings | undefined>;
   setPageSetting(setting: InsertPageSettings): Promise<PageSettings>;
+
+  // Cart
+  getCartItems(): Promise<CartItem[]>;
+  getCartItem(id: string): Promise<CartItem | undefined>;
+  addToCart(item: InsertCartItem): Promise<CartItem>;
+  updateCartItem(id: string, item: Partial<InsertCartItem>): Promise<CartItem | undefined>;
+  removeFromCart(id: string): Promise<boolean>;
+  clearCart(): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -125,7 +136,7 @@ export class DatabaseStorage implements IStorage {
       const insertedCategories = await db.insert(categories).values(defaultCategories).returning();
       
       // Initialize default page settings
-      const defaultPages = ["bio", "gallery", "events", "cv", "contact"];
+      const defaultPages: Array<"bio" | "gallery" | "events" | "cv" | "contact"> = ["bio", "gallery", "events", "cv", "contact"];
       const defaultPageSettings = defaultPages.map(page => ({
         page,
         enabled: page !== "contact", // Contact disabled by default
@@ -166,13 +177,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db.insert(products).values(insertProduct).returning();
+    const productData = {
+      ...insertProduct,
+      tags: (insertProduct.tags as string[]) || [],
+      images: (insertProduct.images as string[]) || [],
+      pricingTiers: (insertProduct.pricingTiers as any[]) || []
+    } as typeof products.$inferInsert;
+    const [product] = await db.insert(products).values(productData).returning();
     return product;
   }
 
   async updateProduct(id: string, updateData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const cleanUpdateData: any = {
+      updatedAt: new Date()
+    };
+    
+    // Copy all fields except array fields that need special handling
+    Object.keys(updateData).forEach(key => {
+      const value = (updateData as any)[key];
+      if (key === 'tags' || key === 'images' || key === 'pricingTiers') {
+        cleanUpdateData[key] = value || [];
+      } else {
+        cleanUpdateData[key] = value;
+      }
+    });
+    
     const [product] = await db.update(products)
-      .set({ ...updateData, updatedAt: new Date() })
+      .set(cleanUpdateData)
       .where(eq(products.id, id))
       .returning();
     return product || undefined;
@@ -180,7 +211,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     const result = await db.delete(products).where(eq(products.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
@@ -233,7 +264,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCategory(id: string): Promise<boolean> {
     const result = await db.delete(categories).where(eq(categories.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Tags
@@ -261,7 +292,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTag(id: string): Promise<boolean> {
     const result = await db.delete(tags).where(eq(tags.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Orders
@@ -275,13 +306,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const [order] = await db.insert(orders).values(insertOrder).returning();
+    const orderData = {
+      ...insertOrder,
+      items: (insertOrder.items as Array<{productId: string, quantity: number, price: number}>) || []
+    } as typeof orders.$inferInsert;
+    const [order] = await db.insert(orders).values(orderData).returning();
     return order;
   }
 
   async updateOrder(id: string, updateData: Partial<InsertOrder>): Promise<Order | undefined> {
+    const cleanUpdateData: any = {
+      updatedAt: new Date()
+    };
+    
+    // Copy all fields except array fields that need special handling
+    Object.keys(updateData).forEach(key => {
+      const value = (updateData as any)[key];
+      if (key === 'items') {
+        cleanUpdateData[key] = value || [];
+      } else {
+        cleanUpdateData[key] = value;
+      }
+    });
+    
     const [order] = await db.update(orders)
-      .set({ ...updateData, updatedAt: new Date() })
+      .set(cleanUpdateData)
       .where(eq(orders.id, id))
       .returning();
     return order || undefined;
@@ -306,7 +355,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db.update(messages)
       .set({ isRead: true })
       .where(eq(messages.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Site Settings
@@ -340,7 +389,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPageSetting(page: string): Promise<PageSettings | undefined> {
-    const [setting] = await db.select().from(pageSettings).where(eq(pageSettings.page, page));
+    const [setting] = await db.select().from(pageSettings).where(eq(pageSettings.page, page as "home" | "bio" | "gallery" | "events" | "cv" | "contact"));
     return setting || undefined;
   }
 
@@ -357,6 +406,39 @@ export class DatabaseStorage implements IStorage {
       const [setting] = await db.insert(pageSettings).values(insertSetting).returning();
       return setting;
     }
+  }
+
+  // Cart
+  async getCartItems(): Promise<CartItem[]> {
+    return await db.select().from(cartItems).orderBy(desc(cartItems.createdAt));
+  }
+
+  async getCartItem(id: string): Promise<CartItem | undefined> {
+    const [item] = await db.select().from(cartItems).where(eq(cartItems.id, id));
+    return item || undefined;
+  }
+
+  async addToCart(insertItem: InsertCartItem): Promise<CartItem> {
+    const [item] = await db.insert(cartItems).values(insertItem).returning();
+    return item;
+  }
+
+  async updateCartItem(id: string, updateData: Partial<InsertCartItem>): Promise<CartItem | undefined> {
+    const [item] = await db.update(cartItems)
+      .set(updateData)
+      .where(eq(cartItems.id, id))
+      .returning();
+    return item || undefined;
+  }
+
+  async removeFromCart(id: string): Promise<boolean> {
+    const result = await db.delete(cartItems).where(eq(cartItems.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async clearCart(): Promise<boolean> {
+    const result = await db.delete(cartItems);
+    return (result.rowCount ?? 0) >= 0; // Returns true even if cart was already empty
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertSiteSettingsSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Type declarations for global rate limiting
@@ -295,6 +295,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Cart
+  app.get("/api/cart", async (req, res) => {
+    try {
+      const cartItems = await storage.getCartItems();
+      res.json(cartItems);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cart items" });
+    }
+  });
+
+  app.post("/api/cart", async (req, res) => {
+    try {
+      const validatedData = insertCartItemSchema.parse(req.body);
+      const cartItem = await storage.addToCart(validatedData);
+      res.status(201).json(cartItem);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid cart item data" });
+    }
+  });
+
+  app.delete("/api/cart/:id", async (req, res) => {
+    try {
+      const success = await storage.removeFromCart(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      res.json({ message: "Cart item removed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove cart item" });
+    }
+  });
+
+  app.delete("/api/cart", async (req, res) => {
+    try {
+      const success = await storage.clearCart();
+      res.json({ message: "Cart cleared successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clear cart" });
     }
   });
 

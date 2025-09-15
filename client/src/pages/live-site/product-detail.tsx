@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Star, Package, Shield, RotateCcw, ShoppingBag } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 
 export default function ProductDetailPage() {
   const [, setLocation] = useLocation();
   const params = useParams();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
+  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ['/api/products', params.id],
@@ -21,6 +25,74 @@ export default function ProductDetailPage() {
     },
     enabled: !!params.id
   });
+
+  // Auto-select the first pricing tier when product loads
+  useEffect(() => {
+    if (product?.pricingTiers && product.pricingTiers.length > 0 && !selectedTierId) {
+      setSelectedTierId(product.pricingTiers[0].id);
+    }
+  }, [product, selectedTierId]);
+
+  // Get selected tier details or fallback to base product
+  const getSelectedTierOrProduct = () => {
+    if (product?.pricingTiers && selectedTierId) {
+      const selectedTier = product.pricingTiers.find(tier => tier.id === selectedTierId);
+      if (selectedTier) {
+        return {
+          price: selectedTier.price,
+          stock: selectedTier.stock,
+          description: selectedTier.description,
+          displayName: `${selectedTier.size} ${selectedTier.type.toLowerCase()}`
+        };
+      }
+    }
+    return {
+      price: product?.price || 0,
+      stock: product?.stock || 0,
+      description: product?.description || '',
+      displayName: product?.name || ''
+    };
+  };
+
+  const selectedOption = getSelectedTierOrProduct();
+
+  const addToCartMutation = useMutation({
+    mutationFn: async (cartItem: any) => {
+      const response = await apiRequest('POST', '/api/cart', cartItem);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+      toast({
+        title: "Added to cart!",
+        description: `${product?.name} (${selectedOption.displayName}) - $${selectedOption.price}`,
+        variant: "default",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    const cartItem = {
+      productId: product.id,
+      productName: product.name,
+      image: product.images?.[0] || '',
+      tierId: selectedTierId,
+      price: selectedOption.price.toString(),
+      quantity: 1,
+      tierDisplayName: selectedOption.displayName
+    };
+
+    addToCartMutation.mutate(cartItem);
+  };
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
     setViewMode(mode);
@@ -106,15 +178,67 @@ export default function ProductDetailPage() {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
-                <p className="text-3xl font-bold text-primary mt-2">${product.price}</p>
+                <p className="text-3xl font-bold text-primary mt-2">${selectedOption.price}</p>
                 <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
               </div>
+
+              <div className="prose prose-sm max-w-none">
+                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+              </div>
+
+              {/* Pricing Tiers / Available Options */}
+              {product.pricingTiers && product.pricingTiers.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-foreground">Available Options:</h3>
+                  <div className="space-y-3">
+                    {product.pricingTiers.map((tier) => (
+                      <div 
+                        key={tier.id} 
+                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                          selectedTierId === tier.id 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => setSelectedTierId(tier.id)}
+                        data-testid={`tier-option-${tier.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                selectedTierId === tier.id 
+                                  ? 'border-primary bg-primary' 
+                                  : 'border-muted-foreground'
+                              }`}
+                            >
+                              {selectedTierId === tier.id && (
+                                <div className="w-2 h-2 rounded-full bg-white"></div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                {tier.size} {tier.type.toLowerCase()}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Stock: {tier.stock}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-xl font-bold text-foreground">
+                            ${tier.price}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Product Info */}
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                    {product.stock > 0 ? `${product.stock} in stock` : 'Out of Stock'}
+                  <Badge variant={selectedOption.stock > 0 ? "default" : "destructive"}>
+                    {selectedOption.stock > 0 ? `${selectedOption.stock} in stock` : 'Out of Stock'}
                   </Badge>
                   {product.isOriginal && (
                     <Badge variant="secondary">Original Artwork</Badge>
@@ -143,17 +267,20 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <div className="prose prose-sm max-w-none">
-                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-              </div>
-
               {/* Add to Cart */}
               <Button 
                 className="w-full py-3 text-lg font-semibold flex items-center justify-center gap-2"
-                disabled={product.stock === 0}
+                disabled={selectedOption.stock === 0 || addToCartMutation.isPending}
+                onClick={handleAddToCart}
+                data-testid="add-to-cart-button"
               >
                 <ShoppingBag className="h-5 w-5" />
-                {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                {addToCartMutation.isPending 
+                  ? 'Adding...' 
+                  : selectedOption.stock > 0 
+                    ? 'Add to cart' 
+                    : 'Out of Stock'
+                }
               </Button>
 
               {/* Features */}
