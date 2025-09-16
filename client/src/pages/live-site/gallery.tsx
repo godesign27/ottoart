@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import type { GalleryItem } from "@shared/schema";
 
 export default function GalleryPage() {
   const [, setLocation] = useLocation();
@@ -13,44 +15,16 @@ export default function GalleryPage() {
     }
   };
 
-  const galleryImages = [
-    { 
-      id: 1, 
-      title: "Abstract Composition 1", 
-      image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2024"
-    },
-    { 
-      id: 2, 
-      title: "Urban Rhythms", 
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2023"
-    },
-    { 
-      id: 3, 
-      title: "Color Study", 
-      image: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2024"
-    },
-    { 
-      id: 4, 
-      title: "Vibrant Forms", 
-      image: "https://images.unsplash.com/photo-1594736797933-d0c6dc309633?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2023"
-    },
-    { 
-      id: 5, 
-      title: "Emotional Landscape", 
-      image: "https://images.unsplash.com/photo-1582201942988-eb80be9b45fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2024"
-    },
-    { 
-      id: 6, 
-      title: "Digital Dreams", 
-      image: "https://images.unsplash.com/photo-1577083288073-40892c0860ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2023"
-    }
-  ];
+  // Fetch gallery items from the API
+  const { data: galleryItems = [], isLoading } = useQuery<GalleryItem[]>({
+    queryKey: ['/api/gallery'],
+    queryFn: () => fetch('/api/gallery').then(res => res.json())
+  });
+
+  // Show only published items and sort by order
+  const publishedGalleryItems = galleryItems
+    .filter(item => item.isPublished)
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,29 +37,48 @@ export default function GalleryPage() {
             <p className="text-muted-foreground mt-2">A collection of my recent works</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryImages.map((item) => (
-              <div key={item.id} className="group cursor-pointer">
-                <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-end">
-                    <div className="p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-sm">{item.year}</p>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-lg text-muted-foreground">Loading gallery...</div>
+            </div>
+          ) : publishedGalleryItems.length === 0 ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">No gallery items yet</h3>
+                <p className="text-sm text-muted-foreground">Gallery items will appear here when they are published.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {publishedGalleryItems.map((item) => (
+                <div key={item.id} className="group cursor-pointer">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-end">
+                      <div className="p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <h3 className="font-semibold">{item.title}</h3>
+                        {item.year && <p className="text-sm">{item.year}</p>}
+                        {item.medium && <p className="text-xs mt-1">{item.medium}</p>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <h3 className="font-medium text-foreground">{item.title}</h3>
+                    <div className="space-y-1">
+                      {item.year && <p className="text-sm text-muted-foreground">{item.year}</p>}
+                      {item.medium && <p className="text-xs text-muted-foreground">{item.medium}</p>}
+                      {item.dimensions && <p className="text-xs text-muted-foreground">{item.dimensions}</p>}
                     </div>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <h3 className="font-medium text-foreground">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.year}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
