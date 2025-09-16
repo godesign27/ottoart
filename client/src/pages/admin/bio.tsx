@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ImageUploader } from "@/components/ui/image-uploader";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Save, Upload } from "lucide-react";
@@ -146,11 +147,12 @@ export default function BioPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="bio-image">Artist Photo</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-2">Drag artist photo here</p>
-                    <p className="text-gray-500 text-sm">or click to upload</p>
-                  </div>
+                  <ImageUploader
+                    onImageUploaded={(url) => setBioImage(url)}
+                    data-testid="dropzone-bio-image"
+                  >
+                    Upload Artist Photo
+                  </ImageUploader>
                   <Input
                     id="bio-image"
                     placeholder="Or enter image URL"
@@ -201,11 +203,12 @@ export default function BioPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="hero-bg-image">Hero Background Image</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-2">Drag image here</p>
-                    <p className="text-gray-500 text-sm">or click to upload</p>
-                  </div>
+                  <ImageUploader
+                    onImageUploaded={(url) => setHeroData(prev => ({ ...prev, backgroundImage: url }))}
+                    data-testid="dropzone-hero-bg"
+                  >
+                    Upload Hero Background
+                  </ImageUploader>
                   <Input
                     id="hero-bg-image"
                     placeholder="Or enter image URL"
@@ -281,11 +284,12 @@ export default function BioPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="cta-bg-image">CTA Background Image (Optional)</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-2">Drag image here</p>
-                    <p className="text-gray-500 text-sm">or click to upload</p>
-                  </div>
+                  <ImageUploader
+                    onImageUploaded={(url) => setCtaData(prev => ({ ...prev, backgroundImage: url }))}
+                    data-testid="dropzone-cta-bg"
+                  >
+                    Upload CTA Background
+                  </ImageUploader>
                   <Input
                     id="cta-bg-image"
                     placeholder="Or enter image URL"
