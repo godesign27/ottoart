@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import { 
   RefreshCw, 
   Filter, 
@@ -21,6 +23,8 @@ import {
   Eye
 } from "lucide-react";
 import type { Order } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminOrders() {
   const [, setLocation] = useLocation();
@@ -28,6 +32,7 @@ export default function AdminOrders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
+  const { toast } = useToast();
 
   const handleNavigate = (href: string) => {
     setLocation(href);
@@ -43,6 +48,28 @@ export default function AdminOrders() {
   // Fetch orders data
   const { data: orders = [], isLoading, refetch } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+  });
+
+  // Mutation to update order status
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: string, status: string }) => {
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Status Updated",
+        description: "Order status has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update order status. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Calculate status counts
@@ -300,7 +327,11 @@ export default function AdminOrders() {
                   <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">Status:</span>
-                      <Select value={order.status || 'pending'} onValueChange={() => {}}>
+                      <Select 
+                        value={order.status || 'pending'} 
+                        onValueChange={(status) => updateOrderStatusMutation.mutate({ orderId: order.id, status })}
+                        disabled={updateOrderStatusMutation.isPending}
+                      >
                         <SelectTrigger className="w-32 h-8 bg-background border-border text-foreground">
                           <SelectValue />
                         </SelectTrigger>
@@ -313,10 +344,145 @@ export default function AdminOrders() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2" data-testid={`view-order-${order.id}`}>
-                      <Eye className="h-4 w-4" />
-                      View Details
-                    </Button>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-2" 
+                          data-testid={`view-order-${order.id}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Details
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent className="w-full sm:max-w-lg">
+                        <SheetHeader>
+                          <SheetTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-5 w-5" />
+                              Order #{order.id.slice(0, 8)}
+                            </div>
+                            <Badge className={`${getStatusColor(order.status || 'pending')} border uppercase`}>
+                              {order.status || 'pending'}
+                            </Badge>
+                          </SheetTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {order.createdAt && new Date(order.createdAt).toLocaleDateString('en-US', { 
+                              month: 'long', 
+                              day: 'numeric', 
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </SheetHeader>
+
+                        <div className="mt-6 space-y-6">
+                          {/* Customer Information */}
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <h3 className="font-medium">Customer Information</h3>
+                            </div>
+                            <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                              <p className="font-medium">{order.customerName}</p>
+                              <p className="text-sm text-muted-foreground">{order.customerEmail}</p>
+                            </div>
+                          </div>
+
+                          {/* Shipping Address */}
+                          {order.shippingAddress && (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Truck className="h-4 w-4 text-muted-foreground" />
+                                <h3 className="font-medium">Shipping Address</h3>
+                              </div>
+                              <div className="bg-muted/30 rounded-lg p-4">
+                                <div className="text-sm space-y-1">
+                                  <p>{order.shippingAddress.street}</p>
+                                  <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
+                                  <p>{order.shippingAddress.country}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Order Items */}
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                              <h3 className="font-medium">Order Items</h3>
+                            </div>
+                            <div className="bg-muted/30 rounded-lg p-4">
+                              {Array.isArray(order.items) && order.items.length > 0 ? (
+                                <div className="space-y-3">
+                                  {order.items.map((item: any, index: number) => (
+                                    <div key={index} className="flex justify-between items-center">
+                                      <div>
+                                        <p className="text-sm font-medium">Product ID: {item.productId}</p>
+                                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                                      </div>
+                                      <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No items found</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Order Summary */}
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Badge className="h-4 w-4 text-muted-foreground" />
+                              <h3 className="font-medium">Order Summary</h3>
+                            </div>
+                            <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Subtotal:</span>
+                                <span>${parseFloat(order.totalAmount).toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Shipping:</span>
+                                <span>$0.00</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Tax:</span>
+                                <span>$0.00</span>
+                              </div>
+                              <Separator className="my-2" />
+                              <div className="flex justify-between font-medium">
+                                <span>Total:</span>
+                                <span>${parseFloat(order.totalAmount).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Update Status */}
+                          <div className="space-y-3">
+                            <h3 className="font-medium">Update Status</h3>
+                            <Select 
+                              value={order.status || 'pending'} 
+                              onValueChange={(status) => updateOrderStatusMutation.mutate({ orderId: order.id, status })}
+                              disabled={updateOrderStatusMutation.isPending}
+                            >
+                              <SelectTrigger className="w-full bg-background border-border text-foreground">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="processing">Processing</SelectItem>
+                                <SelectItem value="shipped">Shipped</SelectItem>
+                                <SelectItem value="delivered">Delivered</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </SheetContent>
+                    </Sheet>
                   </div>
                 </CardContent>
               </Card>
