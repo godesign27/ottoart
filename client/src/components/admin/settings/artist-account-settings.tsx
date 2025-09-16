@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,15 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Upload, User } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export function ArtistAccountSettings() {
   const [showImageUploader, setShowImageUploader] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  
+  // Default form data
+  const defaultFormData = {
     artistName: "Otto Art",
     email: "hello@ottoart.com", 
     phone: "(555) 123-4567",
@@ -22,7 +24,33 @@ export function ArtistAccountSettings() {
     website: "https://ottoart.com",
     location: "Chicago, IL",
     profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
+  };
+  
+  const [formData, setFormData] = useState(defaultFormData);
+
+  // Load existing site settings
+  const { data: siteSettings, isLoading } = useQuery<any[]>({
+    queryKey: ['/api/site-settings']
   });
+
+  // Update form data when site settings are loaded
+  useEffect(() => {
+    if (siteSettings && siteSettings.length > 0) {
+      const artistSettings: any = { ...defaultFormData };
+      
+      // Process each site setting to extract artist data
+      siteSettings.forEach(setting => {
+        if (setting.key && setting.key.startsWith('artist_')) {
+          const fieldName = setting.key.replace('artist_', '');
+          if (fieldName in artistSettings) {
+            artistSettings[fieldName] = setting.value;
+          }
+        }
+      });
+      
+      setFormData(artistSettings);
+    }
+  }, [siteSettings]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -49,6 +77,8 @@ export function ArtistAccountSettings() {
       });
       // Trigger a custom event to update the sidebar profile image
       window.dispatchEvent(new CustomEvent('profileImageUpdated', { detail: { profileImage: formData.profileImage } }));
+      // Invalidate query to refetch the latest settings
+      queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
     },
     onError: () => {
       toast({
