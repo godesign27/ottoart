@@ -15,6 +15,8 @@ import {
   type InsertSiteSettings,
   type PageSettings,
   type InsertPageSettings,
+  type BioSettings,
+  type InsertBioSettings,
   type CartItem,
   type InsertCartItem,
   users,
@@ -25,6 +27,7 @@ import {
   messages,
   siteSettings,
   pageSettings,
+  bioSettings,
   cartItems
 } from "@shared/schema";
 import { db } from "./db";
@@ -83,6 +86,10 @@ export interface IStorage {
   getPageSettings(): Promise<PageSettings[]>;
   getPageSetting(page: string): Promise<PageSettings | undefined>;
   setPageSetting(setting: InsertPageSettings): Promise<PageSettings>;
+
+  // Bio Settings
+  getBioSettings(): Promise<BioSettings | undefined>;
+  setBioSettings(settings: InsertBioSettings): Promise<BioSettings>;
 
   // Cart
   getCartItems(): Promise<CartItem[]>;
@@ -418,6 +425,23 @@ export class DatabaseStorage implements IStorage {
       const [setting] = await db.insert(pageSettings).values(insertSetting).returning();
       return setting;
     }
+  }
+
+  // Bio Settings - Singleton pattern
+  async getBioSettings(): Promise<BioSettings | undefined> {
+    const [settings] = await db.select().from(bioSettings).orderBy(desc(bioSettings.updatedAt)).limit(1);
+    return settings || undefined;
+  }
+
+  async setBioSettings(insertSettings: InsertBioSettings): Promise<BioSettings> {
+    // Always delete existing records and insert new one to maintain singleton
+    await db.delete(bioSettings);
+    
+    const [settings] = await db.insert(bioSettings).values({
+      heroData: insertSettings.heroData as any,
+      ctaData: insertSettings.ctaData as any
+    }).returning();
+    return settings;
   }
 
   // Cart

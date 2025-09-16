@@ -118,6 +118,24 @@ export const cartItems = pgTable("cart_items", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const bioSettings = pgTable("bio_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  heroData: jsonb("hero_data").$type<{
+    headline: string;
+    description: string;
+    backgroundImage: string;
+  }>(),
+  ctaData: jsonb("cta_data").$type<{
+    enabled: boolean;
+    headline: string;
+    description: string;
+    buttonText: string;
+    buttonUrl: string;
+    backgroundImage?: string;
+  }>(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -166,6 +184,11 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   createdAt: true,
 });
 
+export const insertBioSettingsSchema = createInsertSchema(bioSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -193,3 +216,6 @@ export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;
 
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+
+export type BioSettings = typeof bioSettings.$inferSelect;
+export type InsertBioSettings = z.infer<typeof insertBioSettingsSchema>;

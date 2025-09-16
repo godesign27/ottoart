@@ -2,14 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2023-10-16",
+    apiVersion: "2025-08-27.basil",
   });
 } else {
   console.warn('STRIPE_SECRET_KEY not configured - payment features will be disabled');
@@ -276,6 +276,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(pageSetting);
     } catch (error) {
       res.status(400).json({ message: "Invalid page setting data" });
+    }
+  });
+
+  // Bio Settings
+  app.get("/api/bio-settings", async (req, res) => {
+    try {
+      const bioSettings = await storage.getBioSettings();
+      res.json(bioSettings || {
+        heroData: {
+          headline: "Art That Moves You",
+          description: "I don't just create pieces—I build experiences that spark curiosity, boldness, and reflection. This is more than art on a wall—it's energy you can feel every time you walk by.",
+          backgroundImage: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&h=800"
+        },
+        ctaData: {
+          enabled: true,
+          headline: "From Vision to Canvas—Made Just for You",
+          description: "I don't just create pieces—I build experiences that spark curiosity, boldness, and reflection. This is more than art on a wall—it's energy you can feel every time you walk by.",
+          buttonText: "Claim Your Artwork",
+          buttonUrl: "/contact",
+          backgroundImage: ""
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch bio settings" });
+    }
+  });
+
+  app.put("/api/bio-settings", async (req, res) => {
+    try {
+      const validatedData = insertBioSettingsSchema.parse(req.body);
+      const bioSettings = await storage.setBioSettings(validatedData);
+      res.json(bioSettings);
+    } catch (error) {
+      console.error("Bio settings validation error:", error);
+      res.status(400).json({ message: "Invalid bio settings data" });
     }
   });
 
