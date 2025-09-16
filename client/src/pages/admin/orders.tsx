@@ -181,21 +181,24 @@ export default function AdminOrders() {
         {statusCards.map((card) => {
           const Icon = card.icon;
           const isActive = statusFilter === card.key;
+          const statusColors = card.key === 'all' ? 'bg-gray-500/10 text-gray-500 border-gray-500/20' : getStatusColor(card.key);
+          const [bgColor, textColor, borderColor] = statusColors.split(' ');
+          
           return (
             <Card 
               key={card.key}
-              className={`cursor-pointer transition-colors hover:bg-accent/50 ${
-                isActive ? 'bg-primary/10 border-primary/20' : 'bg-card border-border'
+              className={`cursor-pointer transition-colors hover:opacity-80 ${bgColor} ${borderColor} ${
+                isActive ? 'ring-2 ring-offset-2 ring-current' : ''
               }`}
               onClick={() => setStatusFilter(card.key)}
               data-testid={`status-card-${card.key}`}
             >
               <CardContent className="p-4 text-center">
-                <Icon className={`h-6 w-6 mx-auto mb-2 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                <div className={`text-2xl font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                <Icon className={`h-6 w-6 mx-auto mb-2 ${textColor}`} />
+                <div className={`text-2xl font-bold ${textColor}`}>
                   {card.count}
                 </div>
-                <div className={`text-sm ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                <div className={`text-sm ${textColor}`}>
                   {card.label}
                 </div>
               </CardContent>
