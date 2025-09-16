@@ -11,6 +11,7 @@ import {
   Package, 
   Users,
   ShoppingCart,
+  MessageSquare,
   Tags, 
   FileText, 
   Settings,
@@ -45,6 +46,12 @@ const navItems = [
     icon: ShoppingCart,
     href: "/admin/orders",
     view: "orders"
+  },
+  {
+    title: "Messages",
+    icon: MessageSquare,
+    href: "/admin/messages",
+    view: "messages"
   },
   {
     title: "Categories & Tags",
