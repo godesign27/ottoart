@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { LiveSiteNavigation } from "@/components/live-site/navigation";
+import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { HeroSection } from "@/components/live-site/hero-section";
 import { FeaturedArtworks } from "@/components/live-site/featured-artworks";
 import { AboutSection } from "@/components/live-site/about-section";
