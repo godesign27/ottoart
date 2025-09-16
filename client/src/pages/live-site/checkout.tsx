@@ -17,9 +17,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Minus, Plus, Trash2, CreditCard, Package } from "lucide-react";
 import type { CartItem } from "@shared/schema";
 
-// Initialize Stripe only if the public key is available
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : Promise.resolve(null);
+const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 const checkoutFormSchema = z.object({
   customerName: z.string().min(1, "Name is required"),
@@ -35,61 +34,18 @@ const checkoutFormSchema = z.object({
 
 type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 
-function CheckoutForm({ cartItems }: { cartItems: CartItem[] }) {
+function PaymentForm({ clientSecret, customerData, onSuccess }: { 
+  clientSecret: string, 
+  customerData: CheckoutFormData,
+  onSuccess: () => void 
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const [clientSecret, setClientSecret] = useState<string>("");
-  const [serverCalculatedAmount, setServerCalculatedAmount] = useState<number>(0);
-  const [validatedItems, setValidatedItems] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const form = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutFormSchema),
-    defaultValues: {
-      customerName: "",
-      customerEmail: "",
-      shippingAddress: {
-        street: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        country: "United States",
-      },
-    },
-  });
-
-  // Client-side estimate for display only - server validates and recalculates
-  const estimatedTotal = cartItems.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
-
-  const createPaymentIntentMutation = useMutation({
-    mutationFn: async (formData: CheckoutFormData) => {
-      // Server validates cart items and calculates amount securely
-      const response = await apiRequest("POST", "/api/create-payment-intent", {
-        customerInfo: formData, // Only send customer info, server gets cart from storage
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setClientSecret(data.clientSecret);
-      setServerCalculatedAmount(data.amount); // Use server-calculated amount
-      setValidatedItems(data.items || []); // Use server-validated items
-    },
-    onError: (error) => {
-      toast({
-        title: "Payment Setup Failed",
-        description: "Unable to setup payment. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleFormSubmit = async (data: CheckoutFormData) => {
-    if (!clientSecret) {
-      createPaymentIntentMutation.mutate(data);
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (!stripe || !elements) {
       return;
@@ -113,29 +69,7 @@ function CheckoutForm({ cartItems }: { cartItems: CartItem[] }) {
           variant: "destructive",
         });
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        // Create order and clear cart using server-validated data
-        await apiRequest("POST", "/api/orders", {
-          customerName: data.customerName,
-          customerEmail: data.customerEmail,
-          totalAmount: serverCalculatedAmount.toString(), // Use server amount
-          items: validatedItems.map(item => ({ // Use server-validated items
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.unitPrice, // Use server-validated price
-          })),
-          status: "completed",
-          shippingAddress: data.shippingAddress,
-        });
-
-        await apiRequest("DELETE", "/api/cart");
-        queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-
-        toast({
-          title: "Payment Successful!",
-          description: "Your order has been placed successfully.",
-        });
-
-        setLocation("/checkout/success");
+        onSuccess();
       }
     } catch (error) {
       toast({
@@ -149,144 +83,256 @@ function CheckoutForm({ cartItems }: { cartItems: CartItem[] }) {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Shipping Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="customerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-customer-name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="customerEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} data-testid="input-customer-email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="shippingAddress.street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} data-testid="input-street" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="shippingAddress.city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-city" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="shippingAddress.state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-state" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="shippingAddress.zipCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ZIP Code</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-zip" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="shippingAddress.country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-country" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement />
+      <Button 
+        type="submit" 
+        className="w-full py-3"
+        disabled={isProcessing || !stripe || !elements}
+        data-testid="button-submit-payment"
+      >
+        {isProcessing ? "Processing Payment..." : "Complete Payment"}
+      </Button>
+    </form>
+  );
+}
 
-        {clientSecret && (
+function CheckoutForm({ cartItems, serverAmount }: { cartItems: CartItem[], serverAmount: number }) {
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [step, setStep] = useState<'info' | 'payment'>('info');
+  const [customerData, setCustomerData] = useState<CheckoutFormData | null>(null);
+  const [clientSecret, setClientSecret] = useState<string>("");
+
+  const form = useForm<CheckoutFormData>({
+    resolver: zodResolver(checkoutFormSchema),
+    defaultValues: {
+      customerName: "",
+      customerEmail: "",
+      shippingAddress: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "United States",
+      },
+    },
+  });
+
+  const createPaymentIntentMutation = useMutation({
+    mutationFn: async (formData: CheckoutFormData) => {
+      const response = await apiRequest("POST", "/api/create-payment-intent", {
+        customerInfo: formData,
+        items: cartItems,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setClientSecret(data.clientSecret);
+      setStep('payment');
+    },
+    onError: () => {
+      toast({
+        title: "Payment Setup Failed",
+        description: "Unable to setup payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const finalizeOrderMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/orders", {
+        customerName: customerData!.customerName,
+        customerEmail: customerData!.customerEmail,
+        totalAmount: serverAmount.toString(),
+        items: cartItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: parseFloat(item.price),
+        })),
+        status: "completed",
+        shippingAddress: customerData!.shippingAddress,
+      });
+
+      await apiRequest("DELETE", "/api/cart");
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order Completed!",
+        description: "Your order has been placed successfully.",
+      });
+      setLocation("/checkout/success");
+    },
+    onError: () => {
+      toast({
+        title: "Order Error",
+        description: "Payment succeeded but there was an issue creating your order. Please contact support.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleInfoSubmit = (data: CheckoutFormData) => {
+    setCustomerData(data);
+    createPaymentIntentMutation.mutate(data);
+  };
+
+  const handlePaymentSuccess = () => {
+    finalizeOrderMutation.mutate();
+  };
+
+  if (step === 'info') {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleInfoSubmit)} className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Payment Information
+                <Package className="h-5 w-5" />
+                Shipping Information
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <PaymentElement />
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-customer-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="customerEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} data-testid="input-customer-email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="shippingAddress.street"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-street" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <FormField
+                  control={form.control}
+                  name="shippingAddress.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-city" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="shippingAddress.state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-state" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="shippingAddress.zipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-zip" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="shippingAddress.country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-country" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
-        )}
 
-        <Button 
-          type="submit" 
-          className="w-full py-3"
-          disabled={isProcessing || createPaymentIntentMutation.isPending}
-          data-testid="button-submit-payment"
-        >
-          {isProcessing ? "Processing Payment..." : 
-           clientSecret ? `Pay $${serverCalculatedAmount.toFixed(2)}` : 
-           createPaymentIntentMutation.isPending ? "Setting up payment..." : 
-           `Continue to Payment - $${estimatedTotal.toFixed(2)}`}
-        </Button>
-      </form>
-    </Form>
-  );
+          <Button 
+            type="submit" 
+            className="w-full py-3"
+            disabled={createPaymentIntentMutation.isPending}
+            data-testid="button-continue-to-payment"
+          >
+            {createPaymentIntentMutation.isPending ? "Setting up payment..." : `Continue to Payment - $${serverAmount.toFixed(2)}`}
+          </Button>
+        </form>
+      </Form>
+    );
+  }
+
+  if (step === 'payment' && clientSecret && customerData) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Payment Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <PaymentForm 
+                clientSecret={clientSecret} 
+                customerData={customerData}
+                onSuccess={handlePaymentSuccess}
+              />
+            </Elements>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 export default function CheckoutPage() {
@@ -461,9 +507,7 @@ export default function CheckoutPage() {
             {/* Checkout Form */}
             <div>
               {stripePublicKey ? (
-                <Elements stripe={stripePromise}>
-                  <CheckoutForm cartItems={cartItems} />
-                </Elements>
+                <CheckoutForm cartItems={cartItems} serverAmount={totalAmount} />
               ) : (
                 <Card>
                   <CardContent className="p-6 text-center">
