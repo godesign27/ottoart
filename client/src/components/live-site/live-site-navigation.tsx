@@ -1,8 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Search, User } from "lucide-react";
-import type { PageSettings } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
+import { Search, User, ShoppingCart } from "lucide-react";
+import type { PageSettings, CartItem } from "@shared/schema";
 
 interface LiveSiteNavigationProps {
   viewMode?: 'admin' | 'live';
@@ -17,6 +18,13 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
     queryKey: ['/api/page-settings'],
     queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
   });
+
+  // Fetch cart items for badge count
+  const { data: cartItems = [] } = useQuery<CartItem[]>({
+    queryKey: ['/api/cart']
+  });
+
+  const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const getPageEnabled = (page: string) => {
     const setting = pageSettings.find(p => p.page === page);
@@ -77,6 +85,22 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
         >
           <Search className="h-5 w-5" />
         </Button>
+
+        <Link href="/checkout">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-muted-foreground hover:text-foreground relative" 
+            data-testid="button-cart"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-0">
+                {cartItemCount}
+              </Badge>
+            )}
+          </Button>
+        </Link>
 
         <Button data-testid="contact-button">
           Contact

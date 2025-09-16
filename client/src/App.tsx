@@ -30,6 +30,8 @@ import GalleryPage from "@/pages/live-site/gallery";
 import EventsPage from "@/pages/live-site/events";
 import CVPage from "@/pages/live-site/cv";
 import ProductDetailPage from "@/pages/live-site/product-detail";
+import CheckoutPage from "@/pages/live-site/checkout";
+import CheckoutSuccessPage from "@/pages/live-site/checkout-success";
 
 function Router() {
   return (
@@ -44,6 +46,8 @@ function Router() {
       <Route path="/events" component={EventsPage} />
       <Route path="/cv" component={CVPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
+      <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/home" component={AdminHome} />

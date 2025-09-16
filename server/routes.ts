@@ -1,8 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+
+// Initialize Stripe only if the secret key is available
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  });
+} else {
+  console.warn('STRIPE_SECRET_KEY not configured - payment features will be disabled');
+}
 
 // Type declarations for global rate limiting
 declare global {
@@ -330,12 +341,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/cart/:id", async (req, res) => {
+    try {
+      const cartItemId = req.params.id;
+      const updateData = insertCartItemSchema.partial().parse(req.body);
+      const updatedItem = await storage.updateCartItem(cartItemId, updateData);
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      res.json(updatedItem);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid cart item data" });
+    }
+  });
+
   app.delete("/api/cart", async (req, res) => {
     try {
       const success = await storage.clearCart();
       res.json({ message: "Cart cleared successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Stripe Payment Routes
+  app.post("/api/create-payment-intent", async (req, res) => {
+    try {
+      // Check if Stripe is configured
+      if (!stripe) {
+        return res.status(503).json({ 
+          message: "Payment processing is not configured. Please contact support." 
+        });
+      }
+      
+      const { customerInfo } = req.body;
+      
+      // SECURITY: Get cart items from server storage, not client
+      const cartItems = await storage.getCartItems();
+      
+      if (!cartItems || cartItems.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+
+      // SECURITY: Validate each cart item and recalculate total from actual product prices
+      let serverCalculatedTotal = 0;
+      const validatedItems = [];
+      
+      for (const cartItem of cartItems) {
+        const product = await storage.getProduct(cartItem.productId);
+        if (!product) {
+          return res.status(400).json({ message: `Product ${cartItem.productId} not found` });
+        }
+        if (product.status !== 'active') {
+          return res.status(400).json({ message: `Product ${product.name} is not available` });
+        }
+        
+        // Use actual product price, not client-supplied price
+        const actualPrice = parseFloat(product.price);
+        serverCalculatedTotal += actualPrice * cartItem.quantity;
+        
+        validatedItems.push({
+          productId: cartItem.productId,
+          productName: product.name,
+          quantity: cartItem.quantity,
+          unitPrice: actualPrice,
+          totalPrice: actualPrice * cartItem.quantity
+        });
+      }
+      
+      // Convert to cents and ensure it's an integer
+      const amountInCents = Math.round(serverCalculatedTotal * 100);
+      
+      if (amountInCents <= 0) {
+        return res.status(400).json({ message: "Invalid total amount" });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: "usd",
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        metadata: {
+          customerName: customerInfo?.customerName || "",
+          customerEmail: customerInfo?.customerEmail || "",
+          itemCount: validatedItems.length.toString(),
+          serverCalculatedTotal: serverCalculatedTotal.toFixed(2),
+        },
+      });
+
+      res.json({ 
+        clientSecret: paymentIntent.client_secret,
+        amount: serverCalculatedTotal,
+        items: validatedItems
+      });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Error creating payment intent: " + error.message });
     }
   });
 
