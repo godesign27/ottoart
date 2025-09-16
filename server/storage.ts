@@ -19,6 +19,8 @@ import {
   type InsertBioSettings,
   type ContactSettings,
   type InsertContactSettings,
+  type SocialSettings,
+  type InsertSocialSettings,
   type GalleryItem,
   type InsertGalleryItem,
   type CartItem,
@@ -33,6 +35,7 @@ import {
   pageSettings,
   bioSettings,
   contactSettings,
+  socialSettings,
   galleryItems,
   cartItems
 } from "@shared/schema";
@@ -100,6 +103,10 @@ export interface IStorage {
   // Contact Settings
   getContactSettings(): Promise<ContactSettings | undefined>;
   setContactSettings(settings: InsertContactSettings): Promise<ContactSettings>;
+
+  // Social Settings
+  getSocialSettings(): Promise<SocialSettings | undefined>;
+  setSocialSettings(settings: InsertSocialSettings): Promise<SocialSettings>;
 
   // Gallery Items
   getGalleryItems(): Promise<GalleryItem[]>;
@@ -479,6 +486,35 @@ export class DatabaseStorage implements IStorage {
       contactInfo: insertSettings.contactInfo as any,
       studioHours: insertSettings.studioHours as any,
       commissionsText: insertSettings.commissionsText
+    }).returning();
+    return settings;
+  }
+
+  // Social Settings - Singleton pattern
+  async getSocialSettings(): Promise<SocialSettings | undefined> {
+    const [settings] = await db.select().from(socialSettings).orderBy(desc(socialSettings.updatedAt)).limit(1);
+    return settings || undefined;
+  }
+
+  async setSocialSettings(insertSettings: InsertSocialSettings): Promise<SocialSettings> {
+    // Always delete existing records and insert new one to maintain singleton
+    await db.delete(socialSettings);
+    
+    const [settings] = await db.insert(socialSettings).values({
+      instagram: insertSettings.instagram,
+      twitter: insertSettings.twitter,
+      facebook: insertSettings.facebook,
+      linkedin: insertSettings.linkedin,
+      youtube: insertSettings.youtube,
+      tiktok: insertSettings.tiktok,
+      pinterest: insertSettings.pinterest,
+      showInHeader: insertSettings.showInHeader,
+      showInFooter: insertSettings.showInFooter,
+      openInNewTab: insertSettings.openInNewTab,
+      socialSharing: insertSettings.socialSharing,
+      metaDescription: insertSettings.metaDescription,
+      ogImage: insertSettings.ogImage,
+      twitterCard: insertSettings.twitterCard
     }).returning();
     return settings;
   }

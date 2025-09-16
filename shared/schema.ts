@@ -159,6 +159,25 @@ export const contactSettings = pgTable("contact_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const socialSettings = pgTable("social_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  instagram: text("instagram"),
+  twitter: text("twitter"),
+  facebook: text("facebook"),
+  linkedin: text("linkedin"),
+  youtube: text("youtube"),
+  tiktok: text("tiktok"),
+  pinterest: text("pinterest"),
+  showInHeader: boolean("show_in_header").default(true),
+  showInFooter: boolean("show_in_footer").default(true),
+  openInNewTab: boolean("open_in_new_tab").default(true),
+  socialSharing: boolean("social_sharing").default(true),
+  metaDescription: text("meta_description"),
+  ogImage: text("og_image"),
+  twitterCard: text("twitter_card").default("summary_large_image"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const galleryItems = pgTable("gallery_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
@@ -231,6 +250,11 @@ export const insertContactSettingsSchema = createInsertSchema(contactSettings).o
   updatedAt: true,
 });
 
+export const insertSocialSettingsSchema = createInsertSchema(socialSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export const insertGalleryItemSchema = createInsertSchema(galleryItems).omit({
   id: true,
   createdAt: true,
@@ -270,6 +294,9 @@ export type InsertBioSettings = z.infer<typeof insertBioSettingsSchema>;
 
 export type ContactSettings = typeof contactSettings.$inferSelect;
 export type InsertContactSettings = z.infer<typeof insertContactSettingsSchema>;
+
+export type SocialSettings = typeof socialSettings.$inferSelect;
+export type InsertSocialSettings = z.infer<typeof insertSocialSettingsSchema>;
 
 export type GalleryItem = typeof galleryItems.$inferSelect;
 export type InsertGalleryItem = z.infer<typeof insertGalleryItemSchema>;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,13 +7,24 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Save, Share2, Eye, EyeOff } from "lucide-react";
 import { FaInstagram, FaTwitter, FaFacebook, FaLinkedin, FaTiktok, FaYoutube, FaPinterest } from "react-icons/fa";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { SocialSettings, InsertSocialSettings } from "@shared/schema";
 
 export function SocialSettings() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Load social settings from API
+  const { data: socialSettings, isLoading } = useQuery<SocialSettings>({
+    queryKey: ['/api/social-settings']
+  });
+
   const [formData, setFormData] = useState({
-    instagram: "https://instagram.com/ottoart",
-    twitter: "https://twitter.com/ottoart", 
-    facebook: "https://facebook.com/ottoart",
-    linkedin: "https://linkedin.com/in/ottoart",
+    instagram: "",
+    twitter: "", 
+    facebook: "",
+    linkedin: "",
     youtube: "",
     tiktok: "",
     pinterest: "",
@@ -20,10 +32,32 @@ export function SocialSettings() {
     showInFooter: true,
     openInNewTab: true,
     socialSharing: true,
-    metaDescription: "Contemporary artist specializing in abstract paintings and mixed media works.",
+    metaDescription: "",
     ogImage: "",
     twitterCard: "summary_large_image"
   });
+
+  // Update form data when social settings load
+  useEffect(() => {
+    if (socialSettings) {
+      setFormData({
+        instagram: socialSettings.instagram || "",
+        twitter: socialSettings.twitter || "",
+        facebook: socialSettings.facebook || "",
+        linkedin: socialSettings.linkedin || "",
+        youtube: socialSettings.youtube || "",
+        tiktok: socialSettings.tiktok || "",
+        pinterest: socialSettings.pinterest || "",
+        showInHeader: socialSettings.showInHeader ?? true,
+        showInFooter: socialSettings.showInFooter ?? true,
+        openInNewTab: socialSettings.openInNewTab ?? true,
+        socialSharing: socialSettings.socialSharing ?? true,
+        metaDescription: socialSettings.metaDescription || "",
+        ogImage: socialSettings.ogImage || "",
+        twitterCard: socialSettings.twitterCard || "summary_large_image"
+      });
+    }
+  }, [socialSettings]);
 
   const [visiblePreviews, setVisiblePreviews] = useState<{[key: string]: boolean}>({});
 
@@ -35,9 +69,28 @@ export function SocialSettings() {
     setVisiblePreviews(prev => ({...prev, [platform]: !prev[platform]}));
   };
 
+  const saveSocialSettings = useMutation({
+    mutationFn: async (data: InsertSocialSettings) => {
+      return await apiRequest('PUT', '/api/social-settings', data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Settings saved!",
+        description: "Your social media settings have been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/social-settings'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
-    console.log('Saving social settings:', formData);
-    // Implementation for saving settings
+    saveSocialSettings.mutate(formData);
   };
 
   const socialPlatforms = [
@@ -202,9 +255,14 @@ export function SocialSettings() {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} className="flex items-center gap-2">
+        <Button 
+          onClick={handleSave} 
+          className="flex items-center gap-2"
+          disabled={saveSocialSettings.isPending}
+          data-testid="button-save-social-settings"
+        >
           <Save className="h-4 w-4" />
-          Save Changes
+          {saveSocialSettings.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

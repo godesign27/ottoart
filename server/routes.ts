@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Initialize Stripe only if the secret key is available
@@ -425,6 +425,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Contact settings validation error:", error);
       res.status(400).json({ message: "Invalid contact settings data" });
+    }
+  });
+
+  // Social Settings
+  app.get("/api/social-settings", async (req, res) => {
+    try {
+      const socialSettings = await storage.getSocialSettings();
+      res.json(socialSettings || {
+        instagram: "https://instagram.com/ottoart",
+        twitter: "https://twitter.com/ottoart", 
+        facebook: "https://facebook.com/ottoart",
+        linkedin: "https://linkedin.com/in/ottoart",
+        youtube: "",
+        tiktok: "",
+        pinterest: "",
+        showInHeader: true,
+        showInFooter: true,
+        openInNewTab: true,
+        socialSharing: true,
+        metaDescription: "Contemporary artist specializing in abstract paintings and mixed media works.",
+        ogImage: "",
+        twitterCard: "summary_large_image"
+      });
+    } catch (error) {
+      console.error("Social settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch social settings" });
+    }
+  });
+
+  app.put("/api/social-settings", async (req, res) => {
+    try {
+      const validatedData = insertSocialSettingsSchema.parse(req.body);
+      const socialSettings = await storage.setSocialSettings(validatedData);
+      res.json(socialSettings);
+    } catch (error) {
+      console.error("Social settings validation error:", error);
+      res.status(400).json({ message: "Invalid social settings data" });
     }
   });
 
