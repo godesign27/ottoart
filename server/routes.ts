@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Initialize Stripe only if the secret key is available
@@ -311,6 +311,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Bio settings validation error:", error);
       res.status(400).json({ message: "Invalid bio settings data" });
+    }
+  });
+
+  // Contact Settings
+  app.get("/api/contact-settings", async (req, res) => {
+    try {
+      const contactSettings = await storage.getContactSettings();
+      res.json(contactSettings || {
+        getInTouchText: "I'd love to hear from you! Whether you're interested in commissioning a piece, purchasing artwork, or collaborating on a project, please don't hesitate to reach out.",
+        contactInfo: {
+          email: "hello@ottoart.com",
+          phone: "(555) 123-4567",
+          address: "123 Artist Lane, Chicago, IL 60601"
+        },
+        studioHours: {
+          monday: "9:00 AM - 6:00 PM",
+          tuesday: "9:00 AM - 6:00 PM",
+          wednesday: "9:00 AM - 6:00 PM",
+          thursday: "9:00 AM - 6:00 PM",
+          friday: "9:00 AM - 6:00 PM",
+          saturday: "10:00 AM - 4:00 PM",
+          sunday: "By appointment only"
+        },
+        commissionsText: "I accept commissioned work and am always excited to discuss custom pieces. Please include details about your vision, preferred size, timeline, and budget. I typically respond to inquiries within 24-48 hours."
+      });
+    } catch (error) {
+      console.error("Contact settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch contact settings" });
+    }
+  });
+
+  app.put("/api/contact-settings", async (req, res) => {
+    try {
+      const validatedData = insertContactSettingsSchema.parse(req.body);
+      const contactSettings = await storage.setContactSettings(validatedData);
+      res.json(contactSettings);
+    } catch (error) {
+      console.error("Contact settings validation error:", error);
+      res.status(400).json({ message: "Invalid contact settings data" });
     }
   });
 

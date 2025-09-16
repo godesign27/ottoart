@@ -17,6 +17,8 @@ import {
   type InsertPageSettings,
   type BioSettings,
   type InsertBioSettings,
+  type ContactSettings,
+  type InsertContactSettings,
   type CartItem,
   type InsertCartItem,
   users,
@@ -28,6 +30,7 @@ import {
   siteSettings,
   pageSettings,
   bioSettings,
+  contactSettings,
   cartItems
 } from "@shared/schema";
 import { db } from "./db";
@@ -90,6 +93,10 @@ export interface IStorage {
   // Bio Settings
   getBioSettings(): Promise<BioSettings | undefined>;
   setBioSettings(settings: InsertBioSettings): Promise<BioSettings>;
+
+  // Contact Settings
+  getContactSettings(): Promise<ContactSettings | undefined>;
+  setContactSettings(settings: InsertContactSettings): Promise<ContactSettings>;
 
   // Cart
   getCartItems(): Promise<CartItem[]>;
@@ -438,8 +445,29 @@ export class DatabaseStorage implements IStorage {
     await db.delete(bioSettings);
     
     const [settings] = await db.insert(bioSettings).values({
+      bioContent: insertSettings.bioContent,
+      bioImage: insertSettings.bioImage,
       heroData: insertSettings.heroData as any,
       ctaData: insertSettings.ctaData as any
+    }).returning();
+    return settings;
+  }
+
+  // Contact Settings - Singleton pattern
+  async getContactSettings(): Promise<ContactSettings | undefined> {
+    const [settings] = await db.select().from(contactSettings).orderBy(desc(contactSettings.updatedAt)).limit(1);
+    return settings || undefined;
+  }
+
+  async setContactSettings(insertSettings: InsertContactSettings): Promise<ContactSettings> {
+    // Always delete existing records and insert new one to maintain singleton
+    await db.delete(contactSettings);
+    
+    const [settings] = await db.insert(contactSettings).values({
+      getInTouchText: insertSettings.getInTouchText,
+      contactInfo: insertSettings.contactInfo as any,
+      studioHours: insertSettings.studioHours as any,
+      commissionsText: insertSettings.commissionsText
     }).returning();
     return settings;
   }

@@ -37,8 +37,7 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
     { href: "/shop-all", label: "Shop All" },
     { href: "/originals", label: "Originals" },
     { href: "/prints", label: "Prints" },
-    { href: "/accessories", label: "Accessories" },
-    { href: "/contact", label: "Contact" }
+    { href: "/accessories", label: "Accessories" }
   ];
 
   // Page-based navigation items (filtered by page settings)
@@ -49,8 +48,11 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
     { href: "/cv", label: "CV", page: "cv" }
   ].filter(item => getPageEnabled(item.page));
 
+  // Contact is always last
+  const contactNavItem = { href: "/contact", label: "Contact" };
+
   // Combine all navigation items
-  const navItems = [...staticNavItems, ...pageNavItems];
+  const navItems = [...staticNavItems, ...pageNavItems, contactNavItem];
 
   return (
     <nav className="h-16 border-b border-border bg-background px-6 flex items-center justify-between shadow-sm">

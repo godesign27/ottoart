@@ -138,6 +138,27 @@ export const bioSettings = pgTable("bio_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const contactSettings = pgTable("contact_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  getInTouchText: text("get_in_touch_text"),
+  contactInfo: jsonb("contact_info").$type<{
+    email: string;
+    phone: string;
+    address: string;
+  }>(),
+  studioHours: jsonb("studio_hours").$type<{
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    sunday: string;
+  }>(),
+  commissionsText: text("commissions_text"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -191,6 +212,11 @@ export const insertBioSettingsSchema = createInsertSchema(bioSettings).omit({
   updatedAt: true,
 });
 
+export const insertContactSettingsSchema = createInsertSchema(contactSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -221,3 +247,6 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
 export type BioSettings = typeof bioSettings.$inferSelect;
 export type InsertBioSettings = z.infer<typeof insertBioSettingsSchema>;
+
+export type ContactSettings = typeof contactSettings.$inferSelect;
+export type InsertContactSettings = z.infer<typeof insertContactSettingsSchema>;

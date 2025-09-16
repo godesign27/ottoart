@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Send, Mail, Phone, MapPin } from "lucide-react";
-import type { InsertMessage } from "@shared/schema";
+import type { InsertMessage, ContactSettings } from "@shared/schema";
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
@@ -20,6 +20,31 @@ export function ContactSection() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Load contact settings from API
+  const { data: contactSettings } = useQuery<ContactSettings>({
+    queryKey: ['/api/contact-settings']
+  });
+
+  // Default values if no data
+  const settings = contactSettings || {
+    getInTouchText: "I'd love to hear from you! Whether you're interested in commissioning a piece, purchasing artwork, or collaborating on a project, please don't hesitate to reach out.",
+    contactInfo: {
+      email: "hello@ottoart.com",
+      phone: "(555) 123-4567",
+      address: "123 Artist Lane, Chicago, IL 60601"
+    },
+    studioHours: {
+      monday: "9:00 AM - 6:00 PM",
+      tuesday: "9:00 AM - 6:00 PM",
+      wednesday: "9:00 AM - 6:00 PM",
+      thursday: "9:00 AM - 6:00 PM",
+      friday: "9:00 AM - 6:00 PM",
+      saturday: "10:00 AM - 4:00 PM",
+      sunday: "By appointment only"
+    },
+    commissionsText: "I accept commissioned work and am always excited to discuss custom pieces. Please include details about your vision, preferred size, timeline, and budget. I typically respond to inquiries within 24-48 hours."
+  };
 
   const submitMessage = useMutation({
     mutationFn: async (data: InsertMessage) => {
@@ -77,9 +102,7 @@ export function ContactSection() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-4">Get In Touch</h2>
               <p className="text-white/80 leading-relaxed">
-                I'd love to hear from you! Whether you're interested in commissioning a 
-                piece, purchasing artwork, or collaborating on a project, please don't 
-                hesitate to reach out.
+                {settings.getInTouchText}
               </p>
             </div>
 
@@ -91,21 +114,21 @@ export function ContactSection() {
                   <Mail className="h-5 w-5 text-white mt-0.5" />
                   <div>
                     <span className="text-white font-medium">Email: </span>
-                    <span className="text-white/80">hello@ottoart.com</span>
+                    <span className="text-white/80">{settings.contactInfo?.email || 'hello@ottoart.com'}</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-white mt-0.5" />
                   <div>
                     <span className="text-white font-medium">Phone: </span>
-                    <span className="text-white/80">(555) 123-4567</span>
+                    <span className="text-white/80">{settings.contactInfo?.phone || '(555) 123-4567'}</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-white mt-0.5" />
                   <div>
                     <span className="text-white font-medium">Studio: </span>
-                    <span className="text-white/80">123 Artist Lane, Chicago, IL 60601</span>
+                    <span className="text-white/80">{settings.contactInfo?.address || '123 Artist Lane, Chicago, IL 60601'}</span>
                   </div>
                 </div>
               </div>
@@ -115,18 +138,12 @@ export function ContactSection() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-4">Studio Hours</h2>
               <div className="space-y-2">
-                <div>
-                  <span className="text-white font-medium">Monday - Friday: </span>
-                  <span className="text-white/80">9:00 AM - 6:00 PM</span>
-                </div>
-                <div>
-                  <span className="text-white font-medium">Saturday: </span>
-                  <span className="text-white/80">10:00 AM - 4:00 PM</span>
-                </div>
-                <div>
-                  <span className="text-white font-medium">Sunday: </span>
-                  <span className="text-white/80">By appointment only</span>
-                </div>
+                {Object.entries(settings.studioHours || {}).map(([day, hours]) => (
+                  <div key={day}>
+                    <span className="text-white font-medium capitalize">{day}: </span>
+                    <span className="text-white/80">{hours}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -134,16 +151,8 @@ export function ContactSection() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-4">Commissions & Inquiries</h2>
               <div className="space-y-3">
-                <p className="text-white/80 leading-relaxed">
-                  I accept commissioned work and am always excited to discuss custom 
-                  pieces. Please include details about:
-                </p>
-                <ul className="list-disc list-inside text-white/80 space-y-1 ml-4">
-                  <li>Timeline for completion</li>
-                  <li>Budget considerations</li>
-                </ul>
-                <p className="text-white/80">
-                  I typically respond to inquiries within 24-48 hours.
+                <p className="text-white/80 leading-relaxed whitespace-pre-line">
+                  {settings.commissionsText}
                 </p>
               </div>
             </div>
@@ -152,15 +161,15 @@ export function ContactSection() {
             <div className="flex items-center space-x-4 pt-4">
               <div className="flex items-center gap-2 text-white/80">
                 <Mail className="h-5 w-5" />
-                <span className="text-sm">hello@ottoart.com</span>
+                <span className="text-sm">{settings.contactInfo?.email || 'hello@ottoart.com'}</span>
               </div>
               <div className="flex items-center gap-2 text-white/80">
                 <Phone className="h-5 w-5" />
-                <span className="text-sm">(555) 123-4567</span>
+                <span className="text-sm">{settings.contactInfo?.phone || '(555) 123-4567'}</span>
               </div>
               <div className="flex items-center gap-2 text-white/80">
                 <MapPin className="h-5 w-5" />
-                <span className="text-sm">123 Artist Lane, Chicago, IL 60601</span>
+                <span className="text-sm">{settings.contactInfo?.address || '123 Artist Lane, Chicago, IL 60601'}</span>
               </div>
             </div>
           </div>
