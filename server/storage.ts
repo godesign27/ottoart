@@ -66,6 +66,7 @@ export interface IStorage {
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
 
   // Messages
   getMessages(): Promise<Message[]>;
@@ -331,6 +332,17 @@ export class DatabaseStorage implements IStorage {
     
     const [order] = await db.update(orders)
       .set(cleanUpdateData)
+      .where(eq(orders.id, id))
+      .returning();
+    return order || undefined;
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const [order] = await db.update(orders)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
       .where(eq(orders.id, id))
       .returning();
     return order || undefined;
