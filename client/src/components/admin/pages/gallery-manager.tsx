@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ImageUploader } from "@/components/ui/image-uploader";
 import { Plus, Edit, Trash2, Upload, EyeOff, Save, Eye } from "lucide-react";
 
 interface GalleryItem {
@@ -26,6 +27,7 @@ export function GalleryManager() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>('');
 
   // Fetch page settings
   const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
@@ -87,7 +89,12 @@ export function GalleryManager() {
 
   const handleEdit = (item: GalleryItem) => {
     setSelectedItem(item);
+    setImageUrl(item.imageUrl);
     setIsEditing(true);
+  };
+
+  const handleImageUpload = (uploadedImageUrl: string) => {
+    setImageUrl(uploadedImageUrl);
   };
 
   const handleDelete = (id: string) => {
@@ -139,6 +146,10 @@ export function GalleryManager() {
               {pageSettings?.enabled ? "Enabled" : "Disabled"}
             </Badge>
           </div>
+          <Button onClick={() => { setIsEditing(true); setSelectedItem(null); setImageUrl(''); }} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Gallery Item
+          </Button>
           <Button onClick={togglePreview} variant="outline" className="flex items-center gap-2">
             {isPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             {isPreview ? 'Edit' : 'Preview'}
@@ -170,10 +181,6 @@ export function GalleryManager() {
         </CardHeader>
       </Card>
 
-      <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2 mb-6">
-        <Plus className="h-4 w-4" />
-        Add Gallery Item
-      </Button>
 
       {isEditing && (
         <Card>
@@ -228,11 +235,28 @@ export function GalleryManager() {
             </div>
             <div className="space-y-2">
               <Label>Image</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Click to upload image or drag and drop</p>
-                <p className="text-sm text-muted-foreground">PNG, JPG up to 10MB</p>
-              </div>
+              <ImageUploader
+                onImageUploaded={handleImageUpload}
+                data-testid="dropzone-gallery-image"
+              >
+                Upload Artwork Image
+              </ImageUploader>
+              <Input
+                placeholder="Or enter image URL"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="mt-2"
+                data-testid="input-gallery-image"
+              />
+              {imageUrl && (
+                <div className="mt-4">
+                  <img 
+                    src={imageUrl} 
+                    alt="Gallery item preview" 
+                    className="w-32 h-32 object-cover rounded-lg border" 
+                  />
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" onClick={() => setIsEditing(false)}>
