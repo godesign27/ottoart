@@ -18,6 +18,8 @@ export function ContactSection() {
     message: ""
   });
 
+  const [messageSent, setMessageSent] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -51,10 +53,7 @@ export function ContactSection() {
       return await apiRequest('POST', '/api/messages', data);
     },
     onSuccess: () => {
-      toast({
-        title: "Message sent!",
-        description: "Thank you for your message. I'll get back to you soon.",
-      });
+      setMessageSent(true);
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     },
@@ -177,9 +176,11 @@ export function ContactSection() {
           {/* Right Column - Contact Form */}
           <div className="lg:pl-8">
             <div className="bg-slate-700/50 rounded-lg p-6 lg:p-8 border border-slate-600">
-              <h2 className="text-2xl font-bold text-white mb-6">Send a Message</h2>
-              
-              <form className="space-y-4" onSubmit={handleSubmit}>
+              {!messageSent ? (
+                <>
+                  <h2 className="text-2xl font-bold text-white mb-6">Send a Message</h2>
+                  
+                  <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
                   <Label htmlFor="name" className="text-white text-sm font-medium mb-2 block">
                     Name <span className="text-red-400">*</span>
@@ -264,9 +265,26 @@ export function ContactSection() {
                   data-testid="contact-submit"
                 >
                   <Send className="h-4 w-4" />
-                  {submitMessage.isPending ? "Sending..." : "Send Message"}
-                </Button>
-              </form>
+                    {submitMessage.isPending ? "Sending..." : "Send Message"}
+                  </Button>
+                </form>
+                </>
+              ) : (
+                <div className="text-center space-y-6">
+                  <div className="text-6xl mb-4">✉️</div>
+                  <h2 className="text-3xl font-bold text-white mb-4">Thank You!</h2>
+                  <p className="text-white/80 text-lg leading-relaxed">
+                    Your message has been sent successfully. I appreciate you reaching out and will get back to you within 24-48 hours.
+                  </p>
+                  <Button 
+                    onClick={() => setMessageSent(false)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 px-8"
+                    data-testid="contact-send-another"
+                  >
+                    Send Another Message
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
