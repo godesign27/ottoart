@@ -26,6 +26,14 @@ export default function BioPage() {
   });
 
   // Bio settings state - initialize from API data
+  const [bioContent, setBioContent] = useState(
+    "Welcome to my artistic world. I'm a passionate artist dedicated to creating meaningful pieces that speak to the soul. My work explores themes of nature, emotion, and human connection through vibrant colors and dynamic compositions."
+  );
+  
+  const [bioImage, setBioImage] = useState(
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400"
+  );
+  
   const [heroData, setHeroData] = useState({
     headline: "Art That Moves You",
     description: "I don't just create pieces—I build experiences that spark curiosity, boldness, and reflection. This is more than art on a wall—it's energy you can feel every time you walk by.",
@@ -43,6 +51,12 @@ export default function BioPage() {
 
   // Update local state when API data loads
   useEffect(() => {
+    if (bioSettings?.bioContent) {
+      setBioContent(bioSettings.bioContent);
+    }
+    if (bioSettings?.bioImage) {
+      setBioImage(bioSettings.bioImage);
+    }
     if (bioSettings?.heroData) {
       setHeroData(bioSettings.heroData);
     }
@@ -63,7 +77,7 @@ export default function BioPage() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async (settings: { heroData: any; ctaData: any }) => {
+    mutationFn: async (settings: { bioContent: string; bioImage: string; heroData: any; ctaData: any }) => {
       return await apiRequest('PUT', '/api/bio-settings', settings);
     },
     onSuccess: () => {
@@ -83,7 +97,7 @@ export default function BioPage() {
   });
 
   const handleSave = () => {
-    saveMutation.mutate({ heroData, ctaData });
+    saveMutation.mutate({ bioContent, bioImage, heroData, ctaData });
   };
 
   return (
@@ -110,6 +124,53 @@ export default function BioPage() {
                 {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
+
+            {/* Bio Content Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Artist Bio</CardTitle>
+                <CardDescription>Share your story and artistic journey</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="bio-content">Bio Content</Label>
+                  <Textarea
+                    id="bio-content"
+                    value={bioContent}
+                    onChange={(e) => setBioContent(e.target.value)}
+                    rows={8}
+                    placeholder="Tell your story... Share your artistic journey, inspiration, and what drives your creative process."
+                    data-testid="textarea-bio-content"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bio-image">Artist Photo</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-2">Drag artist photo here</p>
+                    <p className="text-gray-500 text-sm">or click to upload</p>
+                  </div>
+                  <Input
+                    id="bio-image"
+                    placeholder="Or enter image URL"
+                    value={bioImage}
+                    onChange={(e) => setBioImage(e.target.value)}
+                    className="mt-2"
+                    data-testid="input-bio-image"
+                  />
+                  {bioImage && (
+                    <div className="mt-4">
+                      <img 
+                        src={bioImage} 
+                        alt="Artist preview" 
+                        className="w-32 h-32 object-cover rounded-lg border" 
+                      />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Hero Section */}
             <Card>

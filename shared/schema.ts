@@ -120,6 +120,8 @@ export const cartItems = pgTable("cart_items", {
 
 export const bioSettings = pgTable("bio_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bioContent: text("bio_content"),
+  bioImage: text("bio_image"),
   heroData: jsonb("hero_data").$type<{
     headline: string;
     description: string;

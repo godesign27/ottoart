@@ -2,17 +2,18 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Mail, Clock, Twitter, Instagram } from "lucide-react";
+import { Send, Mail, Phone, MapPin } from "lucide-react";
 import type { InsertMessage } from "@shared/schema";
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     subject: "",
     message: ""
   });
@@ -29,7 +30,7 @@ export function ContactSection() {
         title: "Message sent!",
         description: "Thank you for your message. I'll get back to you soon.",
       });
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     },
     onError: () => {
@@ -62,119 +63,202 @@ export function ContactSection() {
   };
 
   return (
-    <section className="py-20 px-6" data-testid="contact-section">
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-4xl font-bold text-foreground mb-4">Get in Touch</h2>
-        <p className="text-xl text-muted-foreground mb-12">
-          Interested in commissioning a piece or learning more about available works?
-        </p>
+    <section className="min-h-screen bg-slate-800 text-white" data-testid="contact-section">
+      <div className="max-w-7xl mx-auto p-6 lg:p-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          {/* Left Column - Contact Information */}
+          <div className="space-y-8">
+            {/* Page Title */}
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-2">Contact</h1>
+            </div>
+            
+            {/* Get In Touch Section */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">Get In Touch</h2>
+              <p className="text-white/80 leading-relaxed">
+                I'd love to hear from you! Whether you're interested in commissioning a 
+                piece, purchasing artwork, or collaborating on a project, please don't 
+                hesitate to reach out.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Contact Form */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground">Send a Message</CardTitle>
-            </CardHeader>
-            <CardContent>
+            {/* Contact Information */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">Contact Information</h2>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-white mt-0.5" />
+                  <div>
+                    <span className="text-white font-medium">Email: </span>
+                    <span className="text-white/80">hello@ottoart.com</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="h-5 w-5 text-white mt-0.5" />
+                  <div>
+                    <span className="text-white font-medium">Phone: </span>
+                    <span className="text-white/80">(555) 123-4567</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-white mt-0.5" />
+                  <div>
+                    <span className="text-white font-medium">Studio: </span>
+                    <span className="text-white/80">123 Artist Lane, Chicago, IL 60601</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Studio Hours */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">Studio Hours</h2>
+              <div className="space-y-2">
+                <div>
+                  <span className="text-white font-medium">Monday - Friday: </span>
+                  <span className="text-white/80">9:00 AM - 6:00 PM</span>
+                </div>
+                <div>
+                  <span className="text-white font-medium">Saturday: </span>
+                  <span className="text-white/80">10:00 AM - 4:00 PM</span>
+                </div>
+                <div>
+                  <span className="text-white font-medium">Sunday: </span>
+                  <span className="text-white/80">By appointment only</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Commissions & Inquiries */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">Commissions & Inquiries</h2>
+              <div className="space-y-3">
+                <p className="text-white/80 leading-relaxed">
+                  I accept commissioned work and am always excited to discuss custom 
+                  pieces. Please include details about:
+                </p>
+                <ul className="list-disc list-inside text-white/80 space-y-1 ml-4">
+                  <li>Timeline for completion</li>
+                  <li>Budget considerations</li>
+                </ul>
+                <p className="text-white/80">
+                  I typically respond to inquiries within 24-48 hours.
+                </p>
+              </div>
+            </div>
+
+            {/* Contact Icons at Bottom */}
+            <div className="flex items-center space-x-4 pt-4">
+              <div className="flex items-center gap-2 text-white/80">
+                <Mail className="h-5 w-5" />
+                <span className="text-sm">hello@ottoart.com</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80">
+                <Phone className="h-5 w-5" />
+                <span className="text-sm">(555) 123-4567</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80">
+                <MapPin className="h-5 w-5" />
+                <span className="text-sm">123 Artist Lane, Chicago, IL 60601</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Contact Form */}
+          <div className="lg:pl-8">
+            <div className="bg-slate-700/50 rounded-lg p-6 lg:p-8 border border-slate-600">
+              <h2 className="text-2xl font-bold text-white mb-6">Send a Message</h2>
+              
               <form className="space-y-4" onSubmit={handleSubmit}>
-                <Input
-                  type="text"
-                  name="name"
-                  placeholder="Your Name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  data-testid="contact-name"
-                />
-                <Input
-                  type="email"
-                  name="email"
-                  placeholder="Your Email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  data-testid="contact-email"
-                />
-                <Input
-                  type="text"
-                  name="subject"
-                  placeholder="Subject (optional)"
-                  value={formData.subject}
-                  onChange={handleInputChange}
-                  data-testid="contact-subject"
-                />
-                <Textarea
-                  rows={4}
-                  name="message"
-                  placeholder="Your Message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  data-testid="contact-message"
-                />
+                <div>
+                  <Label htmlFor="name" className="text-white text-sm font-medium mb-2 block">
+                    Name <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="bg-white text-black border-0 h-12"
+                    data-testid="contact-name"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="email" className="text-white text-sm font-medium mb-2 block">
+                    Email <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="bg-white text-black border-0 h-12"
+                    data-testid="contact-email"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="phone" className="text-white text-sm font-medium mb-2 block">
+                    Phone
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="bg-white text-black border-0 h-12"
+                    data-testid="contact-phone"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="subject" className="text-white text-sm font-medium mb-2 block">
+                    Subject
+                  </Label>
+                  <Input
+                    id="subject"
+                    type="text"
+                    name="subject"
+                    placeholder="Commission inquiry, purchase question, etc."
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    className="bg-white text-black border-0 h-12 placeholder:text-gray-500"
+                    data-testid="contact-subject"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="message" className="text-white text-sm font-medium mb-2 block">
+                    Message <span className="text-red-400">*</span>
+                  </Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    rows={6}
+                    placeholder="Tell me about your project, questions, or how I can help you..."
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    className="bg-white text-black border-0 placeholder:text-gray-500 resize-none"
+                    data-testid="contact-message"
+                  />
+                </div>
+                
                 <Button 
                   type="submit" 
-                  className="w-full font-medium"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 flex items-center justify-center gap-2"
                   disabled={submitMessage.isPending}
                   data-testid="contact-submit"
                 >
+                  <Send className="h-4 w-4" />
                   {submitMessage.isPending ? "Sending..." : "Send Message"}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <div className="space-y-6">
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-foreground">Studio Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-3" data-testid="contact-location">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="text-foreground">Chicago, IL</span>
-                </div>
-                <div className="flex items-center space-x-3" data-testid="contact-email-info">
-                  <Mail className="h-5 w-5 text-primary" />
-                  <span className="text-foreground">hello@ottoart.com</span>
-                </div>
-                <div className="flex items-center space-x-3" data-testid="contact-hours">
-                  <Clock className="h-5 w-5 text-primary" />
-                  <span className="text-foreground">By appointment only</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-foreground">Follow the Journey</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex space-x-4">
-                  <Button 
-                    size="icon" 
-                    className="rounded-full"
-                    data-testid="social-twitter"
-                  >
-                    <Twitter className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    size="icon" 
-                    className="rounded-full"
-                    data-testid="social-instagram"
-                  >
-                    <Instagram className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    size="icon" 
-                    className="rounded-full"
-                    data-testid="social-pinterest"
-                  >
-                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.097.118.111.221.082.343-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.751-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z"/>
-                    </svg>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </div>
       </div>

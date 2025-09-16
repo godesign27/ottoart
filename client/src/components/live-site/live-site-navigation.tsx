@@ -37,7 +37,8 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
     { href: "/shop-all", label: "Shop All" },
     { href: "/originals", label: "Originals" },
     { href: "/prints", label: "Prints" },
-    { href: "/accessories", label: "Accessories" }
+    { href: "/accessories", label: "Accessories" },
+    { href: "/contact", label: "Contact" }
   ];
 
   // Page-based navigation items (filtered by page settings)
@@ -93,9 +94,6 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
           </Button>
         </Link>
 
-        <Button data-testid="contact-button">
-          Contact
-        </Button>
 
         {onViewModeChange && (
           <div className="flex bg-muted rounded-lg p-1">
