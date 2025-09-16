@@ -9,6 +9,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
 import AdminCustomers from "@/pages/admin/customers";
 import AdminOrders from "@/pages/admin/orders";
+import AdminMessages from "@/pages/admin/messages";
 import AdminCategories from "@/pages/admin/categories";
 import AdminGallery from "@/pages/admin/gallery";
 import AdminEvents from "@/pages/admin/events";
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/admin/products" component={AdminProducts} />
       <Route path="/admin/customers" component={AdminCustomers} />
       <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/messages" component={AdminMessages} />
       <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/gallery" component={AdminGallery} />
       <Route path="/admin/events" component={AdminEvents} />
