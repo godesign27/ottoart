@@ -95,6 +95,28 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [profileImage, setProfileImage] = useState("https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150");
+  const [artistName, setArtistName] = useState("Otto Art");
+
+  // Fetch site settings to get the saved profile image
+  const { data: siteSettings } = useQuery<any[]>({
+    queryKey: ['/api/site-settings'],
+    queryFn: () => fetch('/api/site-settings').then(res => res.json())
+  });
+
+  // Update profile image and name from site settings
+  useEffect(() => {
+    if (siteSettings && siteSettings.length > 0) {
+      const profileImageSetting = siteSettings.find(setting => setting.key === 'artist_profileImage');
+      const artistNameSetting = siteSettings.find(setting => setting.key === 'artist_artistName');
+      
+      if (profileImageSetting?.value) {
+        setProfileImage(profileImageSetting.value);
+      }
+      if (artistNameSetting?.value) {
+        setArtistName(artistNameSetting.value);
+      }
+    }
+  }, [siteSettings]);
 
   // Listen for profile image updates
   useEffect(() => {
@@ -155,7 +177,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
             className="h-24 w-24 rounded-full object-cover border-2 border-primary/20" 
           />
           <div className="text-center">
-            <h2 className="font-semibold text-foreground">Otto Art</h2>
+            <h2 className="font-semibold text-foreground">{artistName}</h2>
             <p className="text-sm text-muted-foreground">Artist & Creator</p>
           </div>
         </div>
