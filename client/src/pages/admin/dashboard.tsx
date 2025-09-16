@@ -104,6 +104,40 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+            {/* Messages Card */}
+            <Card className="cursor-pointer hover:bg-muted/20 transition-colors" onClick={() => setLocation('/admin/messages')}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-600" />
+                  Messages
+                </CardTitle>
+                <CardDescription>Customer inquiries and contact form submissions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-3xl font-bold text-foreground" data-testid="text-new-messages-count">
+                      {unreadMessages}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {unreadMessages === 1 ? 'new message' : 'new messages'} to read
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation('/admin/messages');
+                    }}
+                    data-testid="button-view-messages"
+                  >
+                    View All
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-2">
