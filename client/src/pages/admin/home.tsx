@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Save, Eye, EyeOff, Package, Users, ShoppingCart, MessageSquare } from "lucide-react";
+import { Save, Eye, EyeOff } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, Order, Message, PageSettings } from "@shared/schema";
+import type { PageSettings } from "@shared/schema";
 
 export default function AdminHomePage() {
   const [, setLocation] = useLocation();
@@ -46,27 +46,6 @@ export default function AdminHomePage() {
   const homePageSettings = pageSettings?.find(p => p.page === 'home');
   const isEnabled = homePageSettings?.enabled ?? true;
 
-  // Fetch dynamic content (non-editable)
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['/api/products'],
-    queryFn: () => fetch('/api/products').then(res => res.json()) as Promise<Product[]>
-  });
-
-  const { data: orders = [], isLoading: isLoadingOrders } = useQuery({
-    queryKey: ['/api/orders'],
-    queryFn: () => fetch('/api/orders').then(res => res.json()) as Promise<Order[]>
-  });
-
-  const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
-    queryKey: ['/api/messages'],
-    queryFn: () => fetch('/api/messages').then(res => res.json()) as Promise<Message[]>
-  });
-
-  // Calculate dynamic stats
-  const recentProducts = products.slice(0, 3);
-  const recentOrders = orders.slice(0, 3);
-  const unreadMessages = messages.filter(m => !m.isRead).length;
-  const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0);
 
   // Mutation for updating page settings
   const updatePageSettingsMutation = useMutation({
@@ -94,7 +73,7 @@ export default function AdminHomePage() {
   };
 
   // Show loading state while any queries are loading
-  if (isLoadingSettings || isLoadingProducts || isLoadingOrders || isLoadingMessages) {
+  if (isLoadingSettings) {
     return (
       <div className="flex h-screen bg-background">
         <AdminSidebar onNavigate={handleNavigate} />
@@ -197,126 +176,50 @@ export default function AdminHomePage() {
                 </CardHeader>
               </Card>
 
-              {/* Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                {/* Left Column - Editable Content */}
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>✏️ Editable Content</CardTitle>
-                      <CardDescription>Customize the content that appears on your home page</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {isPreview ? (
-                        <div className="space-y-4">
-                          <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap">{welcomeMessage}</div>
-                          </div>
-                          <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap">{featuredMessage}</div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="welcome-message">Welcome Message</Label>
-                            <Textarea
-                              id="welcome-message"
-                              placeholder="Enter your welcome message..."
-                              value={welcomeMessage}
-                              onChange={(e) => setWelcomeMessage(e.target.value)}
-                              rows={4}
-                              data-testid="input-welcome-message"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="featured-message">Featured Section</Label>
-                            <Textarea
-                              id="featured-message"
-                              placeholder="Enter your featured section content (supports Markdown)..."
-                              value={featuredMessage}
-                              onChange={(e) => setFeaturedMessage(e.target.value)}
-                              rows={4}
-                              data-testid="input-featured-message"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Right Column - Dynamic Content (Non-editable) */}
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>📊 Live Site Activity</CardTitle>
-                      <CardDescription>Real-time data from your website (view only)</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-4 bg-muted/50 rounded-lg">
-                          <Package className="h-6 w-6 mx-auto mb-2 text-blue-600" />
-                          <div className="text-2xl font-bold" data-testid="text-active-products">{products.filter(p => p.status === 'active').length}</div>
-                          <div className="text-sm text-muted-foreground">Active Products</div>
-                        </div>
-                        <div className="text-center p-4 bg-muted/50 rounded-lg">
-                          <ShoppingCart className="h-6 w-6 mx-auto mb-2 text-green-600" />
-                          <div className="text-2xl font-bold" data-testid="text-total-orders">{orders.length}</div>
-                          <div className="text-sm text-muted-foreground">Total Orders</div>
-                        </div>
-                        <div className="text-center p-4 bg-muted/50 rounded-lg">
-                          <Users className="h-6 w-6 mx-auto mb-2 text-purple-600" />
-                          <div className="text-2xl font-bold" data-testid="text-total-revenue">${totalRevenue.toFixed(2)}</div>
-                          <div className="text-sm text-muted-foreground">Total Revenue</div>
-                        </div>
-                        <div className="text-center p-4 bg-muted/50 rounded-lg">
-                          <MessageSquare className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-                          <div className="text-2xl font-bold" data-testid="text-unread-messages">{unreadMessages}</div>
-                          <div className="text-sm text-muted-foreground">Unread Messages</div>
-                        </div>
+              {/* Editable Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>✏️ Editable Content</CardTitle>
+                  <CardDescription>Customize the content that appears on your home page</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {isPreview ? (
+                    <div className="space-y-4">
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap">{welcomeMessage}</div>
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>🆕 Recent Activity</CardTitle>
-                      <CardDescription>Latest items from your site</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Recent Products</h4>
-                        <div className="space-y-2">
-                          {recentProducts.length > 0 ? recentProducts.map((product) => (
-                            <div key={product.id} className="flex justify-between text-sm p-2 bg-muted/30 rounded" data-testid={`product-${product.id}`}>
-                              <span>{product.name}</span>
-                              <span className="text-muted-foreground">${product.price}</span>
-                            </div>
-                          )) : (
-                            <p className="text-sm text-muted-foreground">No products yet</p>
-                          )}
-                        </div>
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap">{featuredMessage}</div>
                       </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Recent Orders</h4>
-                        <div className="space-y-2">
-                          {recentOrders.length > 0 ? recentOrders.map((order) => (
-                            <div key={order.id} className="flex justify-between text-sm p-2 bg-muted/30 rounded" data-testid={`order-${order.id}`}>
-                              <span>Order #{order.id.slice(-8)}</span>
-                              <span className="text-muted-foreground">${order.totalAmount}</span>
-                            </div>
-                          )) : (
-                            <p className="text-sm text-muted-foreground">No orders yet</p>
-                          )}
-                        </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="welcome-message">Welcome Message</Label>
+                        <Textarea
+                          id="welcome-message"
+                          placeholder="Enter your welcome message..."
+                          value={welcomeMessage}
+                          onChange={(e) => setWelcomeMessage(e.target.value)}
+                          rows={4}
+                          data-testid="input-welcome-message"
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="featured-message">Featured Section</Label>
+                        <Textarea
+                          id="featured-message"
+                          placeholder="Enter your featured section content (supports Markdown)..."
+                          value={featuredMessage}
+                          onChange={(e) => setFeaturedMessage(e.target.value)}
+                          rows={4}
+                          data-testid="input-featured-message"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Disabled page warning */}
               {!isEnabled && (
