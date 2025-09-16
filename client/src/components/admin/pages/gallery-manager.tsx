@@ -11,17 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { Plus, Edit, Trash2, Upload, EyeOff, Save, Eye } from "lucide-react";
 
-interface GalleryItem {
-  id: string;
-  title: string;
-  description?: string;
-  imageUrl: string;
-  year?: string;
-  medium?: string;
-  dimensions?: string;
-  isPublished: boolean;
-  order: number;
-}
+import type { GalleryItem, InsertGalleryItem } from "@shared/schema";
 
 export function GalleryManager() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
@@ -45,46 +35,36 @@ export function GalleryManager() {
     }
   });
 
-  // Mock data - in real app this would come from API
-  const mockGalleryItems: GalleryItem[] = [
-    {
-      id: "1",
-      title: "Abstract Composition 1",
-      description: "A vibrant exploration of color and form",
-      imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2024",
-      medium: "Acrylic on canvas",
-      dimensions: "24\" x 36\"",
-      isPublished: true,
-      order: 1
-    },
-    {
-      id: "2",
-      title: "Urban Rhythms",
-      description: "Inspired by city life and movement",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2023",
-      medium: "Mixed media",
-      dimensions: "30\" x 40\"",
-      isPublished: true,
-      order: 2
-    },
-    {
-      id: "3",
-      title: "Color Study",
-      description: "An experiment in color relationships",
-      imageUrl: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      year: "2024",
-      medium: "Oil on canvas",
-      dimensions: "18\" x 24\"",
-      isPublished: false,
-      order: 3
-    }
-  ];
-
-  const { data: galleryItems = mockGalleryItems, isLoading } = useQuery({
+  const { data: galleryItems = [], isLoading } = useQuery<GalleryItem[]>({
     queryKey: ['/api/gallery'],
-    queryFn: () => Promise.resolve(mockGalleryItems)
+    queryFn: () => fetch('/api/gallery').then(res => res.json())
+  });
+
+  // Create gallery item mutation
+  const createGalleryItemMutation = useMutation({
+    mutationFn: (item: InsertGalleryItem) => 
+      apiRequest('POST', '/api/gallery', item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/gallery'] });
+    }
+  });
+
+  // Update gallery item mutation
+  const updateGalleryItemMutation = useMutation({
+    mutationFn: ({ id, item }: { id: string, item: Partial<InsertGalleryItem> }) => 
+      apiRequest('PUT', `/api/gallery/${id}`, item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/gallery'] });
+    }
+  });
+
+  // Delete gallery item mutation
+  const deleteGalleryItemMutation = useMutation({
+    mutationFn: (id: string) => 
+      apiRequest('DELETE', `/api/gallery/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/gallery'] });
+    }
   });
 
   const handleEdit = (item: GalleryItem) => {
@@ -97,17 +77,56 @@ export function GalleryManager() {
     setImageUrl(uploadedImageUrl);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this gallery item?')) {
-      // Implementation for delete
-      console.log('Delete item:', id);
+      try {
+        await deleteGalleryItemMutation.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to delete gallery item:', error);
+        alert('Failed to delete gallery item. Please try again.');
+      }
     }
   };
 
-  const handleSave = () => {
-    // Implementation for save
-    setIsEditing(false);
-    setSelectedItem(null);
+  const handleSave = async () => {
+    const titleElement = document.getElementById('title') as HTMLInputElement;
+    const yearElement = document.getElementById('year') as HTMLInputElement;
+    const mediumElement = document.getElementById('medium') as HTMLInputElement;
+    const dimensionsElement = document.getElementById('dimensions') as HTMLInputElement;
+    const descriptionElement = document.getElementById('description') as HTMLInputElement;
+
+    if (!titleElement?.value || !imageUrl) {
+      alert('Title and image are required');
+      return;
+    }
+
+    const galleryItemData: InsertGalleryItem = {
+      title: titleElement.value,
+      description: descriptionElement?.value || undefined,
+      imageUrl: imageUrl,
+      year: yearElement?.value || undefined,
+      medium: mediumElement?.value || undefined,
+      dimensions: dimensionsElement?.value || undefined,
+      isPublished: true,
+      sortOrder: 0
+    };
+
+    try {
+      if (selectedItem) {
+        await updateGalleryItemMutation.mutateAsync({ 
+          id: selectedItem.id, 
+          item: galleryItemData 
+        });
+      } else {
+        await createGalleryItemMutation.mutateAsync(galleryItemData);
+      }
+      setIsEditing(false);
+      setSelectedItem(null);
+      setImageUrl('');
+    } catch (error) {
+      console.error('Failed to save gallery item:', error);
+      alert('Failed to save gallery item. Please try again.');
+    }
   };
 
   const handlePageSave = () => {
@@ -204,7 +223,7 @@ export function GalleryManager() {
                 <Label htmlFor="year">Year</Label>
                 <Input
                   id="year"
-                  defaultValue={selectedItem?.year}
+                  defaultValue={selectedItem?.year || ''}
                   placeholder="e.g., 2024"
                 />
               </div>
@@ -212,7 +231,7 @@ export function GalleryManager() {
                 <Label htmlFor="medium">Medium</Label>
                 <Input
                   id="medium"
-                  defaultValue={selectedItem?.medium}
+                  defaultValue={selectedItem?.medium || ''}
                   placeholder="e.g., Acrylic on canvas"
                 />
               </div>
@@ -220,7 +239,7 @@ export function GalleryManager() {
                 <Label htmlFor="dimensions">Dimensions</Label>
                 <Input
                   id="dimensions"
-                  defaultValue={selectedItem?.dimensions}
+                  defaultValue={selectedItem?.dimensions || ''}
                   placeholder="e.g., 24&quot; x 36&quot;"
                 />
               </div>
@@ -229,7 +248,7 @@ export function GalleryManager() {
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
-                defaultValue={selectedItem?.description}
+                defaultValue={selectedItem?.description || ''}
                 placeholder="Brief description of the artwork"
               />
             </div>
@@ -262,8 +281,15 @@ export function GalleryManager() {
               <Button variant="outline" onClick={() => setIsEditing(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave}>
-                {selectedItem ? 'Update' : 'Add'} Gallery Item
+              <Button 
+                onClick={handleSave}
+                disabled={createGalleryItemMutation.isPending || updateGalleryItemMutation.isPending}
+                data-testid="button-save-gallery"
+              >
+                {createGalleryItemMutation.isPending || updateGalleryItemMutation.isPending 
+                  ? 'Saving...' 
+                  : (selectedItem ? 'Update' : 'Add') + ' Gallery Item'
+                }
               </Button>
             </div>
           </CardContent>
@@ -307,10 +333,12 @@ export function GalleryManager() {
                     size="sm"
                     variant="destructive"
                     onClick={() => handleDelete(item.id)}
+                    disabled={deleteGalleryItemMutation.isPending}
                     className="flex items-center gap-1"
+                    data-testid={`button-delete-${item.id}`}
                   >
                     <Trash2 className="h-3 w-3" />
-                    Delete
+                    {deleteGalleryItemMutation.isPending ? 'Deleting...' : 'Delete'}
                   </Button>
                 </div>
               </div>

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Initialize Stripe only if the secret key is available
@@ -241,6 +241,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Message marked as read" });
     } catch (error) {
       res.status(500).json({ message: "Failed to update message" });
+    }
+  });
+
+  // Gallery Items
+  app.get("/api/gallery", async (req, res) => {
+    try {
+      const galleryItems = await storage.getGalleryItems();
+      res.json(galleryItems);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch gallery items" });
+    }
+  });
+
+  app.get("/api/gallery/:id", async (req, res) => {
+    try {
+      const galleryItem = await storage.getGalleryItem(req.params.id);
+      if (!galleryItem) {
+        return res.status(404).json({ message: "Gallery item not found" });
+      }
+      res.json(galleryItem);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch gallery item" });
+    }
+  });
+
+  app.post("/api/gallery", async (req, res) => {
+    try {
+      const validatedData = insertGalleryItemSchema.parse(req.body);
+      const galleryItem = await storage.createGalleryItem(validatedData);
+      res.status(201).json(galleryItem);
+    } catch (error) {
+      console.error("Gallery item validation error:", error);
+      res.status(400).json({ 
+        message: "Invalid gallery item data",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.put("/api/gallery/:id", async (req, res) => {
+    try {
+      const validatedData = insertGalleryItemSchema.partial().parse(req.body);
+      const galleryItem = await storage.updateGalleryItem(req.params.id, validatedData);
+      if (!galleryItem) {
+        return res.status(404).json({ message: "Gallery item not found" });
+      }
+      res.json(galleryItem);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid gallery item data" });
+    }
+  });
+
+  app.delete("/api/gallery/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteGalleryItem(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Gallery item not found" });
+      }
+      res.json({ message: "Gallery item deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete gallery item" });
+    }
+  });
+
+  app.post("/api/gallery/reorder", async (req, res) => {
+    try {
+      const { itemIds } = req.body;
+      if (!Array.isArray(itemIds)) {
+        return res.status(400).json({ message: "itemIds must be an array" });
+      }
+      const galleryItems = await storage.reorderGalleryItems(itemIds);
+      res.json(galleryItems);
+    } catch (error) {
+      console.error("Failed to reorder gallery items:", error);
+      res.status(400).json({ message: "Failed to reorder gallery items" });
     }
   });
 

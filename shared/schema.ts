@@ -159,6 +159,20 @@ export const contactSettings = pgTable("contact_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const galleryItems = pgTable("gallery_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url").notNull(),
+  year: text("year"),
+  medium: text("medium"),
+  dimensions: text("dimensions"),
+  isPublished: boolean("is_published").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -217,6 +231,12 @@ export const insertContactSettingsSchema = createInsertSchema(contactSettings).o
   updatedAt: true,
 });
 
+export const insertGalleryItemSchema = createInsertSchema(galleryItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -250,3 +270,6 @@ export type InsertBioSettings = z.infer<typeof insertBioSettingsSchema>;
 
 export type ContactSettings = typeof contactSettings.$inferSelect;
 export type InsertContactSettings = z.infer<typeof insertContactSettingsSchema>;
+
+export type GalleryItem = typeof galleryItems.$inferSelect;
+export type InsertGalleryItem = z.infer<typeof insertGalleryItemSchema>;

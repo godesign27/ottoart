@@ -19,6 +19,8 @@ import {
   type InsertBioSettings,
   type ContactSettings,
   type InsertContactSettings,
+  type GalleryItem,
+  type InsertGalleryItem,
   type CartItem,
   type InsertCartItem,
   users,
@@ -31,6 +33,7 @@ import {
   pageSettings,
   bioSettings,
   contactSettings,
+  galleryItems,
   cartItems
 } from "@shared/schema";
 import { db } from "./db";
@@ -97,6 +100,14 @@ export interface IStorage {
   // Contact Settings
   getContactSettings(): Promise<ContactSettings | undefined>;
   setContactSettings(settings: InsertContactSettings): Promise<ContactSettings>;
+
+  // Gallery Items
+  getGalleryItems(): Promise<GalleryItem[]>;
+  getGalleryItem(id: string): Promise<GalleryItem | undefined>;
+  createGalleryItem(item: InsertGalleryItem): Promise<GalleryItem>;
+  updateGalleryItem(id: string, item: Partial<InsertGalleryItem>): Promise<GalleryItem | undefined>;
+  deleteGalleryItem(id: string): Promise<boolean>;
+  reorderGalleryItems(itemIds: string[]): Promise<GalleryItem[]>;
 
   // Cart
   getCartItems(): Promise<CartItem[]>;
@@ -503,6 +514,51 @@ export class DatabaseStorage implements IStorage {
   async clearCart(): Promise<boolean> {
     const result = await db.delete(cartItems);
     return (result.rowCount ?? 0) >= 0; // Returns true even if cart was already empty
+  }
+
+  // Gallery Items
+  async getGalleryItems(): Promise<GalleryItem[]> {
+    return await db.select().from(galleryItems).orderBy(galleryItems.sortOrder, desc(galleryItems.createdAt));
+  }
+
+  async getGalleryItem(id: string): Promise<GalleryItem | undefined> {
+    const [item] = await db.select().from(galleryItems).where(eq(galleryItems.id, id));
+    return item || undefined;
+  }
+
+  async createGalleryItem(insertItem: InsertGalleryItem): Promise<GalleryItem> {
+    const [item] = await db.insert(galleryItems).values({
+      ...insertItem,
+      sortOrder: insertItem.sortOrder ?? 0
+    }).returning();
+    return item;
+  }
+
+  async updateGalleryItem(id: string, updateData: Partial<InsertGalleryItem>): Promise<GalleryItem | undefined> {
+    const [item] = await db.update(galleryItems)
+      .set(updateData)
+      .where(eq(galleryItems.id, id))
+      .returning();
+    return item || undefined;
+  }
+
+  async deleteGalleryItem(id: string): Promise<boolean> {
+    const result = await db.delete(galleryItems).where(eq(galleryItems.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async reorderGalleryItems(itemIds: string[]): Promise<GalleryItem[]> {
+    // Update sort order for each item
+    const updatePromises = itemIds.map((id, index) =>
+      db.update(galleryItems)
+        .set({ sortOrder: index })
+        .where(eq(galleryItems.id, id))
+    );
+    
+    await Promise.all(updatePromises);
+    
+    // Return updated items
+    return await this.getGalleryItems();
   }
 }
 
