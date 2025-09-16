@@ -29,6 +29,7 @@ import BioPage from "@/pages/live-site/bio";
 import GalleryPage from "@/pages/live-site/gallery";
 import EventsPage from "@/pages/live-site/events";
 import CVPage from "@/pages/live-site/cv";
+import ContactPage from "@/pages/live-site/contact";
 import ProductDetailPage from "@/pages/live-site/product-detail";
 import CheckoutPage from "@/pages/live-site/checkout";
 import CheckoutSuccessPage from "@/pages/live-site/checkout-success";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/gallery" component={GalleryPage} />
       <Route path="/events" component={EventsPage} />
       <Route path="/cv" component={CVPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />

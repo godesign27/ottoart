@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Save, Eye, EyeOff } from "lucide-react";
+import { Save, Eye, EyeOff, Upload, Image } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PageSettings } from "@shared/schema";
 
@@ -24,6 +25,9 @@ export default function AdminHomePage() {
   );
   const [featuredMessage, setFeaturedMessage] = useState(
     "## Featured Collections\n\nExplore my latest works and discover pieces that speak to your aesthetic vision. Each artwork tells a story and invites you to become part of its narrative."
+  );
+  const [heroImageUrl, setHeroImageUrl] = useState(
+    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600"
   );
 
   const handleNavigate = (href: string) => {
@@ -58,7 +62,7 @@ export default function AdminHomePage() {
   });
 
   const handleSave = () => {
-    console.log('Saving home page content:', { welcomeMessage, featuredMessage });
+    console.log('Saving home page content:', { welcomeMessage, featuredMessage, heroImageUrl });
     // TODO: Implement actual save functionality
   };
 
@@ -135,7 +139,7 @@ export default function AdminHomePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold">Home Page</h1>
-                  <p className="text-muted-foreground">Manage your homepage content and view live site activity</p>
+                  <p className="text-muted-foreground">Manage your homepage content and hero image</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -174,6 +178,55 @@ export default function AdminHomePage() {
                     </div>
                   </div>
                 </CardHeader>
+              </Card>
+
+              {/* Hero Image Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>🖼️ Hero Image</CardTitle>
+                  <CardDescription>Manage the main hero image displayed on your home page</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Current Hero Image Preview */}
+                  <div className="space-y-2">
+                    <Label>Current Hero Image</Label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <img 
+                        src={heroImageUrl} 
+                        alt="Hero image preview" 
+                        className="w-full h-48 object-cover" 
+                        data-testid="hero-image-preview"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Hero Image URL Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="hero-image-url">Hero Image URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="hero-image-url"
+                        type="url"
+                        placeholder="Enter image URL..."
+                        value={heroImageUrl}
+                        onChange={(e) => setHeroImageUrl(e.target.value)}
+                        data-testid="input-hero-image-url"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="flex items-center gap-2"
+                        onClick={() => setHeroImageUrl("https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600")}
+                        data-testid="button-reset-hero-image"
+                      >
+                        <Image className="h-4 w-4" />
+                        Reset
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Enter a direct URL to an image. Recommended dimensions: 800x600px or larger.
+                    </p>
+                  </div>
+                </CardContent>
               </Card>
 
               {/* Editable Content */}
