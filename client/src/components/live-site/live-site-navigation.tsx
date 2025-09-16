@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, User, ShoppingCart } from "lucide-react";
+import { User, ShoppingCart } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 
 interface LiveSiteNavigationProps {
@@ -77,15 +77,6 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
       </div>
 
       <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-muted-foreground hover:text-foreground" 
-          data-testid="search-button"
-        >
-          <Search className="h-5 w-5" />
-        </Button>
-
         <Link href="/checkout">
           <Button 
             variant="ghost" 
