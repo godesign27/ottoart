@@ -178,6 +178,39 @@ export const socialSettings = pgTable("social_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const roomBackgrounds = pgTable("room_backgrounds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url").notNull(),
+  roomType: text("room_type").notNull(), // "living_room", "bedroom", "office", "dining_room", "hallway"
+  wallColor: text("wall_color").default("#ffffff"),
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const artWallSimulations = pgTable("art_wall_simulations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name"),
+  roomBackgroundId: varchar("room_background_id").references(() => roomBackgrounds.id),
+  artworks: jsonb("artworks").$type<Array<{
+    productId: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation?: number;
+    zIndex: number;
+  }>>().default([]),
+  isPublic: boolean("is_public").default(false),
+  userId: varchar("user_id"), // Optional user association for saved simulations
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const galleryItems = pgTable("gallery_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
@@ -255,6 +288,18 @@ export const insertSocialSettingsSchema = createInsertSchema(socialSettings).omi
   updatedAt: true,
 });
 
+export const insertRoomBackgroundSchema = createInsertSchema(roomBackgrounds).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertArtWallSimulationSchema = createInsertSchema(artWallSimulations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertGalleryItemSchema = createInsertSchema(galleryItems).omit({
   id: true,
   createdAt: true,
@@ -297,6 +342,12 @@ export type InsertContactSettings = z.infer<typeof insertContactSettingsSchema>;
 
 export type SocialSettings = typeof socialSettings.$inferSelect;
 export type InsertSocialSettings = z.infer<typeof insertSocialSettingsSchema>;
+
+export type RoomBackground = typeof roomBackgrounds.$inferSelect;
+export type InsertRoomBackground = z.infer<typeof insertRoomBackgroundSchema>;
+
+export type ArtWallSimulation = typeof artWallSimulations.$inferSelect;
+export type InsertArtWallSimulation = z.infer<typeof insertArtWallSimulationSchema>;
 
 export type GalleryItem = typeof galleryItems.$inferSelect;
 export type InsertGalleryItem = z.infer<typeof insertGalleryItemSchema>;
