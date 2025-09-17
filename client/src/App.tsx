@@ -34,6 +34,7 @@ import ContactPage from "@/pages/live-site/contact";
 import ProductDetailPage from "@/pages/live-site/product-detail";
 import CheckoutPage from "@/pages/live-site/checkout";
 import CheckoutSuccessPage from "@/pages/live-site/checkout-success";
+import { ArtWallPage } from "@/pages/live-site/art-wall";
 
 function Router() {
   return (
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/accessories" component={AccessoriesPage} />
       <Route path="/bio" component={BioPage} />
       <Route path="/gallery" component={GalleryPage} />
+      <Route path="/art-wall" component={ArtWallPage} />
       <Route path="/events" component={EventsPage} />
       <Route path="/cv" component={CVPage} />
       <Route path="/contact" component={ContactPage} />
