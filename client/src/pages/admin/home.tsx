@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ImageUploader } from "@/components/ui/image-uploader";
 import { Save, Eye, EyeOff, Upload, Image } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PageSettings } from "@shared/schema";
@@ -184,7 +185,7 @@ export default function AdminHomePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>🖼️ Hero Image</CardTitle>
-                  <CardDescription>Manage the main hero image displayed on your home page</CardDescription>
+                  <CardDescription>Upload an image file or enter a URL for the main hero image displayed on your home page</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Current Hero Image Preview */}
@@ -200,9 +201,23 @@ export default function AdminHomePage() {
                     </div>
                   </div>
 
+                  {/* Image Upload */}
+                  <div className="space-y-2">
+                    <Label>Upload New Image</Label>
+                    <ImageUploader
+                      onImageUploaded={(url) => setHeroImageUrl(url)}
+                      data-testid="dropzone-hero-image"
+                    >
+                      Upload Hero Image
+                    </ImageUploader>
+                    <p className="text-sm text-muted-foreground">
+                      Upload an image file. Recommended dimensions: 800x600px or larger.
+                    </p>
+                  </div>
+
                   {/* Hero Image URL Input */}
                   <div className="space-y-2">
-                    <Label htmlFor="hero-image-url">Hero Image URL</Label>
+                    <Label htmlFor="hero-image-url">Or Enter Image URL</Label>
                     <div className="flex gap-2">
                       <Input
                         id="hero-image-url"
@@ -223,7 +238,7 @@ export default function AdminHomePage() {
                       </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Enter a direct URL to an image. Recommended dimensions: 800x600px or larger.
+                      Alternatively, enter a direct URL to an image. Recommended dimensions: 800x600px or larger.
                     </p>
                   </div>
                 </CardContent>
