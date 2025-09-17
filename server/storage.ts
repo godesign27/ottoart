@@ -21,6 +21,10 @@ import {
   type InsertContactSettings,
   type SocialSettings,
   type InsertSocialSettings,
+  type RoomBackground,
+  type InsertRoomBackground,
+  type ArtWallSimulation,
+  type InsertArtWallSimulation,
   type GalleryItem,
   type InsertGalleryItem,
   type CartItem,
@@ -36,6 +40,8 @@ import {
   bioSettings,
   contactSettings,
   socialSettings,
+  roomBackgrounds,
+  artWallSimulations,
   galleryItems,
   cartItems
 } from "@shared/schema";
@@ -116,6 +122,20 @@ export interface IStorage {
   deleteGalleryItem(id: string): Promise<boolean>;
   reorderGalleryItems(itemIds: string[]): Promise<GalleryItem[]>;
 
+  // Room Backgrounds
+  getRoomBackgrounds(): Promise<RoomBackground[]>;
+  getRoomBackground(id: string): Promise<RoomBackground | undefined>;
+  createRoomBackground(background: InsertRoomBackground): Promise<RoomBackground>;
+  updateRoomBackground(id: string, background: Partial<InsertRoomBackground>): Promise<RoomBackground | undefined>;
+  deleteRoomBackground(id: string): Promise<boolean>;
+
+  // Art Wall Simulations
+  getArtWallSimulations(): Promise<ArtWallSimulation[]>;
+  getArtWallSimulation(id: string): Promise<ArtWallSimulation | undefined>;
+  createArtWallSimulation(simulation: InsertArtWallSimulation): Promise<ArtWallSimulation>;
+  updateArtWallSimulation(id: string, simulation: Partial<InsertArtWallSimulation>): Promise<ArtWallSimulation | undefined>;
+  deleteArtWallSimulation(id: string): Promise<boolean>;
+
   // Cart
   getCartItems(): Promise<CartItem[]>;
   getCartItem(id: string): Promise<CartItem | undefined>;
@@ -176,6 +196,52 @@ export class DatabaseStorage implements IStorage {
       }));
       
       await db.insert(pageSettings).values(defaultPageSettings);
+      
+      // Initialize default room backgrounds for art wall simulator
+      const defaultRoomBackgrounds = [
+        {
+          name: "Modern Living Room",
+          description: "Clean, minimalist living room with white walls perfect for displaying artwork",
+          imageUrl: "/@assets/generated_images/Modern_living_room_wall_5fce4eb6.png",
+          roomType: "living_room",
+          wallColor: "#ffffff",
+          isDefault: true,
+          isActive: true,
+          sortOrder: 0,
+        },
+        {
+          name: "Cozy Bedroom",
+          description: "Warm bedroom interior with light beige walls, perfect for personal artwork",
+          imageUrl: "/@assets/generated_images/Cozy_bedroom_wall_668ce526.png",
+          roomType: "bedroom",
+          wallColor: "#f5f5dc",
+          isDefault: false,
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          name: "Professional Office",
+          description: "Clean office space with bright natural lighting, ideal for inspirational artwork",
+          imageUrl: "/@assets/generated_images/Professional_office_wall_830e1e42.png",
+          roomType: "office",
+          wallColor: "#ffffff",
+          isDefault: false,
+          isActive: true,
+          sortOrder: 2,
+        },
+        {
+          name: "Elegant Dining Room",
+          description: "Sophisticated dining room with soft gray walls, perfect for classic artwork",
+          imageUrl: "/@assets/generated_images/Elegant_dining_room_wall_4bb31147.png",
+          roomType: "dining_room",
+          wallColor: "#d3d3d3",
+          isDefault: false,
+          isActive: true,
+          sortOrder: 3,
+        },
+      ];
+
+      await db.insert(roomBackgrounds).values(defaultRoomBackgrounds);
       
       console.log("✅ Database initialized with default data");
     } catch (error) {
@@ -595,6 +661,73 @@ export class DatabaseStorage implements IStorage {
     
     // Return updated items
     return await this.getGalleryItems();
+  }
+
+  // Room Backgrounds
+  async getRoomBackgrounds(): Promise<RoomBackground[]> {
+    return await db.select().from(roomBackgrounds).orderBy(roomBackgrounds.sortOrder, roomBackgrounds.roomType);
+  }
+
+  async getRoomBackground(id: string): Promise<RoomBackground | undefined> {
+    const [background] = await db.select().from(roomBackgrounds).where(eq(roomBackgrounds.id, id));
+    return background || undefined;
+  }
+
+  async createRoomBackground(insertBackground: InsertRoomBackground): Promise<RoomBackground> {
+    const [background] = await db.insert(roomBackgrounds).values(insertBackground).returning();
+    return background;
+  }
+
+  async updateRoomBackground(id: string, updateData: Partial<InsertRoomBackground>): Promise<RoomBackground | undefined> {
+    const [background] = await db.update(roomBackgrounds)
+      .set(updateData)
+      .where(eq(roomBackgrounds.id, id))
+      .returning();
+    return background || undefined;
+  }
+
+  async deleteRoomBackground(id: string): Promise<boolean> {
+    const result = await db.delete(roomBackgrounds).where(eq(roomBackgrounds.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Art Wall Simulations
+  async getArtWallSimulations(): Promise<ArtWallSimulation[]> {
+    return await db.select().from(artWallSimulations).orderBy(desc(artWallSimulations.createdAt));
+  }
+
+  async getArtWallSimulation(id: string): Promise<ArtWallSimulation | undefined> {
+    const [simulation] = await db.select().from(artWallSimulations).where(eq(artWallSimulations.id, id));
+    return simulation || undefined;
+  }
+
+  async createArtWallSimulation(insertSimulation: InsertArtWallSimulation): Promise<ArtWallSimulation> {
+    const [simulation] = await db.insert(artWallSimulations).values({
+      name: insertSimulation.name,
+      roomBackgroundId: insertSimulation.roomBackgroundId,
+      artworks: insertSimulation.artworks as any,
+      isPublic: insertSimulation.isPublic,
+      userId: insertSimulation.userId
+    }).returning();
+    return simulation;
+  }
+
+  async updateArtWallSimulation(id: string, updateData: Partial<InsertArtWallSimulation>): Promise<ArtWallSimulation | undefined> {
+    const updateObject: any = { ...updateData };
+    if (updateData.artworks) {
+      updateObject.artworks = updateData.artworks as any;
+    }
+    
+    const [simulation] = await db.update(artWallSimulations)
+      .set(updateObject)
+      .where(eq(artWallSimulations.id, id))
+      .returning();
+    return simulation || undefined;
+  }
+
+  async deleteArtWallSimulation(id: string): Promise<boolean> {
+    const result = await db.delete(artWallSimulations).where(eq(artWallSimulations.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

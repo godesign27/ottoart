@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Initialize Stripe only if the secret key is available
@@ -828,6 +828,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Room Backgrounds
+  app.get("/api/room-backgrounds", async (req, res) => {
+    try {
+      const backgrounds = await storage.getRoomBackgrounds();
+      res.json(backgrounds);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch room backgrounds" });
+    }
+  });
+
+  app.get("/api/room-backgrounds/:id", async (req, res) => {
+    try {
+      const background = await storage.getRoomBackground(req.params.id);
+      if (!background) {
+        return res.status(404).json({ message: "Room background not found" });
+      }
+      res.json(background);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch room background" });
+    }
+  });
+
+  app.post("/api/room-backgrounds", async (req, res) => {
+    try {
+      const validatedData = insertRoomBackgroundSchema.parse(req.body);
+      const background = await storage.createRoomBackground(validatedData);
+      res.status(201).json(background);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid room background data" });
+    }
+  });
+
+  app.put("/api/room-backgrounds/:id", async (req, res) => {
+    try {
+      const validatedData = insertRoomBackgroundSchema.parse(req.body);
+      const background = await storage.updateRoomBackground(req.params.id, validatedData);
+      if (!background) {
+        return res.status(404).json({ message: "Room background not found" });
+      }
+      res.json(background);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid room background data" });
+    }
+  });
+
+  app.delete("/api/room-backgrounds/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteRoomBackground(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Room background not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete room background" });
+    }
+  });
+
+  // Art Wall Simulations
+  app.get("/api/art-wall-simulations", async (req, res) => {
+    try {
+      const simulations = await storage.getArtWallSimulations();
+      res.json(simulations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch art wall simulations" });
+    }
+  });
+
+  app.get("/api/art-wall-simulations/:id", async (req, res) => {
+    try {
+      const simulation = await storage.getArtWallSimulation(req.params.id);
+      if (!simulation) {
+        return res.status(404).json({ message: "Art wall simulation not found" });
+      }
+      res.json(simulation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch art wall simulation" });
+    }
+  });
+
+  app.post("/api/art-wall-simulations", async (req, res) => {
+    try {
+      const validatedData = insertArtWallSimulationSchema.parse(req.body);
+      const simulation = await storage.createArtWallSimulation(validatedData);
+      res.status(201).json(simulation);
+    } catch (error) {
+      console.error("Art wall simulation creation error:", error);
+      res.status(400).json({ message: "Invalid art wall simulation data" });
+    }
+  });
+
+  app.put("/api/art-wall-simulations/:id", async (req, res) => {
+    try {
+      const validatedData = insertArtWallSimulationSchema.parse(req.body);
+      const simulation = await storage.updateArtWallSimulation(req.params.id, validatedData);
+      if (!simulation) {
+        return res.status(404).json({ message: "Art wall simulation not found" });
+      }
+      res.json(simulation);
+    } catch (error) {
+      console.error("Art wall simulation update error:", error);
+      res.status(400).json({ message: "Invalid art wall simulation data" });
+    }
+  });
+
+  app.delete("/api/art-wall-simulations/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteArtWallSimulation(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Art wall simulation not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete art wall simulation" });
     }
   });
 
