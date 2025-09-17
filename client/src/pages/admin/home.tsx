@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { AdminSidebar } from "@/components/admin/sidebar";
@@ -20,6 +20,24 @@ export default function AdminHomePage() {
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('admin');
   const [isPreview, setIsPreview] = useState(false);
   
+  // Fetch page settings for home page
+  const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['/api/page-settings'],
+    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+  });
+
+  // Fetch site settings to get the saved hero image URL
+  const { data: siteSettings, isLoading: isLoadingSiteSettings } = useQuery<any[]>({
+    queryKey: ['/api/site-settings'],
+    queryFn: () => fetch('/api/site-settings').then(res => res.json())
+  });
+
+  const homePageSettings = pageSettings?.find(p => p.page === 'home');
+  const isEnabled = homePageSettings?.enabled ?? true;
+
+  // Get the saved hero image URL from site settings
+  const savedHeroImageUrl = siteSettings?.find(setting => setting.key === 'home_heroImageUrl')?.value;
+  
   // Editable content state
   const [welcomeMessage, setWelcomeMessage] = useState(
     "Welcome to Otto Art Studio\n\nDiscover unique contemporary artwork and connect with my creative journey. This is your gateway to exploring original paintings, limited edition prints, and exclusive artistic experiences."
@@ -30,6 +48,13 @@ export default function AdminHomePage() {
   const [heroImageUrl, setHeroImageUrl] = useState(
     "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600"
   );
+
+  // Update heroImageUrl when site settings load
+  useEffect(() => {
+    if (savedHeroImageUrl) {
+      setHeroImageUrl(savedHeroImageUrl);
+    }
+  }, [savedHeroImageUrl]);
 
   const handleNavigate = (href: string) => {
     setLocation(href);
@@ -42,14 +67,6 @@ export default function AdminHomePage() {
     }
   };
 
-  // Fetch page settings for home page
-  const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
-    queryKey: ['/api/page-settings'],
-    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
-  });
-
-  const homePageSettings = pageSettings?.find(p => p.page === 'home');
-  const isEnabled = homePageSettings?.enabled ?? true;
 
 
   // Mutation for updating page settings
@@ -62,9 +79,20 @@ export default function AdminHomePage() {
     }
   });
 
+  // Mutation for saving hero image URL
+  const saveHeroImageMutation = useMutation({
+    mutationFn: (imageUrl: string) => 
+      apiRequest('POST', '/api/site-settings/home_heroImageUrl', { value: imageUrl }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
+    }
+  });
+
   const handleSave = () => {
     console.log('Saving home page content:', { welcomeMessage, featuredMessage, heroImageUrl });
-    // TODO: Implement actual save functionality
+    // Save hero image URL to site settings
+    saveHeroImageMutation.mutate(heroImageUrl);
+    // TODO: Implement save functionality for welcome and featured messages
   };
 
   const handlePageSave = () => {
@@ -78,7 +106,7 @@ export default function AdminHomePage() {
   };
 
   // Show loading state while any queries are loading
-  if (isLoadingSettings) {
+  if (isLoadingSettings || isLoadingSiteSettings) {
     return (
       <div className="flex h-screen bg-background">
         <AdminSidebar onNavigate={handleNavigate} />

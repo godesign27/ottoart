@@ -11,6 +11,7 @@ export function HeroSection() {
   // Extract artist data from site settings
   const artistName = siteSettings?.find(setting => setting.key === 'artist_artistName')?.value || 'Otto Art';
   const profileImage = siteSettings?.find(setting => setting.key === 'artist_profileImage')?.value || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100';
+  const heroImageUrl = siteSettings?.find(setting => setting.key === 'home_heroImageUrl')?.value || 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600';
   return (
     <section className="gradient-bg py-20 px-6">
       <div className="max-w-7xl mx-auto">
@@ -42,7 +43,7 @@ export function HeroSection() {
 
           <div className="relative">
             <img 
-              src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+              src={heroImageUrl} 
               alt="Artist's creative workspace" 
               className="rounded-xl shadow-2xl w-full object-cover" 
             />
