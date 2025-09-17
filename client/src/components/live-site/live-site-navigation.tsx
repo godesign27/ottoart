@@ -44,7 +44,6 @@ export function LiveSiteNavigation({ viewMode = 'live', onViewModeChange }: Live
   const pageNavItems = [
     { href: "/bio", label: "Bio", page: "bio" },
     { href: "/gallery", label: "Gallery", page: "gallery" },
-    { href: "/art-wall", label: "Art Wall", page: "gallery" }, // Link with Gallery page setting
     { href: "/events", label: "Events", page: "events" },
     { href: "/cv", label: "CV", page: "cv" }
   ].filter(item => getPageEnabled(item.page));
