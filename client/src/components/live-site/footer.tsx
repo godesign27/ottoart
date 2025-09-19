@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Instagram, Twitter, Facebook, Linkedin, Youtube } from "lucide-react";
 import { SiTiktok, SiPinterest } from "react-icons/si";
+import { EmailSubscriptionForm } from "./email-subscription-form";
 import type { PageSettings, SocialSettings } from "@shared/schema";
 
 export function Footer() {
@@ -112,33 +113,7 @@ export function Footer() {
       {/* Email Subscription Section */}
       <div className="bg-muted/30 border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold text-foreground">Stay Connected</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Subscribe to receive updates about new artworks, exhibitions, and exclusive previews.
-            </p>
-            <div className="flex justify-center">
-              <div className="w-full max-w-lg">
-                <iframe 
-                  width="100%" 
-                  height="305" 
-                  src="https://9ad21031.sibforms.com/serve/MUIFAJFfUSQoCfZBFqGocVK_GzJce3oQRsC9O5-SHOFbq7h-ag-mlBMqCORTciHr-IOZv4hjoy-h9RjqY1jZnapMhuZ2XusTMqE9dlzuOe_WRSNjxSkyx4p49fboiED-XU3AzwpHilQ0pgi6IXN_bAMZd_kYgDzlkOxYgKT0rWsS0mGyADGphrNyIoCmSKN_mXP1_RDwnQ3WrNiD" 
-                  frameBorder="0" 
-                  scrolling="auto" 
-                  loading="lazy"
-                  title="Email subscription form"
-                  className="rounded-lg shadow-sm bg-white dark:bg-gray-800 h-[360px] sm:h-[305px]"
-                  style={{ 
-                    display: 'block', 
-                    marginLeft: 'auto', 
-                    marginRight: 'auto', 
-                    maxWidth: '100%'
-                  }}
-                  data-testid="email-subscription-form"
-                />
-              </div>
-            </div>
-          </div>
+          <EmailSubscriptionForm />
         </div>
       </div>
       

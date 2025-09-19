@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
+import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Initialize Stripe only if the secret key is available
@@ -572,6 +573,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Cart cleared successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Newsletter subscription schema
+  const newsletterSchema = z.object({
+    email: z.string().email("Invalid email format"),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+  });
+
+  // Newsletter Subscription
+  app.post("/api/newsletter-subscription", async (req, res) => {
+    try {
+      // Validate request body with Zod
+      const validationResult = newsletterSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data",
+          errors: validationResult.error.issues
+        });
+      }
+
+      const { email, firstName, lastName } = validationResult.data;
+
+      // Check if Brevo API key is configured
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      if (!brevoApiKey) {
+        console.error('BREVO_API_KEY not configured');
+        return res.status(500).json({ message: "Newsletter service not configured" });
+      }
+
+      // Get the default mailing list ID from environment or use a fallback
+      const brevoListId = process.env.BREVO_LIST_ID;
+
+      // Prepare contact data for Brevo
+      const contactData: any = {
+        email: email.trim().toLowerCase(),
+        updateEnabled: true,
+        emailBlacklisted: false,
+      };
+
+      // Add attributes if provided
+      if (firstName || lastName) {
+        contactData.attributes = {};
+        if (firstName) contactData.attributes.FIRSTNAME = firstName.trim();
+        if (lastName) contactData.attributes.LASTNAME = lastName.trim();
+      }
+
+      // Add to mailing list if configured
+      if (brevoListId) {
+        const listIdNum = parseInt(brevoListId);
+        if (!isNaN(listIdNum)) {
+          contactData.listIds = [listIdNum];
+        }
+      }
+
+      // Send to Brevo API
+      const brevoResponse = await fetch('https://api.brevo.com/v3/contacts', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'api-key': brevoApiKey,
+        },
+        body: JSON.stringify(contactData),
+      });
+
+      if (brevoResponse.ok) {
+        res.status(201).json({ message: "Successfully subscribed to newsletter" });
+      } else if (brevoResponse.status === 409) {
+        // Contact already exists - need to ensure they're added to the list if specified
+        if (brevoListId) {
+          const listIdNum = parseInt(brevoListId);
+          if (!isNaN(listIdNum)) {
+            try {
+              const addToListResponse = await fetch(`https://api.brevo.com/v3/contacts/lists/${listIdNum}/contacts/add`, {
+                method: 'POST',
+                headers: {
+                  'content-type': 'application/json',
+                  'api-key': brevoApiKey,
+                },
+                body: JSON.stringify({
+                  emails: [email.trim().toLowerCase()]
+                }),
+              });
+              
+              if (addToListResponse.ok || addToListResponse.status === 409) {
+                // Successfully added to list or already in list
+                res.status(200).json({ message: "Successfully subscribed to newsletter" });
+              } else {
+                console.error('Failed to add existing contact to list:', addToListResponse.status);
+                res.status(500).json({ message: "Failed to subscribe to newsletter" });
+              }
+            } catch (listError) {
+              console.error('Error adding contact to list:', listError);
+              res.status(500).json({ message: "Failed to subscribe to newsletter" });
+            }
+          } else {
+            res.status(200).json({ message: "Successfully subscribed to newsletter" });
+          }
+        } else {
+          res.status(200).json({ message: "Successfully subscribed to newsletter" });
+        }
+      } else {
+        const errorData = await brevoResponse.json().catch(() => null);
+        console.error('Brevo API error:', brevoResponse.status, errorData);
+        res.status(500).json({ message: "Failed to subscribe to newsletter" });
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      res.status(500).json({ message: "Failed to subscribe to newsletter" });
+    }
+  });
+
+  // Get Brevo contact lists (development/admin endpoint)
+  app.get("/api/admin/brevo-lists", async (req, res) => {
+    // Restrict to development environment for security
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    try {
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      if (!brevoApiKey) {
+        return res.status(500).json({ message: "Brevo API key not configured" });
+      }
+
+      const brevoResponse = await fetch('https://api.brevo.com/v3/contacts/lists', {
+        method: 'GET',
+        headers: {
+          'api-key': brevoApiKey,
+          'accept': 'application/json',
+        },
+      });
+
+      if (brevoResponse.ok) {
+        const data = await brevoResponse.json();
+        res.json({
+          lists: data.lists?.map((list: any) => ({
+            id: list.id,
+            name: list.name,
+            totalSubscribers: list.totalSubscribers || 0
+          })) || [],
+          currentListId: process.env.BREVO_LIST_ID || null
+        });
+      } else {
+        const errorData = await brevoResponse.json().catch(() => null);
+        console.error('Brevo lists API error:', brevoResponse.status, errorData);
+        res.status(500).json({ message: "Failed to fetch Brevo lists" });
+      }
+    } catch (error) {
+      console.error('Brevo lists fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch Brevo lists" });
     }
   });
 
