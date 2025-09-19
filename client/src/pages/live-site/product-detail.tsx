@@ -16,6 +16,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -35,6 +36,11 @@ export default function ProductDetailPage() {
       setSelectedTierId(product.pricingTiers[0].id);
     }
   }, [product, selectedTierId]);
+
+  // Reset selected image index when product changes
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [product?.id]);
 
   // Get selected tier details or fallback to base product
   const getSelectedTierOrProduct = () => {
@@ -87,7 +93,7 @@ export default function ProductDetailPage() {
     const cartItem = {
       productId: product.id,
       productName: product.name,
-      image: product.images?.[0] || '',
+      image: product.images?.[selectedImageIndex] || '',
       tierId: selectedTierId,
       price: selectedOption.price.toString(),
       quantity: 1,
@@ -162,37 +168,59 @@ export default function ProductDetailPage() {
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Product Image */}
-            <div className={`relative aspect-square rounded-lg overflow-hidden shadow-lg group ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
-              <img 
-                src={product.images?.[0] || "/placeholder.svg"} 
-                alt={product.name} 
-                className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-                onClick={() => product.images && product.images.length > 0 && setIsImageModalOpen(true)}
-                data-testid="product-main-image"
-              />
-              {/* Zoom overlay hint - only show if there are images */}
-              {product.images && product.images.length > 0 && (
-                <div 
-                  className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center"
-                  onClick={() => setIsImageModalOpen(true)}
-                >
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
-                    <ZoomIn className="h-6 w-6 text-gray-800" />
+            {/* Product Images */}
+            <div className="space-y-4">
+              {/* Main Image */}
+              <div className={`relative aspect-square rounded-lg overflow-hidden shadow-lg group ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
+                <img 
+                  src={product.images?.[selectedImageIndex] || "/placeholder.svg"} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                  onClick={() => product.images && product.images.length > 0 && setIsImageModalOpen(true)}
+                  data-testid="product-main-image"
+                />
+                {/* Zoom overlay hint - only show if there are images */}
+                {product.images && product.images.length > 0 && (
+                  <div 
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center"
+                    onClick={() => setIsImageModalOpen(true)}
+                  >
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
+                      <ZoomIn className="h-6 w-6 text-gray-800" />
+                    </div>
                   </div>
-                </div>
-              )}
-              {product.isFeatured && (
-                <Badge className="absolute top-4 right-4 bg-yellow-500 text-yellow-900">
-                  <Star className="h-3 w-3 mr-1" />
-                  Featured
-                </Badge>
-              )}
-              {/* Multiple images indicator */}
+                )}
+                {/* Multiple images indicator */}
+                {product.images && product.images.length > 1 && (
+                  <Badge className="absolute bottom-4 left-4 bg-black/70 text-white">
+                    {selectedImageIndex + 1} of {product.images.length}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Thumbnail Gallery - only show if multiple images */}
               {product.images && product.images.length > 1 && (
-                <Badge className="absolute bottom-4 left-4 bg-black/70 text-white">
-                  {product.images.length} images
-                </Badge>
+                <div className="flex gap-2 overflow-x-auto">
+                  {product.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all hover:border-primary/70 ${
+                        index === selectedImageIndex 
+                          ? 'border-primary' 
+                          : 'border-border'
+                      }`}
+                      data-testid={`thumbnail-${index}`}
+                      aria-label={`View image ${index + 1} of ${product.images?.length || 0}`}
+                    >
+                      <img
+                        src={image}
+                        alt={`${product.name} thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -342,7 +370,7 @@ export default function ProductDetailPage() {
         isOpen={isImageModalOpen}
         onClose={() => setIsImageModalOpen(false)}
         productName={product.name}
-        initialImageIndex={0}
+        initialImageIndex={selectedImageIndex}
       />
     </div>
   );
