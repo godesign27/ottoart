@@ -34,15 +34,6 @@ export default function ContactPage() {
     address: "123 Artist Lane, Chicago, IL 60601"
   });
   
-  const [studioHours, setStudioHours] = useState({
-    monday: "9:00 AM - 6:00 PM",
-    tuesday: "9:00 AM - 6:00 PM",
-    wednesday: "9:00 AM - 6:00 PM",
-    thursday: "9:00 AM - 6:00 PM",
-    friday: "9:00 AM - 6:00 PM",
-    saturday: "10:00 AM - 4:00 PM",
-    sunday: "By appointment only"
-  });
   
   const [commissionsText, setCommissionsText] = useState(
     "I accept commissioned work and am always excited to discuss custom pieces. Please include details about your vision, preferred size, timeline, and budget. I typically respond to inquiries within 24-48 hours."
@@ -55,9 +46,6 @@ export default function ContactPage() {
     }
     if (contactSettings?.contactInfo) {
       setContactInfo(contactSettings.contactInfo);
-    }
-    if (contactSettings?.studioHours) {
-      setStudioHours(contactSettings.studioHours);
     }
     if (contactSettings?.commissionsText) {
       setCommissionsText(contactSettings.commissionsText);
@@ -76,7 +64,7 @@ export default function ContactPage() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async (settings: { getInTouchText: string; contactInfo: any; studioHours: any; commissionsText: string }) => {
+    mutationFn: async (settings: { getInTouchText: string; contactInfo: any; commissionsText: string }) => {
       return await apiRequest('PUT', '/api/contact-settings', settings);
     },
     onSuccess: () => {
@@ -96,7 +84,7 @@ export default function ContactPage() {
   });
 
   const handleSave = () => {
-    saveMutation.mutate({ getInTouchText, contactInfo, studioHours, commissionsText });
+    saveMutation.mutate({ getInTouchText, contactInfo, commissionsText });
   };
 
   return (
@@ -181,27 +169,6 @@ export default function ContactPage() {
               </CardContent>
             </Card>
 
-            {/* Studio Hours Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Studio Hours</CardTitle>
-                <CardDescription>Set your availability for each day of the week</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {Object.entries(studioHours).map(([day, hours]) => (
-                  <div key={day} className="space-y-2">
-                    <Label htmlFor={`hours-${day}`} className="capitalize">{day}</Label>
-                    <Input
-                      id={`hours-${day}`}
-                      value={hours}
-                      onChange={(e) => setStudioHours(prev => ({ ...prev, [day]: e.target.value }))}
-                      placeholder="e.g., 9:00 AM - 6:00 PM or Closed"
-                      data-testid={`input-hours-${day}`}
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
 
             {/* Commissions & Inquiries Section */}
             <Card>
