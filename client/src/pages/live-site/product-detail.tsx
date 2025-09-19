@@ -3,10 +3,11 @@ import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
+import { ProductImageModal } from "@/components/live-site/product-image-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Star, Package, Shield, RotateCcw, ShoppingBag } from "lucide-react";
+import { ChevronLeft, Star, Package, Shield, RotateCcw, ShoppingBag, ZoomIn } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 
@@ -15,6 +16,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: product, isLoading } = useQuery<Product>({
@@ -161,16 +163,35 @@ export default function ProductDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Product Image */}
-            <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg">
+            <div className={`relative aspect-square rounded-lg overflow-hidden shadow-lg group ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
               <img 
                 src={product.images?.[0] || "/placeholder.svg"} 
                 alt={product.name} 
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                onClick={() => product.images && product.images.length > 0 && setIsImageModalOpen(true)}
+                data-testid="product-main-image"
               />
+              {/* Zoom overlay hint - only show if there are images */}
+              {product.images && product.images.length > 0 && (
+                <div 
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center"
+                  onClick={() => setIsImageModalOpen(true)}
+                >
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
+                    <ZoomIn className="h-6 w-6 text-gray-800" />
+                  </div>
+                </div>
+              )}
               {product.isFeatured && (
                 <Badge className="absolute top-4 right-4 bg-yellow-500 text-yellow-900">
                   <Star className="h-3 w-3 mr-1" />
                   Featured
+                </Badge>
+              )}
+              {/* Multiple images indicator */}
+              {product.images && product.images.length > 1 && (
+                <Badge className="absolute bottom-4 left-4 bg-black/70 text-white">
+                  {product.images.length} images
                 </Badge>
               )}
             </div>
@@ -314,6 +335,15 @@ export default function ProductDetailPage() {
       </main>
       
       <Footer />
+
+      {/* Product Image Modal */}
+      <ProductImageModal
+        images={product.images || []}
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        productName={product.name}
+        initialImageIndex={0}
+      />
     </div>
   );
 }
