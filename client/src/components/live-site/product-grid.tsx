@@ -9,14 +9,15 @@ interface ProductGridProps {
   category?: string;
   searchQuery?: string;
   viewMode?: "grid" | "list";
+  filterByPrintTiers?: boolean;
 }
 
-export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: ProductGridProps) {
+export function ProductGrid({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false }: ProductGridProps) {
   // Convert category name to slug for API call
   const categorySlug = category ? category.toLowerCase().replace(/\s+/g, '-') : undefined;
   
   const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products', { category: categorySlug }],
+    queryKey: ['/api/products', { category: categorySlug, printOnly: filterByPrintTiers }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (categorySlug) {
@@ -34,6 +35,13 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid" }: P
         filtered = filtered.filter(product =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
+      // Filter by print tiers if requested
+      if (filterByPrintTiers) {
+        filtered = filtered.filter(product => 
+          product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print')
         );
       }
       

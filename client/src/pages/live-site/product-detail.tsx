@@ -30,16 +30,21 @@ export default function ProductDetailPage() {
     enabled: !!params.id
   });
 
-  // Auto-select the first pricing tier when product loads
+  // Auto-select the first print tier, or fallback to first tier when product loads
   useEffect(() => {
     if (product?.pricingTiers && product.pricingTiers.length > 0 && !selectedTierId) {
-      setSelectedTierId(product.pricingTiers[0].id);
+      // Try to find first print tier
+      const firstPrintTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'print');
+      // Use first print tier if available, otherwise use first tier
+      const tierToSelect = firstPrintTier || product.pricingTiers[0];
+      setSelectedTierId(tierToSelect.id);
     }
   }, [product, selectedTierId]);
 
-  // Reset selected image index when product changes
+  // Reset selected image index and tier selection when product changes
   useEffect(() => {
     setSelectedImageIndex(0);
+    setSelectedTierId(null);
   }, [product?.id]);
 
   // Get selected tier details or fallback to base product

@@ -25,7 +25,7 @@ export default function PrintsPage() {
             <h1 className="text-3xl font-bold text-foreground">Prints</h1>
             <p className="text-muted-foreground mt-2">Digital and physical prints</p>
           </div>
-          <ProductGrid category="Art Prints" />
+          <ProductGrid filterByPrintTiers={true} />
         </div>
       </main>
       
