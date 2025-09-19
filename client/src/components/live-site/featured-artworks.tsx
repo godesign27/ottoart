@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
 
 export function FeaturedArtworks() {
@@ -60,17 +61,37 @@ export function FeaturedArtworks() {
                 />
                 <div className="p-6">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="text-xl font-semibold text-foreground mb-1">{product.name}</h3>
-                      <p className="text-muted-foreground">
-                        {product.isOriginal ? 'Original Painting' : 'Art Print'} • {product.dimensions}
+                      <p className="text-muted-foreground mb-3">
+                        {product.dimensions}
                       </p>
+                      
+                      {/* Badge Logic */}
+                      <div className="flex gap-2 mb-2">
+                        {(() => {
+                          // Check if original is sold out (case-insensitive and safer fallback)
+                          const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
+                          const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                          
+                          // Check if prints are available (case-insensitive)
+                          const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
+                          
+                          return (
+                            <>
+                              {originalSoldOut && (
+                                <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
+                              )}
+                              {hasPrintTiers && (
+                                <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-foreground">${product.price}</p>
-                      <p className="text-sm text-green-600">
-                        {(product.stock ?? 0) > 0 ? ((product.stock ?? 0) === 1 ? 'In Stock' : `${product.stock} Available`) : 'Out of Stock'}
-                      </p>
                     </div>
                   </div>
                 </div>
