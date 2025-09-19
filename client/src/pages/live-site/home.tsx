@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { HeroSection } from "@/components/live-site/hero-section";
 import { FeaturedArtworks } from "@/components/live-site/featured-artworks";
+import { Footer } from "@/components/live-site/footer";
 
 export default function LiveSiteHome() {
   const [, setLocation] = useLocation();
@@ -23,6 +24,8 @@ export default function LiveSiteHome() {
         <HeroSection />
         <FeaturedArtworks />
       </main>
+      
+      <Footer />
     </div>
   );
 }

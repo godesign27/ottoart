@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { ContactSection } from "@/components/live-site/contact-section";
 
 export default function LiveSiteContact() {
@@ -21,6 +22,8 @@ export default function LiveSiteContact() {
       <main className="bg-background">
         <ContactSection />
       </main>
+      
+      <Footer />
     </div>
   );
 }

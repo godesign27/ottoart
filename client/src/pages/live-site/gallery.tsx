@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Palette, ArrowRight, Eye } from "lucide-react";
@@ -123,6 +124,8 @@ export default function GalleryPage() {
           )}
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }

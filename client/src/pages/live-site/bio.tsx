@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 
 export default function BioPage() {
@@ -118,6 +119,8 @@ export default function BioPage() {
           </div>
         </section>
       )}
+      
+      <Footer />
     </div>
   );
 }

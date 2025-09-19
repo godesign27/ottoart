@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -528,6 +529,8 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

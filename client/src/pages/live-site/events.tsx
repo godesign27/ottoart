@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, MapPin } from "lucide-react";
 
@@ -95,6 +96,8 @@ export default function EventsPage() {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }

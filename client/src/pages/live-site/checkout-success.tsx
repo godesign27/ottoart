@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, ShoppingBag, Home } from "lucide-react";
@@ -61,6 +62,8 @@ export default function CheckoutSuccessPage() {
           </Card>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

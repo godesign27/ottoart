@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { ProductGrid } from "@/components/live-site/product-grid";
 
 export default function PrintsPage() {
@@ -27,6 +28,8 @@ export default function PrintsPage() {
           <ProductGrid category="Art Prints" />
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }

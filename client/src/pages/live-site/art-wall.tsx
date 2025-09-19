@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArtWallSimulator } from "@/components/live-site/art-wall-simulator";
+import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ArrowLeft, Palette } from "lucide-react";
@@ -116,6 +117,8 @@ export function ArtWallPage() {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }

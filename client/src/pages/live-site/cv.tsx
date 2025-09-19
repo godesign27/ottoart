@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 
 export default function CVPage() {
   const [, setLocation] = useLocation();
@@ -143,6 +144,8 @@ export default function CVPage() {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }

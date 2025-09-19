@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
+import { Footer } from "@/components/live-site/footer";
 import { ProductGrid } from "@/components/live-site/product-grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +74,8 @@ export default function ShopAllPage() {
           <ProductGrid searchQuery={searchQuery} viewMode={gridViewMode} />
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }
