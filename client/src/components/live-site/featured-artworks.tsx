@@ -82,7 +82,7 @@ export function FeaturedArtworks() {
                               {originalSoldOut && (
                                 <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
                               )}
-                              {hasPrintTiers && (
+                              {originalSoldOut && hasPrintTiers && (
                                 <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
                               )}
                             </>

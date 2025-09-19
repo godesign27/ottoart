@@ -99,12 +99,25 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                         <p className="text-lg font-bold mt-2">${product.price}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {product.isFeatured && (
-                          <Badge variant="secondary">Featured</Badge>
-                        )}
-                        <Badge variant={(product.stock ?? 0) > 0 ? "default" : "destructive"}>
-                          {(product.stock ?? 0) > 0 ? 'In Stock' : 'Out of Stock'}
-                        </Badge>
+                        {(() => {
+                          // Check if original is sold out (case-insensitive and safer fallback)
+                          const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
+                          const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                          
+                          // Check if prints are available (case-insensitive)
+                          const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
+                          
+                          return (
+                            <>
+                              {originalSoldOut && (
+                                <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
+                              )}
+                              {originalSoldOut && hasPrintTiers && (
+                                <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -128,20 +141,33 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              {product.isFeatured && (
-                <Badge className="absolute top-3 right-3 bg-yellow-500 text-yellow-900">
-                  Featured
-                </Badge>
-              )}
             </div>
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg">{product.name}</h3>
                 <div className="flex items-center justify-between">
                   <p className="text-xl font-bold">${product.price}</p>
-                  <Badge variant={(product.stock ?? 0) > 0 ? "default" : "destructive"}>
-                    {(product.stock ?? 0) > 0 ? 'In Stock' : 'Out of Stock'}
-                  </Badge>
+                  <div className="flex gap-2">
+                    {(() => {
+                      // Check if original is sold out (case-insensitive and safer fallback)
+                      const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
+                      const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                      
+                      // Check if prints are available (case-insensitive)
+                      const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
+                      
+                      return (
+                        <>
+                          {originalSoldOut && (
+                            <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
+                          )}
+                          {originalSoldOut && hasPrintTiers && (
+                            <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </CardContent>
