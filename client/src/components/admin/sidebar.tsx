@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PageSettings } from "@shared/schema";
 import { 
   LayoutDashboard, 
@@ -19,7 +20,13 @@ import {
   User,
   Building,
   Palette,
-  Share2
+  Share2,
+  Home,
+  UserCircle,
+  ImageIcon,
+  Calendar,
+  FileTextIcon,
+  Mail
 } from "lucide-react";
 
 const navItems = [
@@ -65,32 +72,38 @@ const pageItems = [
   {
     title: "Home",
     href: "/admin/home",
-    page: "home"
+    page: "home",
+    icon: Home
   },
   {
     title: "Bio",
     href: "/admin/bio",
-    page: "bio"
+    page: "bio",
+    icon: UserCircle
   },
   {
     title: "Gallery", 
     href: "/admin/gallery",
-    page: "gallery"
+    page: "gallery",
+    icon: ImageIcon
   },
   {
     title: "Events",
     href: "/admin/events",
-    page: "events"
+    page: "events",
+    icon: Calendar
   },
   {
     title: "CV",
     href: "/admin/cv", 
-    page: "cv"
+    page: "cv",
+    icon: FileTextIcon
   },
   {
     title: "Contact",
     href: "/admin/contact",
-    page: "contact"
+    page: "contact",
+    icon: Mail
   }
 ];
 
@@ -231,24 +244,44 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
               const Icon = item.icon;
               const isActive = location === item.href || location.startsWith(item.href + '/');
               
-              return (
+              return isCollapsed && !isMobileMenuOpen ? (
+                <TooltipProvider key={item.href}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        className={`w-full transition-all duration-200 justify-center px-2 ${
+                          isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'
+                        }`}
+                        onClick={() => {
+                          onNavigate(item.href);
+                          if (isMobileMenuOpen && onClose) onClose();
+                        }}
+                        data-testid={`nav-${item.view}`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>{item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
                 <Button
                   key={item.href}
                   variant={isActive ? "secondary" : "ghost"}
-                  className={`w-full transition-all duration-200 ${
-                    isCollapsed ? 'justify-center px-2' : 'justify-start'
-                  } ${isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'}`}
+                  className={`w-full transition-all duration-200 justify-start ${
+                    isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'
+                  }`}
                   onClick={() => {
                     onNavigate(item.href);
                     if (isMobileMenuOpen && onClose) onClose();
                   }}
                   data-testid={`nav-${item.view}`}
-                  title={isCollapsed ? item.title : undefined}
                 >
-                  <Icon className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
-                  {(!isCollapsed || isMobileMenuOpen) && (
-                    <span className="transition-opacity duration-200">{item.title}</span>
-                  )}
+                  <Icon className="h-4 w-4 mr-3" />
+                  <span className="transition-opacity duration-200">{item.title}</span>
                 </Button>
               );
             })}
@@ -269,31 +302,40 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
               <div className={`space-y-1 ${isCollapsed && !isMobileMenuOpen ? '' : 'ml-6'}`}>
                 {pageItems.map((page) => {
                   const isEnabled = getPageEnabled(page.page);
-                  return (
+                  return isCollapsed && !isMobileMenuOpen ? (
+                    <TooltipProvider key={page.href}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div 
+                            className="w-full flex items-center justify-center rounded-md cursor-pointer transition-all duration-200 px-2 py-2 text-xs hover:bg-accent text-foreground"
+                            onClick={() => {
+                              onNavigate(page.href);
+                              if (isMobileMenuOpen && onClose) onClose();
+                            }}
+                            data-testid={`page-${page.title.toLowerCase()}`}
+                          >
+                            <page.icon className="h-4 w-4" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p>{page.title} ({isEnabled ? 'Enabled' : 'Disabled'})</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
                     <div 
                       key={page.href}
-                      className={`w-full flex items-center rounded-md cursor-pointer transition-all duration-200 ${
-                        isCollapsed && !isMobileMenuOpen 
-                          ? 'justify-center px-2 py-2 text-xs hover:bg-accent' 
-                          : 'justify-between px-3 py-1 text-sm hover:bg-accent'
-                      } text-foreground`}
+                      className="w-full flex items-center justify-between rounded-md cursor-pointer transition-all duration-200 px-3 py-1 text-sm hover:bg-accent text-foreground"
                       onClick={() => {
                         onNavigate(page.href);
                         if (isMobileMenuOpen && onClose) onClose();
                       }}
                       data-testid={`page-${page.title.toLowerCase()}`}
-                      title={isCollapsed && !isMobileMenuOpen ? `${page.title} (${isEnabled ? 'Enabled' : 'Disabled'})` : undefined}
                     >
-                      {isCollapsed && !isMobileMenuOpen ? (
-                        <span className="text-xs font-medium">{page.title.charAt(0)}</span>
-                      ) : (
-                        <>
-                          <span>{page.title}</span>
-                          <Badge variant={isEnabled ? "default" : "secondary"} className="text-xs">
-                            {isEnabled ? "Enabled" : "Disabled"}
-                          </Badge>
-                        </>
-                      )}
+                      <span>{page.title}</span>
+                      <Badge variant={isEnabled ? "default" : "secondary"} className="text-xs">
+                        {isEnabled ? "Enabled" : "Disabled"}
+                      </Badge>
                     </div>
                   );
                 })}
@@ -318,24 +360,44 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
                   const Icon = item.icon;
                   const isActive = location === item.href;
                   
-                  return (
+                  return isCollapsed && !isMobileMenuOpen ? (
+                    <TooltipProvider key={item.href}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={isActive ? "secondary" : "ghost"}
+                            className={`w-full text-sm transition-all duration-200 justify-center px-2 ${
+                              isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                            }`}
+                            onClick={() => {
+                              onNavigate(item.href);
+                              if (isMobileMenuOpen && onClose) onClose();
+                            }}
+                            data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
+                          >
+                            <Icon className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p>{item.title}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
                     <Button
                       key={item.href}
                       variant={isActive ? "secondary" : "ghost"}
-                      className={`w-full text-sm transition-all duration-200 ${
-                        isCollapsed && !isMobileMenuOpen ? 'justify-center px-2' : 'justify-start'
-                      } ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}
+                      className={`w-full text-sm transition-all duration-200 justify-start ${
+                        isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                      }`}
                       onClick={() => {
                         onNavigate(item.href);
                         if (isMobileMenuOpen && onClose) onClose();
                       }}
                       data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
-                      title={isCollapsed && !isMobileMenuOpen ? item.title : undefined}
                     >
-                      <Icon className={`h-3 w-3 ${isCollapsed && !isMobileMenuOpen ? '' : 'mr-3'}`} />
-                      {(!isCollapsed || isMobileMenuOpen) && (
-                        <span className="transition-opacity duration-200">{item.title}</span>
-                      )}
+                      <Icon className="h-3 w-3 mr-3" />
+                      <span className="transition-opacity duration-200">{item.title}</span>
                     </Button>
                   );
                 })}

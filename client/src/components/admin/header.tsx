@@ -60,8 +60,7 @@ export function AdminHeader({ viewMode, onViewModeChange, onMenuToggle, isMobile
             onClick={() => onViewModeChange('admin')}
             data-testid="admin-tab"
           >
-            <Settings className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">Studio Admin</span>
+            <Settings className="h-4 w-4" />
           </Button>
           <Button
             size="sm"
@@ -70,8 +69,7 @@ export function AdminHeader({ viewMode, onViewModeChange, onMenuToggle, isMobile
             onClick={() => onViewModeChange('live')}
             data-testid="live-tab"
           >
-            <Eye className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">Live Site</span>
+            <Eye className="h-4 w-4" />
           </Button>
         </div>
 
