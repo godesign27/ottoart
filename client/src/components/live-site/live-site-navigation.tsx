@@ -228,6 +228,29 @@ export function LiveSiteNavigation({
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
+          {onViewModeChange && (
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button
+                size="sm"
+                variant={viewMode === 'admin' ? 'default' : 'ghost'}
+                className={viewMode === 'admin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}
+                onClick={() => onViewModeChange('admin')}
+                data-testid="admin-tab-live"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={viewMode === 'live' ? 'default' : 'ghost'}
+                className={viewMode === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}
+                onClick={() => onViewModeChange('live')}
+                data-testid="live-tab-live"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
           <Link href="/checkout">
             <Button 
               variant="ghost" 
@@ -243,29 +266,6 @@ export function LiveSiteNavigation({
               )}
             </Button>
           </Link>
-
-          {onViewModeChange && (
-            <div className="flex bg-muted rounded-lg p-1">
-              <Button
-                size="sm"
-                variant={viewMode === 'admin' ? 'default' : 'ghost'}
-                className={viewMode === 'admin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}
-                onClick={() => onViewModeChange('admin')}
-                data-testid="admin-tab-live"
-              >
-                Studio Admin
-              </Button>
-              <Button
-                size="sm"
-                variant={viewMode === 'live' ? 'default' : 'ghost'}
-                className={viewMode === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}
-                onClick={() => onViewModeChange('live')}
-                data-testid="live-tab-live"
-              >
-                Live Site
-              </Button>
-            </div>
-          )}
 
           <Button 
             variant="ghost" 
@@ -318,6 +318,15 @@ export function LiveSiteNavigation({
               )}
             </Button>
           </Link>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-muted-foreground hover:text-foreground" 
+            data-testid="mobile-user-button"
+          >
+            <User className="h-5 w-5" />
+          </Button>
         </div>
       </nav>
     </>
