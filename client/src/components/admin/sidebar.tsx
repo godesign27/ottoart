@@ -96,9 +96,12 @@ const pageItems = [
 
 interface AdminSidebarProps {
   onNavigate: (href: string) => void;
+  isCollapsed?: boolean;
+  isMobileMenuOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
+export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen = false, onClose }: AdminSidebarProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [profileImage, setProfileImage] = useState("https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150");
@@ -174,114 +177,210 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   ];
 
   return (
-    <div className="admin-sidebar w-64 bg-card border-r border-border flex flex-col shadow-sm">
-      {/* User Profile Section */}
-      <div className="px-6 py-12 border-b border-border">
-        <div className="flex flex-col items-center space-y-3">
-          <img 
-            src={profileImage} 
-            alt="Otto Art Profile" 
-            className="h-24 w-24 rounded-full object-cover border-2 border-primary/20" 
-          />
-          <div className="text-center">
-            <h2 className="font-semibold text-foreground">{artistName}</h2>
-            <p className="text-sm text-muted-foreground">Artist & Creator</p>
+    <>
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          onClick={onClose}
+          data-testid="mobile-menu-overlay"
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div 
+        className={`admin-sidebar bg-card border-r border-border flex flex-col shadow-sm transition-all duration-200 ${
+          // Mobile styles
+          isMobileMenuOpen 
+            ? 'fixed left-0 top-0 bottom-0 w-64 z-50 md:relative md:translate-x-0' 
+            : 'fixed left-0 top-0 bottom-0 w-64 z-50 -translate-x-full md:relative md:translate-x-0'
+        } ${
+          // Desktop collapsed styles  
+          isCollapsed ? 'md:w-16' : 'md:w-64'
+        }`}
+        id="mobile-sidebar"
+        role={isMobileMenuOpen ? "dialog" : undefined}
+        aria-modal={isMobileMenuOpen ? "true" : undefined}
+        aria-label={isMobileMenuOpen ? "Navigation menu" : undefined}
+      >
+        {/* User Profile Section */}
+        <div className={`px-6 py-8 border-b border-border transition-all duration-200 ${
+          isCollapsed ? 'md:px-2' : 'md:px-6'
+        }`}>
+          <div className="flex flex-col items-center space-y-3">
+            <img 
+              src={profileImage} 
+              alt="Otto Art Profile" 
+              className={`rounded-full object-cover border-2 border-primary/20 transition-all duration-200 ${
+                isCollapsed ? 'h-8 w-8 md:h-10 md:w-10' : 'h-16 w-16 md:h-24 md:w-24'
+              }`} 
+            />
+            {(!isCollapsed || isMobileMenuOpen) && (
+              <div className="text-center">
+                <h2 className="font-semibold text-foreground text-sm md:text-base">{artistName}</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">Artist & Creator</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.href || location.startsWith(item.href + '/');
+              
+              return (
+                <Button
+                  key={item.href}
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={`w-full transition-all duration-200 ${
+                    isCollapsed ? 'justify-center px-2' : 'justify-start'
+                  } ${isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'}`}
+                  onClick={() => {
+                    onNavigate(item.href);
+                    if (isMobileMenuOpen && onClose) onClose();
+                  }}
+                  data-testid={`nav-${item.view}`}
+                  title={isCollapsed ? item.title : undefined}
+                >
+                  <Icon className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                  {(!isCollapsed || isMobileMenuOpen) && (
+                    <span className="transition-opacity duration-200">{item.title}</span>
+                  )}
+                </Button>
+              );
+            })}
+
+            {/* Pages Section */}
+            <div className="space-y-1 mt-6">
+              {(!isCollapsed || isMobileMenuOpen) && (
+                <div className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground">
+                  <FileText className="mr-3 h-4 w-4" />
+                  Pages
+                </div>
+              )}
+              {isCollapsed && !isMobileMenuOpen && (
+                <div className="flex justify-center py-2" title="Pages">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className={`space-y-1 ${isCollapsed && !isMobileMenuOpen ? '' : 'ml-6'}`}>
+                {pageItems.map((page) => {
+                  const isEnabled = getPageEnabled(page.page);
+                  return (
+                    <div 
+                      key={page.href}
+                      className={`w-full flex items-center rounded-md cursor-pointer transition-all duration-200 ${
+                        isCollapsed && !isMobileMenuOpen 
+                          ? 'justify-center px-2 py-2 text-xs hover:bg-accent' 
+                          : 'justify-between px-3 py-1 text-sm hover:bg-accent'
+                      } text-foreground`}
+                      onClick={() => {
+                        onNavigate(page.href);
+                        if (isMobileMenuOpen && onClose) onClose();
+                      }}
+                      data-testid={`page-${page.title.toLowerCase()}`}
+                      title={isCollapsed && !isMobileMenuOpen ? `${page.title} (${isEnabled ? 'Enabled' : 'Disabled'})` : undefined}
+                    >
+                      {isCollapsed && !isMobileMenuOpen ? (
+                        <span className="text-xs font-medium">{page.title.charAt(0)}</span>
+                      ) : (
+                        <>
+                          <span>{page.title}</span>
+                          <Badge variant={isEnabled ? "default" : "secondary"} className="text-xs">
+                            {isEnabled ? "Enabled" : "Disabled"}
+                          </Badge>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Site Settings */}
+            <div className="space-y-1 mt-6">
+              {(!isCollapsed || isMobileMenuOpen) && (
+                <div className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground">
+                  <Settings className="mr-3 h-4 w-4" />
+                  Site Settings
+                </div>
+              )}
+              {isCollapsed && !isMobileMenuOpen && (
+                <div className="flex justify-center py-2" title="Site Settings">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className={`space-y-1 ${isCollapsed && !isMobileMenuOpen ? '' : 'ml-6'}`}>
+                {settingsItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location === item.href;
+                  
+                  return (
+                    <Button
+                      key={item.href}
+                      variant={isActive ? "secondary" : "ghost"}
+                      className={`w-full text-sm transition-all duration-200 ${
+                        isCollapsed && !isMobileMenuOpen ? 'justify-center px-2' : 'justify-start'
+                      } ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}
+                      onClick={() => {
+                        onNavigate(item.href);
+                        if (isMobileMenuOpen && onClose) onClose();
+                      }}
+                      data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
+                      title={isCollapsed && !isMobileMenuOpen ? item.title : undefined}
+                    >
+                      <Icon className={`h-3 w-3 ${isCollapsed && !isMobileMenuOpen ? '' : 'mr-3'}`} />
+                      {(!isCollapsed || isMobileMenuOpen) && (
+                        <span className="transition-opacity duration-200">{item.title}</span>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Dark Mode Toggle */}
+        <div className={`p-4 border-t border-border transition-all duration-200 ${
+          isCollapsed && !isMobileMenuOpen ? 'px-2' : 'px-4'
+        }`}>
+          <div className={`flex items-center ${
+            isCollapsed && !isMobileMenuOpen ? 'justify-center' : 'justify-between'
+          }`}>
+            {isCollapsed && !isMobileMenuOpen ? (
+              <div className="flex flex-col items-center space-y-2" title="Dark Mode Toggle">
+                <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+                <Switch 
+                  checked={theme === 'dark'} 
+                  onCheckedChange={toggleTheme}
+                  data-testid="theme-toggle"
+                  className="scale-75"
+                />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center space-x-2">
+                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                  </svg>
+                  <span className="text-sm text-foreground">Dark Mode</span>
+                </div>
+                <Switch 
+                  checked={theme === 'dark'} 
+                  onCheckedChange={toggleTheme}
+                  data-testid="theme-toggle"
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        <div className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href || location.startsWith(item.href + '/');
-            
-            return (
-              <Button
-                key={item.href}
-                variant={isActive ? "secondary" : "ghost"}
-                className={`w-full justify-start ${isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'}`}
-                onClick={() => onNavigate(item.href)}
-                data-testid={`nav-${item.view}`}
-              >
-                <Icon className="mr-3 h-4 w-4" />
-                {item.title}
-              </Button>
-            );
-          })}
-
-          {/* Pages Section */}
-          <div className="space-y-1 mt-6">
-            <div className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground">
-              <FileText className="mr-3 h-4 w-4" />
-              Pages
-            </div>
-            <div className="ml-6 space-y-1">
-              {pageItems.map((page) => {
-                const isEnabled = getPageEnabled(page.page);
-                return (
-                  <div 
-                    key={page.href}
-                    className="w-full flex items-center justify-between px-3 py-1 text-sm text-foreground hover:bg-accent rounded-md cursor-pointer"
-                    onClick={() => onNavigate(page.href)}
-                    data-testid={`page-${page.title.toLowerCase()}`}
-                  >
-                    {page.title}
-                    <Badge variant={isEnabled ? "default" : "secondary"} className="text-xs">
-                      {isEnabled ? "Enabled" : "Disabled"}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Site Settings */}
-          <div className="space-y-1 mt-6">
-            <div className="flex items-center px-3 py-2 text-sm font-medium text-muted-foreground">
-              <Settings className="mr-3 h-4 w-4" />
-              Site Settings
-            </div>
-            <div className="ml-6 space-y-1">
-              {settingsItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location === item.href;
-                
-                return (
-                  <Button
-                    key={item.href}
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={`w-full justify-start text-sm ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}
-                    onClick={() => onNavigate(item.href)}
-                    data-testid={`nav-settings-${item.title.toLowerCase().replace(' ', '-')}`}
-                  >
-                    <Icon className="mr-3 h-3 w-3" />
-                    {item.title}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Dark Mode Toggle */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-            </svg>
-            <span className="text-sm text-foreground">Dark Mode</span>
-          </div>
-          <Switch 
-            checked={theme === 'dark'} 
-            onCheckedChange={toggleTheme}
-            data-testid="theme-toggle"
-          />
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
