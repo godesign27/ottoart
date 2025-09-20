@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, ShoppingCart, Menu, X } from "lucide-react";
+import { User, ShoppingCart, Menu, X, Settings, Eye } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 
 interface LiveSiteNavigationProps {
@@ -279,6 +279,30 @@ export function LiveSiteNavigation({
 
         {/* Mobile-only Icons */}
         <div className="flex md:hidden items-center space-x-2">
+          {/* Mobile View Switcher */}
+          {onViewModeChange && (
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button
+                size="sm"
+                variant={viewMode === 'admin' ? 'default' : 'ghost'}
+                className={viewMode === 'admin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}
+                onClick={() => onViewModeChange('admin')}
+                data-testid="mobile-admin-tab-icon"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={viewMode === 'live' ? 'default' : 'ghost'}
+                className={viewMode === 'live' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}
+                onClick={() => onViewModeChange('live')}
+                data-testid="mobile-live-tab-icon"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          
           <Link href="/checkout">
             <Button 
               variant="ghost" 
