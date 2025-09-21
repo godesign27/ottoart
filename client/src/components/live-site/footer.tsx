@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Instagram, Twitter, Facebook, Linkedin, Youtube } from "lucide-react";
 import { SiTiktok, SiPinterest } from "react-icons/si";
 import { EmailSubscriptionForm } from "./email-subscription-form";
+import { ServiceTrustCards } from "./service-trust-cards";
 import type { PageSettings, SocialSettings } from "@shared/schema";
 
 export function Footer() {
@@ -110,6 +111,9 @@ export function Footer() {
 
   return (
     <footer className="bg-background border-t border-border">
+      {/* Service Trust Cards Section */}
+      <ServiceTrustCards />
+      
       {/* Email Subscription Section */}
       <div className="bg-muted/30 border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-8">
