@@ -227,6 +227,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage(validatedData);
+
+      // Get Brevo API key for additional functionality
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      
+      if (brevoApiKey) {
+        // Send email notification to ottoart27@gmail.com
+        try {
+          const emailData = {
+            sender: {
+              name: "Otto Art Contact Form",
+              email: "noreply@ottoart.com"
+            },
+            to: [
+              {
+                email: "ottoart27@gmail.com",
+                name: "Otto Art"
+              }
+            ],
+            subject: validatedData.subject ? `Contact Form: ${validatedData.subject}` : "New Contact Form Inquiry",
+            htmlContent: `
+              <h2>New Contact Form Submission</h2>
+              <p><strong>Name:</strong> ${validatedData.name}</p>
+              <p><strong>Email:</strong> ${validatedData.email}</p>
+              ${validatedData.subject ? `<p><strong>Subject:</strong> ${validatedData.subject}</p>` : ''}
+              <p><strong>Message:</strong></p>
+              <p>${validatedData.message.replace(/\n/g, '<br>')}</p>
+              <hr>
+              <p><em>This message was sent via the Otto Art website contact form.</em></p>
+            `
+          };
+
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'api-key': brevoApiKey,
+            },
+            body: JSON.stringify(emailData),
+          });
+        } catch (emailError) {
+          console.error('Failed to send email notification:', emailError);
+          // Don't fail the whole request if email fails
+        }
+
+        // Add contact to Brevo list #2
+        try {
+          const contactData = {
+            email: validatedData.email.trim().toLowerCase(),
+            updateEnabled: true,
+            emailBlacklisted: false,
+            listIds: [2], // Add to list #2
+            attributes: {
+              FIRSTNAME: validatedData.name.split(' ')[0],
+              LASTNAME: validatedData.name.split(' ').slice(1).join(' ') || ''
+            }
+          };
+
+          const brevoResponse = await fetch('https://api.brevo.com/v3/contacts', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'api-key': brevoApiKey,
+            },
+            body: JSON.stringify(contactData),
+          });
+
+          if (!brevoResponse.ok && brevoResponse.status === 409) {
+            // Contact already exists - add them to list #2
+            try {
+              await fetch(`https://api.brevo.com/v3/contacts/lists/2/contacts/add`, {
+                method: 'POST',
+                headers: {
+                  'content-type': 'application/json',
+                  'api-key': brevoApiKey,
+                },
+                body: JSON.stringify({
+                  emails: [validatedData.email.trim().toLowerCase()]
+                }),
+              });
+            } catch (listError) {
+              console.error('Failed to add existing contact to list #2:', listError);
+            }
+          }
+        } catch (brevoError) {
+          console.error('Failed to add contact to Brevo:', brevoError);
+          // Don't fail the whole request if Brevo fails
+        }
+      }
+
       res.status(201).json(message);
     } catch (error) {
       res.status(400).json({ message: "Invalid message data" });
