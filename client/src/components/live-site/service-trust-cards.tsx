@@ -5,12 +5,12 @@ export function ServiceTrustCards() {
     {
       icon: Truck,
       title: "Shipping & Delivery",
-      content: "Free delivery worldwide. Professional packaging with tracking number provided for safe transit of your artwork."
+      content: "Free US delivery for qualifying orders. Your artwork is hand-packed with care and shipped in professional packaging. Every order comes with a tracking number emailed directly to you for peace of mind.\n\nUS delivery: within 14 days\nInternational delivery: 14–28 days"
     },
     {
       icon: Shield,
       title: "Secure Checkout",
-      content: "Your payment information is protected with bank-level security. Shop with confidence using our encrypted checkout process."
+      content: "Shop with Confidence. Your payment details are safeguarded by bank-level encryption throughout the checkout process. We accept all major credit cards, plus modern options like Link and Amazon Pay, so you can choose the method that works best for you."
     },
     {
       icon: Award,
