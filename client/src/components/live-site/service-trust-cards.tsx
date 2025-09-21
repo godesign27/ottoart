@@ -28,7 +28,7 @@ export function ServiceTrustCards() {
             return (
               <div 
                 key={index} 
-                className="text-center space-y-4 p-6 rounded-lg bg-background/50 border border-border/50 hover:bg-background/80 transition-colors"
+                className="text-center space-y-4 p-6 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
                 data-testid={`service-card-${card.title.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
