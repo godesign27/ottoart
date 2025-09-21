@@ -20,7 +20,7 @@ export function ServiceTrustCards() {
   ];
 
   return (
-    <div className="bg-muted/20 border-b border-border">
+    <div className="bg-muted/50 border-b border-border">
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {cards.map((card, index) => {
