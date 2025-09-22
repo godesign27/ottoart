@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, ShoppingCart, Menu, X, Settings, Eye } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
+import { ProfileMenu } from "./profile-menu";
 
 interface LiveSiteNavigationProps {
   viewMode?: 'admin' | 'live';
@@ -267,14 +268,7 @@ export function LiveSiteNavigation({
             </Button>
           </Link>
 
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-muted-foreground hover:text-foreground" 
-            data-testid="user-button-live"
-          >
-            <User className="h-5 w-5" />
-          </Button>
+          <ProfileMenu />
         </div>
 
         {/* Mobile-only Icons */}
@@ -319,14 +313,7 @@ export function LiveSiteNavigation({
             </Button>
           </Link>
           
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-muted-foreground hover:text-foreground" 
-            data-testid="mobile-user-button"
-          >
-            <User className="h-5 w-5" />
-          </Button>
+          <ProfileMenu />
         </div>
       </nav>
     </>

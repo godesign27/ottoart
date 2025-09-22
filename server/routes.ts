@@ -2,9 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
@@ -23,6 +24,77 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication middleware - from blueprint:javascript_log_in_with_replit
+  await setupAuth(app);
+
+  // Authentication routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Favorites routes (protected)
+  app.get('/api/favorites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getUserFavorites(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  app.post('/api/favorites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { productId } = req.body;
+      const validatedData = insertFavoriteSchema.parse({
+        userId,
+        productId
+      });
+      const favorite = await storage.addFavorite(validatedData);
+      res.status(201).json(favorite);
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      res.status(400).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  app.delete('/api/favorites/:productId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { productId } = req.params;
+      const success = await storage.removeFavorite(userId, productId);
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: "Favorite not found" });
+      }
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  app.get('/api/favorites/:productId/check', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { productId } = req.params;
+      const isFavorite = await storage.isFavorite(userId, productId);
+      res.json({ isFavorite });
+    } catch (error) {
+      console.error("Error checking favorite:", error);
+      res.status(500).json({ message: "Failed to check favorite status" });
+    }
+  });
+
   // Products
   app.get("/api/products", async (req, res) => {
     try {

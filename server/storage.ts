@@ -1,6 +1,9 @@
 import { 
   type User, 
   type InsertUser,
+  type UpsertUser,
+  type Favorite,
+  type InsertFavorite,
   type Product,
   type InsertProduct,
   type Category,
@@ -43,16 +46,23 @@ import {
   roomBackgrounds,
   artWallSimulations,
   galleryItems,
-  cartItems
+  cartItems,
+  favorites
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  // Users
+  // Users (updated for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>; // Required for Replit Auth
   createUser(user: InsertUser): Promise<User>;
+
+  // Favorites
+  getUserFavorites(userId: string): Promise<Favorite[]>;
+  addFavorite(favorite: InsertFavorite): Promise<Favorite>;
+  removeFavorite(userId: string, productId: string): Promise<boolean>;
+  isFavorite(userId: string, productId: string): Promise<boolean>;
 
   // Products
   getProducts(): Promise<Product[]>;
@@ -255,14 +265,48 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+  // Replit Auth upsert method - creates or updates user
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  // Favorites methods
+  async getUserFavorites(userId: string): Promise<Favorite[]> {
+    const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
+    return userFavorites;
+  }
+
+  async addFavorite(favorite: InsertFavorite): Promise<Favorite> {
+    const [newFavorite] = await db.insert(favorites).values(favorite).returning();
+    return newFavorite;
+  }
+
+  async removeFavorite(userId: string, productId: string): Promise<boolean> {
+    const result = await db.delete(favorites)
+      .where(eq(favorites.userId, userId) && eq(favorites.productId, productId));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async isFavorite(userId: string, productId: string): Promise<boolean> {
+    const [favorite] = await db.select().from(favorites)
+      .where(eq(favorites.userId, userId) && eq(favorites.productId, productId));
+    return !!favorite;
   }
 
   // Products
