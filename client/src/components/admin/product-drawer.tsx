@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -44,8 +45,332 @@ const productFormSchema = insertProductSchema.extend({
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
+// Content Tab Component with Accordions
+function ContentTab({ form }: { form: any }) {
+  return (
+    <Accordion type="multiple" defaultValue={["production", "details"]} className="space-y-4">
+      <AccordionItem value="production" data-testid="section-production">
+        <AccordionTrigger data-testid="accordion-trigger-production" className="text-lg font-semibold">
+          Production Information
+        </AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Product Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Enter product name" 
+                    {...field} 
+                    data-testid="input-product-name"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL Slug</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., abstract-art-painting"
+                    {...field} 
+                    data-testid="input-product-slug"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Used in the product URL. Only lowercase letters, numbers, and hyphens allowed.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="sku"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>SKU</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Optional" 
+                    {...field} 
+                    data-testid="input-sku"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="stock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quantity in Stock</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    data-testid="input-stock"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    data-testid="input-price"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger data-testid="select-status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="isFeatured"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox 
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    data-testid="checkbox-featured"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Featured Product</FormLabel>
+                  <FormDescription>
+                    Featured products appear on the home page and at the top of product listings
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="details" data-testid="section-details">
+        <AccordionTrigger data-testid="accordion-trigger-details" className="text-lg font-semibold">
+          Product Details
+        </AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-4">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Enter product description..."
+                    className="min-h-[120px]"
+                    {...field} 
+                    data-testid="input-description"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Use the toolbar to format your text with bold, italic, lists, and more.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Physical Details Section */}
+          <div className="border-t pt-6 mt-6">
+            <h3 className="text-lg font-medium mb-4">Physical Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year Created</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        min="1900"
+                        max="2100"
+                        placeholder="e.g., 2023"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                        data-testid="input-year"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="medium"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Method/Medium</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., Oil on Canvas, Digital Art"
+                        {...field} 
+                        data-testid="input-medium"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="dimensions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dimensions</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., 24 x 36 inches"
+                        {...field} 
+                        data-testid="input-dimensions"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rarity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rarity</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., Original, Limited Edition of 100"
+                        {...field} 
+                        data-testid="input-rarity"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="frame"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Frame</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., Black Wood Frame, Not Framed"
+                        {...field} 
+                        data-testid="input-frame"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="packaging"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Packaging</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., Ships in a Box, Tube Shipping"
+                        {...field} 
+                        data-testid="input-packaging"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="authenticity"
+              render={({ field }) => (
+                <FormItem className="mt-4">
+                  <FormLabel>Authenticity</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g., Certificate of Authenticity Included"
+                      {...field} 
+                      data-testid="input-authenticity"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
+
 export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerProps) {
   const isEditing = !!editProduct;
+  const [activeTab, setActiveTab] = useState("content");
   const [imageUrl, setImageUrl] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -222,49 +547,46 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   variant: "destructive",
                 });
               })} className="flex-1 min-h-0 flex flex-col">
-                <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-24">
-                  <Accordion type="multiple" defaultValue={["production", "details"]} className="space-y-4">
-                    <AccordionItem value="production" data-testid="section-production">
-                      <AccordionTrigger data-testid="accordion-trigger-production" className="text-lg font-semibold">
-                        Production Information
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-6 pt-4">
-                        <GeneralInfo form={form} />
-                        <div className="border-t pt-6">
-                          <h3 className="text-lg font-medium mb-4">Pricing Tiers</h3>
-                          <PricingTab form={form} />
-                        </div>
-                        <div className="border-t pt-6">
-                          <h3 className="text-lg font-medium mb-4">Categories & Tags</h3>
-                          <CategoriesTab 
-                            form={form} 
-                            categories={categories || []}
-                            tags={tags || []}
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
+                  {/* Tab Navigation */}
+                  <div className="shrink-0 px-6 pt-4 border-b">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="content" data-testid="tab-content">Content</TabsTrigger>
+                      <TabsTrigger value="pricing" data-testid="tab-pricing">Pricing</TabsTrigger>
+                      <TabsTrigger value="images" data-testid="tab-images">Images</TabsTrigger>
+                      <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
+                    </TabsList>
+                  </div>
 
-                    <AccordionItem value="details" data-testid="section-details">
-                      <AccordionTrigger data-testid="accordion-trigger-details" className="text-lg font-semibold">
-                        Product Details
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-6 pt-4">
-                        <DetailSpecs form={form} />
-                        <div className="border-t pt-6">
-                          <h3 className="text-lg font-medium mb-4">Images</h3>
-                          <ImagesTab 
-                            form={form} 
-                            imageUrl={imageUrl}
-                            setImageUrl={setImageUrl}
-                            onAddImage={handleAddImage}
-                            onRemoveImage={handleRemoveImage}
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </div>
+                  {/* Tab Content */}
+                  <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-24">
+                    <TabsContent value="content" className="space-y-6 mt-0">
+                      <ContentTab form={form} />
+                    </TabsContent>
+
+                    <TabsContent value="pricing" className="space-y-6 mt-0">
+                      <PricingTab form={form} />
+                    </TabsContent>
+
+                    <TabsContent value="images" className="space-y-6 mt-0">
+                      <ImagesTab 
+                        form={form} 
+                        imageUrl={imageUrl}
+                        setImageUrl={setImageUrl}
+                        onAddImage={handleAddImage}
+                        onRemoveImage={handleRemoveImage}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="categories" className="space-y-6 mt-0">
+                      <CategoriesTab 
+                        form={form} 
+                        categories={categories || []}
+                        tags={tags || []}
+                      />
+                    </TabsContent>
+                  </div>
+                </Tabs>
 
                 {/* Footer */}
                 <div className="shrink-0 flex items-center justify-between p-6 border-t border-border bg-background">
@@ -291,344 +613,6 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
             </Form>
           </div>
         </div>
-      </div>
-    </>
-  );
-}
-
-// General Info Component (Production Information)
-function GeneralInfo({ form }: { form: any }) {
-  return (
-    <>
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Product Name</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="Enter product name" 
-                {...field} 
-                data-testid="input-product-name"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="slug"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>URL Slug</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="e.g., abstract-art-painting"
-                {...field} 
-                data-testid="input-product-slug"
-              />
-            </FormControl>
-            <FormDescription>
-              Used in the product URL. Only lowercase letters, numbers, and hyphens allowed.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="sku"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>SKU</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="Optional" 
-                {...field} 
-                data-testid="input-sku"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="stock"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Quantity in Stock</FormLabel>
-            <FormControl>
-              <Input 
-                type="number"
-                min="0"
-                {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                data-testid="input-stock"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Enter product description..."
-                className="min-h-[120px]"
-                {...field} 
-                data-testid="input-description"
-              />
-            </FormControl>
-            <FormDescription>
-              Use the toolbar to format your text with bold, italic, lists, and more.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="price"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Price</FormLabel>
-            <FormControl>
-              <Input 
-                type="number"
-                step="0.01"
-                min="0"
-                {...field}
-                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                data-testid="input-price"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="status"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Status</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger data-testid="select-status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="isFeatured"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox 
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                data-testid="checkbox-featured"
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>Featured Product</FormLabel>
-              <FormDescription>
-                Featured products appear on the home page and at the top of product listings
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
-      />
-    </>
-  );
-}
-
-// Detail Specs Component (Product Details)
-function DetailSpecs({ form }: { form: any }) {
-  return (
-    <>
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Enter product description..."
-                className="min-h-[120px]"
-                {...field} 
-                data-testid="input-description"
-              />
-            </FormControl>
-            <FormDescription>
-              Use the toolbar to format your text with bold, italic, lists, and more.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Product Details Section */}
-      <div className="border-t pt-6 mt-6">
-        <h3 className="text-lg font-medium mb-4">Physical Details</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="year"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Year Created</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number"
-                    min="1900"
-                    max="2100"
-                    placeholder="e.g., 2023"
-                    {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
-                    data-testid="input-year"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="medium"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Method/Medium</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., Oil on Canvas, Digital Art"
-                    {...field} 
-                    data-testid="input-medium"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="dimensions"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Dimensions</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., 24 x 36 inches"
-                    {...field} 
-                    data-testid="input-dimensions"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="rarity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Rarity</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., Original, Limited Edition of 100"
-                    {...field} 
-                    data-testid="input-rarity"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="frame"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Frame</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., Black Wood Frame, Not Framed"
-                    {...field} 
-                    data-testid="input-frame"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="packaging"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Packaging</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="e.g., Ships in a Box, Tube Shipping"
-                    {...field} 
-                    data-testid="input-packaging"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="authenticity"
-          render={({ field }) => (
-            <FormItem className="mt-4">
-              <FormLabel>Authenticity</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="e.g., Certificate of Authenticity Included"
-                  {...field} 
-                  data-testid="input-authenticity"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
     </>
   );
