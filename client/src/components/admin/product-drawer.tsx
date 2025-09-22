@@ -454,6 +454,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       // Reset form with edit product data
       form.reset({
         name: editProduct.name || "",
+        slug: editProduct.slug || "",
         sku: editProduct.sku || "",
         description: editProduct.description || "",
         price: parseFloat(editProduct.price.toString()) || 0,
@@ -464,11 +465,20 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
         tags: editProduct.tags || [],
         categoryId: editProduct.categoryId || undefined,
         pricingTiers: editProduct.pricingTiers || [],
+        // Product detail fields
+        year: editProduct.year || undefined,
+        medium: editProduct.medium || "",
+        dimensions: editProduct.dimensions || "",
+        rarity: editProduct.rarity || "",
+        frame: editProduct.frame || "",
+        packaging: editProduct.packaging || "",
+        authenticity: editProduct.authenticity || "",
       });
     } else {
       // Reset form with empty values for new product
       form.reset({
         name: "",
+        slug: "",
         sku: "",
         description: "",
         price: 0,
@@ -479,6 +489,14 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
         tags: [],
         categoryId: undefined,
         pricingTiers: [],
+        // Product detail fields
+        year: undefined,
+        medium: "",
+        dimensions: "",
+        rarity: "",
+        frame: "",
+        packaging: "",
+        authenticity: "",
       });
     }
   }, [editProduct, form]);
