@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FavoriteButton } from "@/components/live-site/favorite-button";
 import type { Product } from "@shared/schema";
 
 interface ProductGridProps {
@@ -91,6 +92,14 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                       alt={product.name}
                       className="w-full h-full object-cover rounded-md"
                     />
+                    <div className="absolute top-1 right-1">
+                      <FavoriteButton 
+                        productId={product.id} 
+                        size="sm" 
+                        iconOnly
+                        className="bg-white/80 backdrop-blur-sm hover:bg-white"
+                      />
+                    </div>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
@@ -141,6 +150,14 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
+              <div className="absolute top-3 right-3">
+                <FavoriteButton 
+                  productId={product.id} 
+                  size="sm" 
+                  iconOnly
+                  className="bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm"
+                />
+              </div>
             </div>
             <CardContent className="p-4">
               <div className="space-y-2">

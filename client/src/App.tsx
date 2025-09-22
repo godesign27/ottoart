@@ -34,6 +34,7 @@ import ContactPage from "@/pages/live-site/contact";
 import ProductDetailPage from "@/pages/live-site/product-detail";
 import CheckoutPage from "@/pages/live-site/checkout";
 import CheckoutSuccessPage from "@/pages/live-site/checkout-success";
+import FavoritesPage from "@/pages/live-site/favorites";
 import { ArtWallPage } from "@/pages/live-site/art-wall";
 
 function Router() {
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/cv" component={CVPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
+      <Route path="/favorites" component={FavoritesPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/admin" component={AdminDashboard} />

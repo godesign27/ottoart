@@ -5,6 +5,7 @@ import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation"
 import { Footer } from "@/components/live-site/footer";
 import { ProductImageModal } from "@/components/live-site/product-image-modal";
 import { ProductDetails } from "@/components/live-site/product-details";
+import { FavoriteButton } from "@/components/live-site/favorite-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -233,9 +234,14 @@ export default function ProductDetailPage() {
             {/* Product Details */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
-                <p className="text-3xl font-bold text-primary mt-2">${selectedOption.price}</p>
-                <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+                    <p className="text-3xl font-bold text-primary mt-2">${selectedOption.price}</p>
+                    <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
+                  </div>
+                  <FavoriteButton productId={product.id} size="lg" />
+                </div>
               </div>
 
               <div className="prose prose-sm max-w-none">
