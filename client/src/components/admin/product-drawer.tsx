@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -46,7 +46,6 @@ type ProductFormData = z.infer<typeof productFormSchema>;
 
 export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerProps) {
   const isEditing = !!editProduct;
-  const [activeTab, setActiveTab] = useState("content");
   const [imageUrl, setImageUrl] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -223,46 +222,49 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   variant: "destructive",
                 });
               })} className="flex-1 min-h-0 flex flex-col">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
-                  {/* Tab Navigation */}
-                  <div className="sticky top-0 z-10 bg-background px-6 pt-4 border-b">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="content" data-testid="tab-content">Content</TabsTrigger>
-                      <TabsTrigger value="pricing" data-testid="tab-pricing">Pricing</TabsTrigger>
-                      <TabsTrigger value="images" data-testid="tab-images">Images</TabsTrigger>
-                      <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
-                    </TabsList>
-                  </div>
+                <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-24">
+                  <Accordion type="multiple" defaultValue={["production", "details"]} className="space-y-4">
+                    <AccordionItem value="production" data-testid="section-production">
+                      <AccordionTrigger data-testid="accordion-trigger-production" className="text-lg font-semibold">
+                        Production Information
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-6 pt-4">
+                        <GeneralInfo form={form} />
+                        <div className="border-t pt-6">
+                          <h3 className="text-lg font-medium mb-4">Pricing Tiers</h3>
+                          <PricingTab form={form} />
+                        </div>
+                        <div className="border-t pt-6">
+                          <h3 className="text-lg font-medium mb-4">Categories & Tags</h3>
+                          <CategoriesTab 
+                            form={form} 
+                            categories={categories || []}
+                            tags={tags || []}
+                          />
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                  {/* Tab Content */}
-                  <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-24">
-                    <TabsContent value="content" className="space-y-6 mt-0">
-                      <ContentTab form={form} />
-                    </TabsContent>
-
-                    <TabsContent value="pricing" className="space-y-6 mt-0">
-                      <PricingTab form={form} />
-                    </TabsContent>
-
-                    <TabsContent value="images" className="space-y-6 mt-0">
-                      <ImagesTab 
-                        form={form} 
-                        imageUrl={imageUrl}
-                        setImageUrl={setImageUrl}
-                        onAddImage={handleAddImage}
-                        onRemoveImage={handleRemoveImage}
-                      />
-                    </TabsContent>
-
-                    <TabsContent value="categories" className="space-y-6 mt-0">
-                      <CategoriesTab 
-                        form={form} 
-                        categories={categories || []}
-                        tags={tags || []}
-                      />
-                    </TabsContent>
-                  </div>
-                </Tabs>
+                    <AccordionItem value="details" data-testid="section-details">
+                      <AccordionTrigger data-testid="accordion-trigger-details" className="text-lg font-semibold">
+                        Product Details
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-6 pt-4">
+                        <DetailSpecs form={form} />
+                        <div className="border-t pt-6">
+                          <h3 className="text-lg font-medium mb-4">Images</h3>
+                          <ImagesTab 
+                            form={form} 
+                            imageUrl={imageUrl}
+                            setImageUrl={setImageUrl}
+                            onAddImage={handleAddImage}
+                            onRemoveImage={handleRemoveImage}
+                          />
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
 
                 {/* Footer */}
                 <div className="shrink-0 flex items-center justify-between p-6 border-t border-border bg-background">
@@ -294,8 +296,8 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
   );
 }
 
-// Content Tab Component
-function ContentTab({ form }: { form: any }) {
+// General Info Component (Production Information)
+function GeneralInfo({ form }: { form: any }) {
   return (
     <>
       <FormField
@@ -462,10 +464,39 @@ function ContentTab({ form }: { form: any }) {
           </FormItem>
         )}
       />
+    </>
+  );
+}
+
+// Detail Specs Component (Product Details)
+function DetailSpecs({ form }: { form: any }) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Enter product description..."
+                className="min-h-[120px]"
+                {...field} 
+                data-testid="input-description"
+              />
+            </FormControl>
+            <FormDescription>
+              Use the toolbar to format your text with bold, italic, lists, and more.
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       {/* Product Details Section */}
       <div className="border-t pt-6 mt-6">
-        <h3 className="text-lg font-medium mb-4">Product Details</h3>
+        <h3 className="text-lg font-medium mb-4">Physical Details</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
