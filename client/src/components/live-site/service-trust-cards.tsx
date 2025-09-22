@@ -3,9 +3,9 @@ import { Truck, Shield, Award } from "lucide-react";
 export function ServiceTrustCards() {
   const cards = [
     {
-      icon: Truck,
-      title: "Shipping & Delivery",
-      content: "Free US delivery for qualifying orders. Your artwork is hand-packed with care and shipped in professional packaging. Every order comes with a tracking number emailed directly to you for peace of mind.\n\nUS delivery: within 14 days\nInternational delivery: 14–28 days"
+      icon: Award,
+      title: "Certificate of Authenticity",
+      content: "Every original artwork includes a signed certificate guaranteeing authenticity and providing full provenance details."
     },
     {
       icon: Shield,
@@ -13,15 +13,18 @@ export function ServiceTrustCards() {
       content: "Shop with Confidence. Your payment details are safeguarded by bank-level encryption throughout the checkout process. We accept all major credit cards, plus modern options like Link and Amazon Pay, so you can choose the method that works best for you."
     },
     {
-      icon: Award,
-      title: "Certificate of Authenticity",
-      content: "Every original artwork includes a signed certificate guaranteeing authenticity and providing full provenance details."
+      icon: Truck,
+      title: "Shipping & Delivery",
+      content: "Free US delivery for qualifying orders. Your artwork is hand-packed with care and shipped in professional packaging. Every order comes with a tracking number emailed directly to you for peace of mind.\n\nUS delivery: within 14 days\nInternational delivery: 14–28 days"
     }
   ];
 
   return (
     <div className="bg-gray-100 dark:bg-gray-800 border-b border-border">
       <div className="max-w-6xl mx-auto px-6 py-12">
+        <h2 className="text-3xl font-bold text-foreground text-center mb-8">
+          Peace of Mind, Every Step
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {cards.map((card, index) => {
             const IconComponent = card.icon;
