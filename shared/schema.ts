@@ -49,6 +49,10 @@ export const products = pgTable("products", {
   medium: text("medium"),
   year: integer("year"),
   isOriginal: boolean("is_original").default(false),
+  rarity: text("rarity"), // e.g., "Original", "Print Limited Edition of 100"
+  frame: text("frame"), // e.g., "Not Framed", "Black Wood Frame"
+  packaging: text("packaging"), // e.g., "Ships in a Box", "Tube Shipping"
+  authenticity: text("authenticity"), // e.g., "Certificate is Included"
   tags: jsonb("tags").$type<string[]>().default([]),
   pricingTiers: jsonb("pricing_tiers").$type<Array<{
     id: string;

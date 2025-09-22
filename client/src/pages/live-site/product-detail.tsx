@@ -4,10 +4,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { ProductImageModal } from "@/components/live-site/product-image-modal";
+import { ProductDetails } from "@/components/live-site/product-details";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Star, Package, Shield, RotateCcw, ShoppingBag, ZoomIn } from "lucide-react";
+import { ChevronLeft, Star, ShoppingBag, ZoomIn } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 
@@ -338,34 +339,13 @@ export default function ProductDetailPage() {
                 }
               </Button>
 
-              {/* Features */}
-              <div className="space-y-4 pt-6 border-t border-border">
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-semibold text-foreground">Free Shipping</p>
-                    <p className="text-sm text-muted-foreground">On orders over $50</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-semibold text-foreground">Secure Payment</p>
-                    <p className="text-sm text-muted-foreground">Your payment information is safe</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <RotateCcw className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-semibold text-foreground">Easy Returns</p>
-                    <p className="text-sm text-muted-foreground">30-day return policy</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Product Details Section */}
+      <ProductDetails product={product} />
       
       <Footer />
 

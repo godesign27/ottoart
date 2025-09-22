@@ -462,6 +462,143 @@ function ContentTab({ form }: { form: any }) {
           </FormItem>
         )}
       />
+
+      {/* Product Details Section */}
+      <div className="border-t pt-6 mt-6">
+        <h3 className="text-lg font-medium mb-4">Product Details</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="year"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Year Created</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number"
+                    min="1900"
+                    max="2100"
+                    placeholder="e.g., 2023"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                    data-testid="input-year"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="medium"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Method/Medium</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., Oil on Canvas, Digital Art"
+                    {...field} 
+                    data-testid="input-medium"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dimensions"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dimensions</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., 24 x 36 inches"
+                    {...field} 
+                    data-testid="input-dimensions"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="rarity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Rarity</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., Original, Limited Edition of 100"
+                    {...field} 
+                    data-testid="input-rarity"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="frame"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Frame</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., Black Wood Frame, Not Framed"
+                    {...field} 
+                    data-testid="input-frame"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="packaging"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Packaging</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., Ships in a Box, Tube Shipping"
+                    {...field} 
+                    data-testid="input-packaging"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="authenticity"
+          render={({ field }) => (
+            <FormItem className="mt-4">
+              <FormLabel>Authenticity</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="e.g., Certificate of Authenticity Included"
+                  {...field} 
+                  data-testid="input-authenticity"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </>
   );
 }
