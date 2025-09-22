@@ -39,14 +39,14 @@ export function ProfileMenu() {
           <DropdownMenuSeparator />
           
           <DropdownMenuItem asChild data-testid="menu-login">
-            <a href="/api/auth/login">
+            <a href="/api/login">
               <LogIn className="mr-2 h-4 w-4" />
               Log In
             </a>
           </DropdownMenuItem>
           
           <DropdownMenuItem asChild data-testid="menu-register">
-            <a href="/api/auth/register">
+            <a href="/api/login">
               <UserPlus className="mr-2 h-4 w-4" />
               Register
             </a>
@@ -138,7 +138,7 @@ export function ProfileMenu() {
         <DropdownMenuSeparator />
         
         <DropdownMenuItem asChild data-testid="menu-logout">
-          <a href="/api/auth/logout">
+          <a href="/api/logout">
             <LogOut className="mr-2 h-4 w-4" />
             Log Out
           </a>
