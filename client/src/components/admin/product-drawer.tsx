@@ -196,9 +196,9 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       
       {/* Drawer */}
       <div className={`fixed right-0 top-0 h-full w-[600px] bg-background border-l border-border z-50 shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full min-h-0">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="shrink-0 flex items-center justify-between p-6 border-b border-border">
             <h2 className="text-xl font-semibold text-foreground">
               {isEditing ? "Edit Product" : "Add Product"}
             </h2>
@@ -235,7 +235,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   </div>
 
                   {/* Tab Content */}
-                  <div className="flex-1 min-h-0 overflow-y-auto p-6">
+                  <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-24">
                     <TabsContent value="content" className="space-y-6 mt-0">
                       <ContentTab form={form} />
                     </TabsContent>
@@ -265,7 +265,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                 </Tabs>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between p-6 border-t border-border">
+                <div className="shrink-0 flex items-center justify-between p-6 border-t border-border bg-background">
                   <Button 
                     type="button" 
                     variant="outline" 
