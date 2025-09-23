@@ -3,7 +3,13 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, ShoppingCart, Menu, X, Settings, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User, ShoppingCart, Menu, X, Settings, Eye, ChevronDown } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 import { ProfileMenu } from "./profile-menu";
 
@@ -46,8 +52,8 @@ export function LiveSiteNavigation({
     { href: "/accessories", label: "Accessories" }
   ];
 
-  // Page-based navigation items (filtered by page settings)
-  const pageNavItems = [
+  // Page-based navigation items (filtered by page settings) - now in "More" dropdown
+  const moreNavItems = [
     { href: "/bio", label: "Bio", page: "bio" },
     { href: "/gallery", label: "Gallery", page: "gallery" },
     { href: "/events", label: "Events", page: "events" },
@@ -57,8 +63,8 @@ export function LiveSiteNavigation({
   // Contact is always last
   const contactNavItem = { href: "/contact", label: "Contact" };
 
-  // Combine all navigation items
-  const navItems = [...staticNavItems, ...pageNavItems, contactNavItem];
+  // Main navigation items (excludes the "More" dropdown items)
+  const navItems = [...staticNavItems, contactNavItem];
 
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -147,6 +153,30 @@ export function LiveSiteNavigation({
               {item.label}
             </Link>
           ))}
+          
+          {/* Mobile More Items */}
+          {moreNavItems.length > 0 && (
+            <>
+              <div className="py-2">
+                <div className="text-xs font-medium text-muted-foreground px-2">More</div>
+              </div>
+              {moreNavItems.map((item) => (
+                <Link 
+                  key={item.href}
+                  href={item.href}
+                  className={`block py-3 px-4 ml-2 rounded-md transition-colors ${
+                    location === item.href 
+                      ? 'bg-primary/10 text-primary font-medium' 
+                      : 'text-foreground hover:bg-muted hover:text-primary'
+                  }`}
+                  data-testid={`mobile-nav-more-${item.label.toLowerCase()}`}
+                  onClick={handleMobileMenuClose}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Mobile Actions */}
@@ -225,6 +255,43 @@ export function LiveSiteNavigation({
                 {item.label}
               </Link>
             ))}
+            
+            {/* More dropdown menu */}
+            {moreNavItems.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={`nav-link transition-colors inline-flex items-center gap-1 ${
+                      moreNavItems.some(item => location === item.href)
+                        ? 'text-primary font-medium' 
+                        : 'text-foreground hover:text-primary'
+                    }`}
+                    data-testid="nav-more"
+                  >
+                    More
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  {moreNavItems.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild>
+                      <Link 
+                        href={item.href}
+                        className={`cursor-pointer ${
+                          location === item.href 
+                            ? 'bg-accent text-accent-foreground font-medium' 
+                            : ''
+                        }`}
+                        data-testid={`nav-more-${item.label.toLowerCase()}`}
+                      >
+                        {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
