@@ -6,6 +6,34 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import type { Product } from "@shared/schema";
 
+// Helper function to format pricing display
+function formatProductPricing(product: Product): string {
+  if (!product.pricingTiers || product.pricingTiers.length === 0) {
+    return `$${parseFloat(product.price).toFixed(2)}`;
+  }
+
+  const originalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
+  const printTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'print');
+
+  let priceParts: string[] = [];
+
+  if (originalTier) {
+    priceParts.push(`$${originalTier.price.toFixed(2)} Original`);
+  }
+  
+  if (printTier) {
+    priceParts.push(`$${printTier.price} Print`);
+  }
+
+  // If we have both original and print tiers
+  if (priceParts.length > 1) {
+    return priceParts.join(' / ');
+  }
+
+  // If we only have one tier or no recognized tiers, fall back to main price
+  return priceParts.length > 0 ? priceParts[0] : `$${parseFloat(product.price).toFixed(2)}`;
+}
+
 interface ProductGridProps {
   category?: string;
   searchQuery?: string;
@@ -103,9 +131,12 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="space-y-1">
                         <h3 className="font-semibold text-lg">{product.name}</h3>
-                        <p className="text-lg font-bold mt-2">${product.price}</p>
+                        {product.dimensions && (
+                          <p className="text-sm text-muted-foreground">{product.dimensions}</p>
+                        )}
+                        <p className="text-sm font-medium text-foreground mt-1">{formatProductPricing(product)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {(() => {
@@ -162,29 +193,30 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
             <CardContent className="p-4">
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg">{product.name}</h3>
-                <div className="flex items-center justify-between">
-                  <p className="text-xl font-bold">${product.price}</p>
-                  <div className="flex gap-2">
-                    {(() => {
-                      // Check if original is sold out (case-insensitive and safer fallback)
-                      const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
-                      const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
-                      
-                      // Check if prints are available (case-insensitive)
-                      const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
-                      
-                      return (
-                        <>
-                          {originalSoldOut && (
-                            <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
-                          )}
-                          {originalSoldOut && hasPrintTiers && (
-                            <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
+                {product.dimensions && (
+                  <p className="text-sm text-muted-foreground">{product.dimensions}</p>
+                )}
+                <p className="text-sm font-medium text-foreground">{formatProductPricing(product)}</p>
+                <div className="flex gap-2 justify-start">
+                  {(() => {
+                    // Check if original is sold out (case-insensitive and safer fallback)
+                    const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
+                    const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                    
+                    // Check if prints are available (case-insensitive)
+                    const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
+                    
+                    return (
+                      <>
+                        {originalSoldOut && (
+                          <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
+                        )}
+                        {originalSoldOut && hasPrintTiers && (
+                          <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </CardContent>
