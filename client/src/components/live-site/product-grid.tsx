@@ -39,13 +39,14 @@ interface ProductGridProps {
   searchQuery?: string;
   viewMode?: "grid" | "list";
   filterByPrintTiers?: boolean;
+  products?: Product[]; // Optional products prop to display custom product list
 }
 
-export function ProductGrid({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false }: ProductGridProps) {
+export function ProductGrid({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false, products: customProducts }: ProductGridProps) {
   // Convert category name to slug for API call
   const categorySlug = category ? category.toLowerCase().replace(/\s+/g, '-') : undefined;
   
-  const { data: products, isLoading } = useQuery<Product[]>({
+  const { data: fetchedProducts, isLoading } = useQuery<Product[]>({
     queryKey: ['/api/products', { category: categorySlug, printOnly: filterByPrintTiers }],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -76,10 +77,14 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
       
       // Only show active products
       return filtered.filter(product => product.status === 'active');
-    }
+    },
+    enabled: !customProducts // Only fetch if custom products are not provided
   });
 
-  if (isLoading) {
+  // Use custom products if provided, otherwise use fetched products
+  const products = customProducts || fetchedProducts;
+
+  if (isLoading && !customProducts) {
     return (
       <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
         {[...Array(6)].map((_, i) => (
