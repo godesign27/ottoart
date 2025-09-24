@@ -133,18 +133,6 @@ export function ContactSection() {
               </div>
             </div>
 
-            {/* Studio Hours */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4">Studio Hours</h2>
-              <div className="space-y-2">
-                {Object.entries(settings.studioHours || {}).map(([day, hours]) => (
-                  <div key={day}>
-                    <span className="text-white font-medium capitalize">{day}: </span>
-                    <span className="text-white/80">{hours}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Commissions & Inquiries */}
             <div>
