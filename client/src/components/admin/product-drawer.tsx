@@ -577,7 +577,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   </div>
 
                   {/* Tab Content */}
-                  <div className="flex-1 min-h-0 overflow-y-auto">
+                  <div className="flex-1 min-h-0 overflow-y-auto pb-24">
                     <TabsContent value="content" className="space-y-6 mt-0 p-6 pb-24">
                       <ContentTab form={form} />
                     </TabsContent>
@@ -606,8 +606,8 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   </div>
                 </Tabs>
 
-                {/* Footer */}
-                <div className="shrink-0 flex items-center justify-between p-6 border-t border-border bg-background">
+                {/* Footer - Sticky */}
+                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-6 border-t border-border bg-background">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -696,8 +696,8 @@ function PricingTab({ form }: { form: any }) {
             const tierData = form.watch(`pricingTiers.${index}`);
             return (
               <AccordionItem key={field.id} value={field.id} className="border rounded-lg">
-                <div className="flex items-center">
-                  <AccordionTrigger className="flex-1 px-4 py-3 hover:no-underline" data-testid={`tier-trigger-${index}`}>
+                <div className="flex items-center justify-between pr-4">
+                  <AccordionTrigger className="flex-1 py-3 pl-4 pr-0 hover:no-underline justify-start [&>svg]:order-first [&>svg]:mr-3" data-testid={`tier-trigger-${index}`}>
                     <div className="flex items-center gap-3">
                       <span className="font-medium">Tier {index + 1}</span>
                       {tierData?.type && (
@@ -716,7 +716,7 @@ function PricingTab({ form }: { form: any }) {
                       remove(index);
                     }}
                     data-testid={`remove-tier-${index}`}
-                    className="mr-4"
+                    className="ml-2"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
