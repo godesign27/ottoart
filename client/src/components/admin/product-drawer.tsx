@@ -577,16 +577,16 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   </div>
 
                   {/* Tab Content */}
-                  <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-24">
-                    <TabsContent value="content" className="space-y-6 mt-0">
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <TabsContent value="content" className="space-y-6 mt-0 p-6 pb-24">
                       <ContentTab form={form} />
                     </TabsContent>
 
-                    <TabsContent value="pricing" className="space-y-6 mt-0">
+                    <TabsContent value="pricing" className="space-y-6 mt-0 p-6 pb-24">
                       <PricingTab form={form} />
                     </TabsContent>
 
-                    <TabsContent value="images" className="space-y-6 mt-0">
+                    <TabsContent value="images" className="space-y-6 mt-0 p-6 pb-24">
                       <ImagesTab 
                         form={form} 
                         imageUrl={imageUrl}
@@ -596,7 +596,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                       />
                     </TabsContent>
 
-                    <TabsContent value="categories" className="space-y-6 mt-0">
+                    <TabsContent value="categories" className="space-y-6 mt-0 p-6 pb-24">
                       <CategoriesTab 
                         form={form} 
                         categories={categories || []}
