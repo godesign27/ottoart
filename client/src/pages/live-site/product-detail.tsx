@@ -32,22 +32,25 @@ export default function ProductDetailPage() {
     enabled: !!params.id
   });
 
-  // Auto-select the first original tier, or fallback to first tier when product loads
+  // Reset and auto-select when product changes
   useEffect(() => {
-    if (product?.pricingTiers && product.pricingTiers.length > 0 && !selectedTierId) {
-      // Try to find first original tier
-      const firstOriginalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
-      // Use first original tier if available, otherwise use first tier
-      const tierToSelect = firstOriginalTier || product.pricingTiers[0];
-      setSelectedTierId(tierToSelect.id);
+    if (product?.id) {
+      // Reset image index
+      setSelectedImageIndex(0);
+      
+      // Auto-select the first original tier, or fallback to first tier
+      if (product.pricingTiers && product.pricingTiers.length > 0) {
+        // Try to find first original tier
+        const firstOriginalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
+        // Use first original tier if available, otherwise use first tier
+        const tierToSelect = firstOriginalTier || product.pricingTiers[0];
+        setSelectedTierId(tierToSelect.id);
+      } else {
+        // No pricing tiers, so no tier selection needed
+        setSelectedTierId(null);
+      }
     }
-  }, [product, selectedTierId]);
-
-  // Reset selected image index and tier selection when product changes
-  useEffect(() => {
-    setSelectedImageIndex(0);
-    setSelectedTierId(null);
-  }, [product?.id]);
+  }, [product?.id, product?.pricingTiers]);
 
   // Get selected tier details or fallback to base product
   const getSelectedTierOrProduct = () => {
