@@ -61,6 +61,12 @@ const navItems = [
     view: "messages"
   },
   {
+    title: "Mail Club",
+    icon: Mail,
+    href: "/admin/mail-club",
+    view: "mail-club"
+  },
+  {
     title: "Categories & Tags",
     icon: Tags,
     href: "/admin/categories",
