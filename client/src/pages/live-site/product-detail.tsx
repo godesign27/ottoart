@@ -32,13 +32,13 @@ export default function ProductDetailPage() {
     enabled: !!params.id
   });
 
-  // Auto-select the first print tier, or fallback to first tier when product loads
+  // Auto-select the first original tier, or fallback to first tier when product loads
   useEffect(() => {
     if (product?.pricingTiers && product.pricingTiers.length > 0 && !selectedTierId) {
-      // Try to find first print tier
-      const firstPrintTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'print');
-      // Use first print tier if available, otherwise use first tier
-      const tierToSelect = firstPrintTier || product.pricingTiers[0];
+      // Try to find first original tier
+      const firstOriginalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
+      // Use first original tier if available, otherwise use first tier
+      const tierToSelect = firstOriginalTier || product.pricingTiers[0];
       setSelectedTierId(tierToSelect.id);
     }
   }, [product, selectedTierId]);
@@ -58,7 +58,7 @@ export default function ProductDetailPage() {
           price: selectedTier.price,
           stock: selectedTier.stock,
           description: selectedTier.description,
-          displayName: `${selectedTier.size} ${selectedTier.type.toLowerCase()}`
+          displayName: `${selectedTier.type}: ${selectedTier.size}`
         };
       }
     }
@@ -279,7 +279,7 @@ export default function ProductDetailPage() {
                             </div>
                             <div>
                               <p className="font-medium text-foreground">
-                                {tier.size} {tier.type.toLowerCase()}
+                                <span className="font-bold">{tier.type}:</span> {tier.size}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 Stock: {tier.stock}
