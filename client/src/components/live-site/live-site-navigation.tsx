@@ -49,7 +49,8 @@ export function LiveSiteNavigation({
     { href: "/shop-all", label: "Shop All" },
     { href: "/originals", label: "Originals" },
     { href: "/prints", label: "Prints" },
-    { href: "/accessories", label: "Accessories" }
+    { href: "/accessories", label: "Accessories" },
+    { href: "/mail-club", label: "Mail Club" }
   ];
 
   // Page-based navigation items (filtered by page settings) - now in "More" dropdown
