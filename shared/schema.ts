@@ -17,9 +17,9 @@ export const sessions = pgTable(
 // User storage table updated for Replit Auth (keeping existing varchar ID type)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
+  email: text("email").unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: text("role").default("user").notNull(), // user, admin
   createdAt: timestamp("created_at").defaultNow(),
@@ -35,6 +35,37 @@ export const favorites = pgTable("favorites", {
 }, (table) => [
   index("idx_favorites_user_id").on(table.userId),
 ]);
+
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // "Postcard Pal", "Sticker Star", "Super Mail Club"
+  slug: text("slug").notNull().unique(), // "postcard-pal", "sticker-star", "super-mail-club"
+  description: text("description").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Monthly price
+  stripeProductId: text("stripe_product_id"),
+  stripePriceId: text("stripe_price_id"),
+  icon: text("icon"), // Icon identifier or URL
+  features: jsonb("features").$type<string[]>().default([]),
+  isRecommended: boolean("is_recommended").default(false),
+  status: text("status").default("active"), // active, draft, archived
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripeCustomerId: text("stripe_customer_id"),
+  status: text("status").notNull(), // active, cancelled, past_due, unpaid
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -127,7 +158,7 @@ export const siteSettings = pgTable("site_settings", {
 
 export const pageSettings = pgTable("page_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  page: text("page", { enum: ["home", "bio", "gallery", "events", "cv", "contact"] }).notNull().unique(),
+  page: text("page", { enum: ["home", "bio", "gallery", "events", "cv", "contact", "mail-club"] }).notNull().unique(),
   enabled: boolean("enabled").default(true).notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -263,6 +294,18 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   createdAt: true,
 });
 
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
@@ -345,6 +388,12 @@ export type UpsertUser = typeof users.$inferInsert; // For Replit Auth
 
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
