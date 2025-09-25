@@ -691,127 +691,144 @@ function PricingTab({ form }: { form: any }) {
           </p>
         )}
 
-        <div className="space-y-4">
-          {fields.map((field, index) => (
-            <div key={field.id} className="border rounded-lg p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Tier {index + 1}</h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => remove(index)}
-                  data-testid={`remove-tier-${index}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name={`pricingTiers.${index}.size`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Size</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g., 42x42"
-                          {...field}
-                          data-testid={`tier-size-${index}`}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name={`pricingTiers.${index}.price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price ($)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          data-testid={`tier-price-${index}`}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name={`pricingTiers.${index}.type`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+        <Accordion type="multiple" className="space-y-4">
+          {fields.map((field, index) => {
+            const tierData = form.watch(`pricingTiers.${index}`);
+            return (
+              <AccordionItem key={field.id} value={field.id} className="border rounded-lg">
+                <div className="flex items-center">
+                  <AccordionTrigger className="flex-1 px-4 py-3 hover:no-underline" data-testid={`tier-trigger-${index}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium">Tier {index + 1}</span>
+                      {tierData?.type && (
+                        <span className="text-sm text-muted-foreground">
+                          {tierData.type} - ${(tierData.price || 0).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(index);
+                    }}
+                    data-testid={`remove-tier-${index}`}
+                    className="mr-4"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <AccordionContent className="px-4 pb-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`pricingTiers.${index}.size`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Size</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="e.g., 42x42"
+                              {...field}
+                              data-testid={`tier-size-${index}`}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name={`pricingTiers.${index}.price`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              data-testid={`tier-price-${index}`}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name={`pricingTiers.${index}.type`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid={`tier-type-${index}`}>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Original">Original</SelectItem>
+                              <SelectItem value="Canvas">Canvas</SelectItem>
+                              <SelectItem value="Print">Print</SelectItem>
+                              <SelectItem value="Framed">Framed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name={`pricingTiers.${index}.stock`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stock</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              data-testid={`tier-stock-${index}`}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name={`pricingTiers.${index}.description`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <SelectTrigger data-testid={`tier-type-${index}`}>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
+                          <Input 
+                            placeholder="e.g., 42x42 original"
+                            {...field}
+                            data-testid={`tier-description-${index}`}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Original">Original</SelectItem>
-                          <SelectItem value="Canvas">Canvas</SelectItem>
-                          <SelectItem value="Print">Print</SelectItem>
-                          <SelectItem value="Framed">Framed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name={`pricingTiers.${index}.stock`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          data-testid={`tier-stock-${index}`}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name={`pricingTiers.${index}.description`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g., 42x42 original"
-                        {...field}
-                        data-testid={`tier-description-${index}`}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          ))}
-        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
       </div>
     </>
   );
