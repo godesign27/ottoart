@@ -36,6 +36,7 @@ import ProductDetailPage from "@/pages/live-site/product-detail";
 import CheckoutPage from "@/pages/live-site/checkout";
 import CheckoutSuccessPage from "@/pages/live-site/checkout-success";
 import FavoritesPage from "@/pages/live-site/favorites";
+import MailClubPage from "@/pages/live-site/mail-club";
 import { ArtWallPage } from "@/pages/live-site/art-wall";
 
 function Router() {
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/favorites" component={FavoritesPage} />
+      <Route path="/mail-club" component={MailClubPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/admin" component={AdminDashboard} />
