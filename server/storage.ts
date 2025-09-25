@@ -4,6 +4,10 @@ import {
   type UpsertUser,
   type Favorite,
   type InsertFavorite,
+  type SubscriptionPlan,
+  type InsertSubscriptionPlan,
+  type UserSubscription,
+  type InsertUserSubscription,
   type Product,
   type InsertProduct,
   type Category,
@@ -33,6 +37,8 @@ import {
   type CartItem,
   type InsertCartItem,
   users,
+  subscriptionPlans,
+  userSubscriptions,
   products,
   categories,
   tags,
@@ -50,7 +56,7 @@ import {
   favorites
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users (updated for Replit Auth)
@@ -63,6 +69,23 @@ export interface IStorage {
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
   removeFavorite(userId: string, productId: string): Promise<boolean>;
   isFavorite(userId: string, productId: string): Promise<boolean>;
+
+  // Subscription Plans
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined>;
+  getSubscriptionPlanBySlug(slug: string): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: string, plan: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined>;
+  deleteSubscriptionPlan(id: string): Promise<boolean>;
+
+  // User Subscriptions
+  getUserSubscriptions(userId: string): Promise<UserSubscription[]>;
+  getUserActiveSubscription(userId: string): Promise<UserSubscription | undefined>;
+  getUserSubscription(id: string): Promise<UserSubscription | undefined>;
+  createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
+  updateUserSubscription(id: string, subscription: Partial<InsertUserSubscription>): Promise<UserSubscription | undefined>;
+  updateSubscriptionStatus(stripeSubscriptionId: string, status: string): Promise<UserSubscription | undefined>;
+  cancelUserSubscription(id: string): Promise<UserSubscription | undefined>;
 
   // Products
   getProducts(): Promise<Product[]>;
@@ -299,14 +322,131 @@ export class DatabaseStorage implements IStorage {
 
   async removeFavorite(userId: string, productId: string): Promise<boolean> {
     const result = await db.delete(favorites)
-      .where(eq(favorites.userId, userId) && eq(favorites.productId, productId));
+      .where(and(eq(favorites.userId, userId), eq(favorites.productId, productId)));
     return (result.rowCount || 0) > 0;
   }
 
   async isFavorite(userId: string, productId: string): Promise<boolean> {
     const [favorite] = await db.select().from(favorites)
-      .where(eq(favorites.userId, userId) && eq(favorites.productId, productId));
+      .where(and(eq(favorites.userId, userId), eq(favorites.productId, productId)));
     return !!favorite;
+  }
+
+  // Subscription Plans
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(subscriptionPlans)
+      .where(eq(subscriptionPlans.status, "active"))
+      .orderBy(subscriptionPlans.displayOrder);
+  }
+
+  async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan || undefined;
+  }
+
+  async getSubscriptionPlanBySlug(slug: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.slug, slug));
+    return plan || undefined;
+  }
+
+  async createSubscriptionPlan(insertPlan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const planData = {
+      ...insertPlan,
+      features: (insertPlan.features as string[]) || []
+    } as typeof subscriptionPlans.$inferInsert;
+    const [plan] = await db.insert(subscriptionPlans).values(planData).returning();
+    return plan;
+  }
+
+  async updateSubscriptionPlan(id: string, updateData: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined> {
+    const cleanUpdateData: any = {
+      updatedAt: new Date()
+    };
+    
+    // Copy all fields except array fields that need special handling
+    Object.keys(updateData).forEach(key => {
+      const value = (updateData as any)[key];
+      if (key === 'features') {
+        cleanUpdateData[key] = value || [];
+      } else {
+        cleanUpdateData[key] = value;
+      }
+    });
+    
+    const [plan] = await db.update(subscriptionPlans)
+      .set(cleanUpdateData)
+      .where(eq(subscriptionPlans.id, id))
+      .returning();
+    return plan || undefined;
+  }
+
+  async deleteSubscriptionPlan(id: string): Promise<boolean> {
+    const result = await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // User Subscriptions
+  async getUserSubscriptions(userId: string): Promise<UserSubscription[]> {
+    return await db.select().from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, userId))
+      .orderBy(desc(userSubscriptions.createdAt));
+  }
+
+  async getUserActiveSubscription(userId: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.select().from(userSubscriptions)
+      .where(and(eq(userSubscriptions.userId, userId), eq(userSubscriptions.status, "active")))
+      .orderBy(desc(userSubscriptions.createdAt))
+      .limit(1);
+    return subscription || undefined;
+  }
+
+  async getUserSubscription(id: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.id, id));
+    return subscription || undefined;
+  }
+
+  async createUserSubscription(insertSubscription: InsertUserSubscription): Promise<UserSubscription> {
+    const [subscription] = await db.insert(userSubscriptions).values(insertSubscription).returning();
+    return subscription;
+  }
+
+  async updateUserSubscription(id: string, updateData: Partial<InsertUserSubscription>): Promise<UserSubscription | undefined> {
+    const cleanUpdateData: any = {
+      updatedAt: new Date()
+    };
+    
+    // Copy all fields, no array fields in user subscriptions
+    Object.keys(updateData).forEach(key => {
+      cleanUpdateData[key] = (updateData as any)[key];
+    });
+    
+    const [subscription] = await db.update(userSubscriptions)
+      .set(cleanUpdateData)
+      .where(eq(userSubscriptions.id, id))
+      .returning();
+    return subscription || undefined;
+  }
+
+  async updateSubscriptionStatus(stripeSubscriptionId: string, status: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.update(userSubscriptions)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(userSubscriptions.stripeSubscriptionId, stripeSubscriptionId))
+      .returning();
+    return subscription || undefined;
+  }
+
+  async cancelUserSubscription(id: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.update(userSubscriptions)
+      .set({ 
+        cancelAtPeriodEnd: true,
+        updatedAt: new Date()
+      })
+      .where(eq(userSubscriptions.id, id))
+      .returning();
+    return subscription || undefined;
   }
 
   // Products
