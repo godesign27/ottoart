@@ -1607,6 +1607,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create Stripe Checkout Session for subscription
+  app.post("/api/checkout/subscription", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { planId } = req.body;
+      
+      if (!stripe) {
+        return res.status(503).json({ message: "Payment processing unavailable" });
+      }
+
+      // Get subscription plan
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+      
+      // Validate that plan has Stripe configuration
+      if (!plan.stripePriceId) {
+        return res.status(400).json({ message: "Subscription plan is not configured for payments" });
+      }
+
+      // Check if user already has a subscription to this plan (active or pending)
+      const existingSubscription = await storage.getUserSubscriptionByPlan(userId, planId);
+      if (existingSubscription && ['active', 'pending', 'incomplete'].includes(existingSubscription.status)) {
+        return res.status(400).json({ 
+          message: "User already has a subscription to this plan",
+          existingSubscription: {
+            id: existingSubscription.id,
+            status: existingSubscription.status
+          }
+        });
+      }
+
+      // Get user info for customer creation
+      const user = await storage.getUser(userId);
+      
+      // Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{
+          price: plan.stripePriceId,
+          quantity: 1,
+        }],
+        success_url: `${req.headers.origin}/mail-club/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/mail-club`,
+        customer_email: user?.email || '',
+        metadata: {
+          userId: userId,
+          planId: planId,
+          planName: plan.name,
+        },
+        subscription_data: {
+          metadata: {
+            userId: userId,
+            planId: planId,
+            planName: plan.name,
+          },
+        },
+      });
+
+      res.json({
+        url: session.url,
+        sessionId: session.id,
+      });
+    } catch (error: any) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ message: "Error creating checkout session: " + error.message });
+    }
+  });
+
   // Stripe webhook handler - requires raw body for signature verification
   app.post("/api/stripe-webhook", express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -1677,6 +1748,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'cancelled',
               updatedAt: new Date(),
             });
+          }
+          break;
+
+        case 'checkout.session.completed':
+          const session = event.data.object as any;
+          
+          // Only handle subscription checkouts
+          if (session.mode === 'subscription' && session.subscription) {
+            const { userId, planId } = session.metadata;
+            
+            if (userId && planId) {
+              // Get the subscription from Stripe to get current period info
+              const stripeSubscription = await stripe.subscriptions.retrieve(session.subscription);
+              
+              // Create user subscription record
+              await storage.createUserSubscription({
+                userId,
+                planId,
+                stripeSubscriptionId: session.subscription,
+                stripeCustomerId: session.customer,
+                status: stripeSubscription.status,
+                currentPeriodStart: stripeSubscription.current_period_start 
+                  ? new Date(stripeSubscription.current_period_start * 1000) 
+                  : null,
+                currentPeriodEnd: stripeSubscription.current_period_end 
+                  ? new Date(stripeSubscription.current_period_end * 1000) 
+                  : null,
+              });
+              
+              console.log(`Created subscription for user ${userId} on plan ${planId}`);
+            }
           }
           break;
           

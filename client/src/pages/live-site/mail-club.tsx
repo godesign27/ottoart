@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -16,81 +13,6 @@ import { Check, Star, Mail, Gift, Heart, Crown } from "lucide-react";
 import type { SubscriptionPlan } from "@shared/schema";
 import abstractNftImage from "@assets/abstract-nft_1758925017311.png";
 
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
-
-// Payment form component for subscription checkout
-function SubscriptionPaymentForm({ 
-  clientSecret, 
-  planName,
-  onSuccess 
-}: { 
-  clientSecret: string;
-  planName: string;
-  onSuccess: () => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/mail-club?success=true`,
-        },
-        redirect: "if_required",
-      });
-
-      if (error) {
-        toast({
-          title: "Payment Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        toast({
-          title: "Subscription Successful!",
-          description: `Welcome to ${planName}! Your subscription is now active.`,
-        });
-        onSuccess();
-      }
-    } catch (error) {
-      toast({
-        title: "Payment Failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
-      <Button 
-        type="submit" 
-        disabled={!stripe || !elements || isProcessing}
-        className="w-full"
-        size="lg"
-        data-testid="button-confirm-subscription"
-      >
-        {isProcessing ? "Processing..." : `Subscribe to ${planName}`}
-      </Button>
-    </form>
-  );
-}
 
 // Plan selection component
 function PlanCard({ plan, onSelect, isPopular }: {
@@ -166,8 +88,6 @@ export default function MailClubPage() {
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-  const [clientSecret, setClientSecret] = useState<string>("");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
@@ -183,20 +103,22 @@ export default function MailClubPage() {
     queryKey: ['/api/subscription-plans'],
   });
 
-  // Create subscription mutation
-  const createSubscriptionMutation = useMutation({
+  // Create checkout session mutation
+  const createCheckoutMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/create-subscription', { planId });
+      const response = await apiRequest('POST', '/api/checkout/subscription', { planId });
       return response.json();
     },
     onSuccess: (data) => {
-      setClientSecret(data.clientSecret);
-      setShowPaymentModal(true);
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url;
+      }
     },
     onError: (error: any) => {
       toast({
         title: "Subscription Error",
-        description: error.message || "Failed to create subscription. Please try again.",
+        description: error.message || "Failed to start checkout. Please try again.",
         variant: "destructive",
       });
     },
@@ -216,19 +138,9 @@ export default function MailClubPage() {
     if (!plan) return;
 
     setSelectedPlan(plan);
-    createSubscriptionMutation.mutate(planId);
+    createCheckoutMutation.mutate(planId);
   };
 
-  const handlePaymentSuccess = () => {
-    setShowPaymentModal(false);
-    setClientSecret("");
-    setSelectedPlan(null);
-    queryClient.invalidateQueries({ queryKey: ['/api/user-subscriptions'] });
-    toast({
-      title: "Welcome to Mail Club!",
-      description: "Your subscription is active. You'll receive your first package soon!",
-    });
-  };
 
   // Filter active plans and sort by display order
   const activePlans = plans
@@ -348,35 +260,6 @@ export default function MailClubPage() {
         </div>
       </section>
 
-      {/* Payment Modal */}
-      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle data-testid="payment-modal-title">
-              Subscribe to {selectedPlan?.name}
-            </DialogTitle>
-            <DialogDescription data-testid="payment-modal-description">
-              Complete your subscription to start receiving monthly art packages.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {clientSecret && selectedPlan && stripePromise && (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <SubscriptionPaymentForm 
-                clientSecret={clientSecret}
-                planName={selectedPlan.name}
-                onSuccess={handlePaymentSuccess}
-              />
-            </Elements>
-          )}
-          
-          {createSubscriptionMutation.isPending && (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Footer />
     </div>
