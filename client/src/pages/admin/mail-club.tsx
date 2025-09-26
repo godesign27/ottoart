@@ -89,6 +89,16 @@ export default function AdminMailClub() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isMobileMenuOpen]);
 
+  // Check authentication status
+  const { data: authUser, isLoading: isAuthLoading } = useQuery({
+    queryKey: ['/api/auth/user'],
+    queryFn: () => fetch('/api/auth/user').then(res => {
+      if (!res.ok) throw new Error('Not authenticated');
+      return res.json();
+    }),
+    retry: false
+  });
+
   const { data: subscriptionPlans = [], isLoading } = useQuery({
     queryKey: ['/api/subscription-plans'],
     queryFn: () => fetch('/api/subscription-plans').then(res => res.json()) as Promise<SubscriptionPlan[]>
@@ -148,11 +158,22 @@ export default function AdminMailClub() {
         description: "Subscription plan created successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const isAuthError = error?.message?.includes('Unauthorized') || error?.status === 401;
       toast({
         title: "Error",
-        description: "Failed to create subscription plan",
+        description: isAuthError 
+          ? "Please log in to create subscription plans. Click here to log in."
+          : "Failed to create subscription plan",
         variant: "destructive",
+        action: isAuthError ? (
+          <button 
+            onClick={() => window.location.href = '/api/login'}
+            className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
+          >
+            Log In
+          </button>
+        ) : undefined
       });
     },
   });
@@ -170,11 +191,22 @@ export default function AdminMailClub() {
         description: "Subscription plan updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const isAuthError = error?.message?.includes('Unauthorized') || error?.status === 401;
       toast({
         title: "Error",
-        description: "Failed to update subscription plan",
+        description: isAuthError 
+          ? "Please log in to update subscription plans. Click here to log in."
+          : "Failed to update subscription plan",
         variant: "destructive",
+        action: isAuthError ? (
+          <button 
+            onClick={() => window.location.href = '/api/login'}
+            className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
+          >
+            Log In
+          </button>
+        ) : undefined
       });
     },
   });
@@ -190,11 +222,22 @@ export default function AdminMailClub() {
         description: "Subscription plan deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const isAuthError = error?.message?.includes('Unauthorized') || error?.status === 401;
       toast({
         title: "Error",
-        description: "Failed to delete subscription plan",
+        description: isAuthError 
+          ? "Please log in to delete subscription plans. Click here to log in."
+          : "Failed to delete subscription plan",
         variant: "destructive",
+        action: isAuthError ? (
+          <button 
+            onClick={() => window.location.href = '/api/login'}
+            className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
+          >
+            Log In
+          </button>
+        ) : undefined
       });
     },
   });
@@ -250,6 +293,37 @@ export default function AdminMailClub() {
         
         <main className="flex-1 overflow-auto p-6 bg-background">
           <div className="max-w-7xl mx-auto fade-in">
+            {/* Authentication Status */}
+            {isAuthLoading && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">Checking authentication status...</p>
+              </div>
+            )}
+            {!isAuthLoading && !authUser && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">Authentication Required</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">You need to log in to manage subscription plans.</p>
+                  </div>
+                  <Button 
+                    onClick={() => window.location.href = '/api/login'}
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Log In
+                  </Button>
+                </div>
+              </div>
+            )}
+            {!isAuthLoading && authUser && (
+              <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  ✓ Authenticated as {authUser.email || 'admin user'}
+                </p>
+              </div>
+            )}
+            
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
