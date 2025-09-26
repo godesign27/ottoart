@@ -242,6 +242,37 @@ export default function AdminMailClub() {
     },
   });
 
+  const fixStripeMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/subscription-plans/fix-stripe');
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+      toast({
+        title: "Stripe Configuration Fixed",
+        description: `Successfully processed ${data?.results?.length || 0} subscription plans`,
+      });
+    },
+    onError: (error: any) => {
+      const isAuthError = error?.message?.includes('Unauthorized') || error?.status === 401;
+      toast({
+        title: "Error",
+        description: isAuthError 
+          ? "Please log in to fix Stripe configuration. Click here to log in."
+          : "Failed to fix Stripe configuration",
+        variant: "destructive",
+        action: isAuthError ? (
+          <button 
+            onClick={() => window.location.href = '/api/login'}
+            className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
+          >
+            Log In
+          </button>
+        ) : undefined
+      });
+    },
+  });
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const planData = {
       ...values,
@@ -335,21 +366,46 @@ export default function AdminMailClub() {
                 </p>
               </div>
               
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={() => fixStripeMutation.mutate()}
+                  disabled={fixStripeMutation.isPending}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  data-testid="button-fix-stripe"
+                >
+                  {fixStripeMutation.isPending ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                  ) : (
+                    <DollarSign className="h-4 w-4" />
+                  )}
+                  {fixStripeMutation.isPending ? 'Fixing...' : 'Fix Stripe Config'}
+                </Button>
+                
+                <Dialog open={dialogOpen} onOpenChange={(open) => {
+                  setDialogOpen(open);
+                  if (!open) {
+                    setEditingPlan(null);
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="flex items-center gap-2"
+                      data-testid="button-add-plan"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add New Plan
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+              
               <Dialog open={dialogOpen} onOpenChange={(open) => {
                 setDialogOpen(open);
                 if (!open) {
                   setEditingPlan(null);
                 }
               }}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="flex items-center gap-2"
-                    data-testid="button-add-plan"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add New Plan
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
                     <DialogTitle>
