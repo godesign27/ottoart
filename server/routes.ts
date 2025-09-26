@@ -136,7 +136,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/subscription-plans", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.parse(req.body);
-      const plan = await storage.createSubscriptionPlan(validatedData);
+      
+      // Create Stripe product and price if Stripe is configured
+      let stripeProductId: string | undefined;
+      let stripePriceId: string | undefined;
+      
+      if (stripe) {
+        try {
+          // Create Stripe product
+          const stripeProduct = await stripe.products.create({
+            name: validatedData.name,
+            description: validatedData.description,
+            metadata: {
+              plan_slug: validatedData.slug,
+            },
+          });
+          stripeProductId = stripeProduct.id;
+          
+          // Create Stripe price (monthly recurring)
+          const stripePrice = await stripe.prices.create({
+            unit_amount: Math.round(parseFloat(validatedData.price) * 100), // Convert to cents
+            currency: 'usd',
+            recurring: {
+              interval: 'month',
+            },
+            product: stripeProductId,
+            metadata: {
+              plan_slug: validatedData.slug,
+            },
+          });
+          stripePriceId = stripePrice.id;
+          
+          console.log(`Created Stripe product ${stripeProductId} and price ${stripePriceId} for plan ${validatedData.name}`);
+        } catch (stripeError) {
+          console.error("Error creating Stripe product/price:", stripeError);
+          // Continue without Stripe integration if it fails
+        }
+      }
+      
+      // Create the subscription plan with Stripe IDs
+      const planData = {
+        ...validatedData,
+        ...(stripeProductId && { stripeProductId }),
+        ...(stripePriceId && { stripePriceId }),
+      };
+      
+      const plan = await storage.createSubscriptionPlan(planData);
       res.status(201).json(plan);
     } catch (error) {
       console.error("Error creating subscription plan:", error);
@@ -172,6 +217,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating subscription plan:", error);
       res.status(400).json({ message: "Invalid subscription plan data" });
+    }
+  });
+
+  // Utility endpoint to fix existing subscription plans with missing Stripe configuration
+  app.post("/api/subscription-plans/fix-stripe", isAuthenticated, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ message: "Stripe not configured" });
+      }
+
+      const plans = await storage.getSubscriptionPlans();
+      const plansToFix = plans.filter(plan => !plan.stripePriceId);
+      
+      const results = [];
+      
+      for (const plan of plansToFix) {
+        try {
+          // Create Stripe product
+          const stripeProduct = await stripe.products.create({
+            name: plan.name,
+            description: plan.description,
+            metadata: {
+              plan_slug: plan.slug,
+              plan_id: plan.id,
+            },
+          });
+          
+          // Create Stripe price (monthly recurring)
+          const stripePrice = await stripe.prices.create({
+            unit_amount: Math.round(parseFloat(plan.price) * 100), // Convert to cents
+            currency: 'usd',
+            recurring: {
+              interval: 'month',
+            },
+            product: stripeProduct.id,
+            metadata: {
+              plan_slug: plan.slug,
+              plan_id: plan.id,
+            },
+          });
+          
+          // Update the subscription plan with Stripe IDs
+          await storage.updateSubscriptionPlan(plan.id, {
+            stripeProductId: stripeProduct.id,
+            stripePriceId: stripePrice.id,
+          });
+          
+          results.push({
+            planId: plan.id,
+            planName: plan.name,
+            stripeProductId: stripeProduct.id,
+            stripePriceId: stripePrice.id,
+            status: 'success',
+          });
+          
+          console.log(`Fixed Stripe configuration for plan ${plan.name} (${plan.id})`);
+        } catch (stripeError) {
+          console.error(`Error fixing plan ${plan.name}:`, stripeError);
+          results.push({
+            planId: plan.id,
+            planName: plan.name,
+            status: 'error',
+            error: stripeError instanceof Error ? stripeError.message : 'Unknown error',
+          });
+        }
+      }
+      
+      res.json({
+        message: `Processed ${plansToFix.length} subscription plans`,
+        results,
+      });
+    } catch (error) {
+      console.error("Error fixing subscription plans:", error);
+      res.status(500).json({ 
+        message: "Error fixing subscription plans",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
