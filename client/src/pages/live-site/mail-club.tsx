@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Check, Star, Mail, Gift, Heart, Crown } from "lucide-react";
 import type { SubscriptionPlan } from "@shared/schema";
+import abstractNftImage from "@assets/abstract-nft_1758925017311.png";
 
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
@@ -240,9 +241,9 @@ export default function MailClubPage() {
       
       {/* Hero Section */}
       <section 
-        className="relative min-h-[70vh] flex items-center justify-center text-center bg-cover bg-center"
+        className="relative min-h-[47vh] flex items-center justify-center text-center bg-cover bg-center"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1586953208448-b95a79798f07?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+          backgroundImage: `url(${abstractNftImage})`,
         }}
         data-testid="mail-club-hero-section"
       >
