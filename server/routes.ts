@@ -1643,6 +1643,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user info for customer creation
       const user = await storage.getUser(userId);
       
+      // Build base URL more reliably
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host || req.get('host');
+      const baseUrl = `${protocol}://${host}`;
+      
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
@@ -1651,8 +1656,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           price: plan.stripePriceId,
           quantity: 1,
         }],
-        success_url: `${req.headers.origin}/mail-club/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/mail-club`,
+        success_url: `${baseUrl}/mail-club/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/mail-club`,
         customer_email: user?.email || '',
         metadata: {
           userId: userId,
