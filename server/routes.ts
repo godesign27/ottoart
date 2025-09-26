@@ -1649,6 +1649,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const baseUrl = `${protocol}://${host}`;
       
       // Create Stripe Checkout Session
+      console.log("Creating checkout session with baseUrl:", baseUrl);
+      console.log("Success URL will be:", `${baseUrl}/mail-club/success?session_id={CHECKOUT_SESSION_ID}`);
+      console.log("Cancel URL will be:", `${baseUrl}/mail-club`);
+      
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         payment_method_types: ['card'],
@@ -1672,6 +1676,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
         },
       });
+      
+      console.log("Created session with URL:", session.url);
 
       res.json({
         url: session.url,
