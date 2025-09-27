@@ -110,12 +110,22 @@ export default function MailClubPage() {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("Checkout session response:", data);
       // Redirect to Stripe checkout
       if (data.url) {
+        console.log("Redirecting to:", data.url);
         window.location.href = data.url;
+      } else {
+        console.error("No URL returned from checkout session");
+        toast({
+          title: "Subscription Error",
+          description: "No checkout URL received. Please try again.",
+          variant: "destructive",
+        });
       }
     },
     onError: (error: any) => {
+      console.error("Checkout session error:", error);
       toast({
         title: "Subscription Error",
         description: error.message || "Failed to start checkout. Please try again.",
