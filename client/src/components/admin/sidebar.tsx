@@ -12,6 +12,7 @@ import {
   Package, 
   Users,
   ShoppingCart,
+  UserCheck,
   MessageSquare,
   Tags, 
   FileText, 
@@ -53,6 +54,12 @@ const navItems = [
     icon: ShoppingCart,
     href: "/admin/orders",
     view: "orders"
+  },
+  {
+    title: "Subscriptions",
+    icon: UserCheck,
+    href: "/admin/subscriptions",
+    view: "subscriptions"
   },
   {
     title: "Messages",
