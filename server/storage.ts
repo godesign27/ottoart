@@ -84,6 +84,7 @@ export interface IStorage {
   getUserSubscription(id: string): Promise<UserSubscription | undefined>;
   getUserSubscriptionByPlan(userId: string, planId: string): Promise<UserSubscription | undefined>;
   getUserSubscriptionByStripeId(stripeSubscriptionId: string): Promise<UserSubscription | undefined>;
+  getAllUserSubscriptions(): Promise<(UserSubscription & { userEmail: string })[]>;
   createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
   updateUserSubscription(id: string, subscription: Partial<InsertUserSubscription>): Promise<UserSubscription | undefined>;
   updateSubscriptionStatus(stripeSubscriptionId: string, status: string): Promise<UserSubscription | undefined>;
@@ -422,6 +423,28 @@ export class DatabaseStorage implements IStorage {
     const [subscription] = await db.select().from(userSubscriptions)
       .where(eq(userSubscriptions.stripeSubscriptionId, stripeSubscriptionId));
     return subscription || undefined;
+  }
+
+  async getAllUserSubscriptions(): Promise<(UserSubscription & { userEmail: string })[]> {
+    const result = await db.select({
+      id: userSubscriptions.id,
+      createdAt: userSubscriptions.createdAt,
+      updatedAt: userSubscriptions.updatedAt,
+      userId: userSubscriptions.userId,
+      status: userSubscriptions.status,
+      planId: userSubscriptions.planId,
+      stripeSubscriptionId: userSubscriptions.stripeSubscriptionId,
+      stripeCustomerId: userSubscriptions.stripeCustomerId,
+      currentPeriodStart: userSubscriptions.currentPeriodStart,
+      currentPeriodEnd: userSubscriptions.currentPeriodEnd,
+      cancelAtPeriodEnd: userSubscriptions.cancelAtPeriodEnd,
+      userEmail: users.email
+    })
+    .from(userSubscriptions)
+    .leftJoin(users, eq(userSubscriptions.userId, users.id))
+    .orderBy(desc(userSubscriptions.createdAt));
+    
+    return result as (UserSubscription & { userEmail: string })[];
   }
 
   async createUserSubscription(insertSubscription: InsertUserSubscription): Promise<UserSubscription> {

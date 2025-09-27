@@ -19,7 +19,22 @@ import {
   DollarSign,
   Users
 } from "lucide-react";
-import type { UserSubscription, SubscriptionPlan } from "@shared/schema";
+type UserSubscriptionWithEmail = {
+  id: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  userId: string;
+  status: string;
+  planId: string;
+  stripeSubscriptionId: string | null;
+  stripeCustomerId: string | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean | null;
+  userEmail: string;
+};
+
+import type { SubscriptionPlan } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -107,7 +122,7 @@ export default function AdminSubscriptions() {
   }, [isMobileMenuOpen]);
 
   // Load subscriptions and plans data
-  const { data: subscriptions = [], isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery<UserSubscription[]>({
+  const { data: subscriptions = [], isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery<UserSubscriptionWithEmail[]>({
     queryKey: ['/api/user-subscriptions/all'],
   });
 
@@ -127,7 +142,7 @@ export default function AdminSubscriptions() {
     const searchTerm = searchQuery.toLowerCase();
     
     const matchesSearch = searchTerm === "" || 
-      subscription.userEmail?.toLowerCase().includes(searchTerm) ||
+      subscription.userEmail.toLowerCase().includes(searchTerm) ||
       plan?.name.toLowerCase().includes(searchTerm);
     
     const matchesStatus = statusFilter === "all" || subscription.status === statusFilter;
@@ -161,7 +176,7 @@ export default function AdminSubscriptions() {
       .filter(s => s.status === 'active')
       .reduce((total, sub) => {
         const plan = plansMap[sub.planId];
-        return total + (plan ? plan.price : 0);
+        return total + (plan ? Number(plan.price) : 0);
       }, 0)
   };
 
@@ -348,11 +363,11 @@ export default function AdminSubscriptions() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <div className="font-medium">{plan ? formatPrice(plan.price) : 'N/A'}</div>
+                              <div className="font-medium">{plan ? formatPrice(Number(plan.price)) : 'N/A'}</div>
                               <div className="text-sm text-muted-foreground">per month</div>
                             </TableCell>
                             <TableCell>
-                              {subscription.startDate ? formatDate(subscription.startDate) : 'N/A'}
+                              {subscription.currentPeriodStart ? formatDate(subscription.currentPeriodStart.toString()) : 'N/A'}
                             </TableCell>
                             <TableCell>
                               <div className="text-sm font-mono">{subscription.stripeSubscriptionId || 'N/A'}</div>

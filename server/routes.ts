@@ -1569,6 +1569,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all user subscriptions for admin
+  app.get("/api/user-subscriptions/all", isAuthenticated, async (req: any, res) => {
+    try {
+      const subscriptions = await storage.getAllUserSubscriptions();
+      res.json(subscriptions);
+    } catch (error: any) {
+      console.error("Error fetching all user subscriptions:", error);
+      res.status(500).json({ message: "Error fetching all subscriptions" });
+    }
+  });
+
   // Cancel subscription
   app.post("/api/cancel-subscription/:userSubscriptionId", isAuthenticated, async (req: any, res) => {
     try {
