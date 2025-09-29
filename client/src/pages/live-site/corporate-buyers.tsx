@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Building2, Hotel, Briefcase, Heart, Plane, Palette, Sparkles, RotateCw, Check } from "lucide-react";
 
 export default function CorporateBuyersPage() {
@@ -97,12 +98,12 @@ export default function CorporateBuyersPage() {
       >
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
-          <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 tracking-tight" data-testid="hero-headline">
+          <Badge className="mb-6 text-sm font-semibold px-4 py-2 bg-white/20 text-white border-white/30" data-testid="hero-badge">
             Corporate Buyers
-          </h1>
-          <p className="text-3xl md:text-4xl text-white/90 font-light mb-8 tracking-wide" data-testid="hero-subheadline">
+          </Badge>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight" data-testid="hero-headline">
             Elevate Your Space with Original Art
-          </p>
+          </h1>
           <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-4xl mx-auto" data-testid="hero-description">
             Art is more than decoration — it's a powerful way to shape how people feel in your space. 
             My work brings bold design, texture, and energy into environments where people gather, work, and travel.
