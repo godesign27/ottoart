@@ -193,6 +193,14 @@ export function Footer() {
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
               <Link 
+                href="/corporate-buyers" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="footer-corporate-buyers"
+              >
+                Corporate Buyers
+              </Link>
+              <span className="text-muted-foreground">•</span>
+              <Link 
                 href="/checkout" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 data-testid="footer-cart"

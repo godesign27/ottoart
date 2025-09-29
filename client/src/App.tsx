@@ -41,6 +41,7 @@ import MailClubPage from "@/pages/live-site/mail-club";
 import MailClubSuccessPage from "@/pages/live-site/mail-club-success";
 import AccountPage from "@/pages/live-site/account";
 import { ArtWallPage } from "@/pages/live-site/art-wall";
+import CorporateBuyersPage from "@/pages/live-site/corporate-buyers";
 
 function Router() {
   return (
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/events" component={EventsPage} />
       <Route path="/cv" component={CVPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/corporate-buyers" component={CorporateBuyersPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/favorites" component={FavoritesPage} />
       <Route path="/account" component={AccountPage} />
