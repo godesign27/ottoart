@@ -87,7 +87,7 @@ export default function CorporateBuyersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
       
       {/* Hero Section */}
@@ -111,7 +111,7 @@ export default function CorporateBuyersPage() {
       </section>
 
       {/* Introduction */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-gray-50 dark:bg-slate-900">
         <div className="max-w-4xl mx-auto px-6">
           <p className="text-xl text-muted-foreground leading-relaxed text-center">
             Whether you're curating a welcoming lobby, energizing a boardroom, or creating memorable guest experiences, 
@@ -121,7 +121,7 @@ export default function CorporateBuyersPage() {
       </section>
 
       {/* Who I Work With */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-gray-100 dark:bg-slate-800">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16" data-testid="who-we-work-with-heading">
             Who I Work With
@@ -132,7 +132,7 @@ export default function CorporateBuyersPage() {
               return (
                 <div 
                   key={index}
-                  className="bg-background p-8 rounded-lg shadow-sm border border-border hover:shadow-lg transition-shadow"
+                  className="bg-white dark:bg-slate-950 p-8 rounded-lg shadow-sm border border-border hover:shadow-lg transition-shadow"
                   data-testid={`work-with-card-${index}`}
                 >
                   <Icon className="h-12 w-12 text-primary mb-4" />
@@ -146,7 +146,7 @@ export default function CorporateBuyersPage() {
       </section>
 
       {/* Options for Corporate Buyers */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-gray-50 dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16" data-testid="options-heading">
             Options for Corporate Buyers
@@ -157,7 +157,7 @@ export default function CorporateBuyersPage() {
               return (
                 <div 
                   key={index}
-                  className="flex gap-6 p-8 bg-muted/30 rounded-lg border border-border"
+                  className="flex gap-6 p-8 bg-white dark:bg-slate-950 rounded-lg border border-border shadow-sm"
                   data-testid={`option-card-${index}`}
                 >
                   <div className="flex-shrink-0">
@@ -175,7 +175,7 @@ export default function CorporateBuyersPage() {
       </section>
 
       {/* Why Partner With Me */}
-      <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
+      <section className="py-20 bg-gray-100 dark:bg-slate-800">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16" data-testid="benefits-heading">
             Why Partner With Me
