@@ -89,14 +89,79 @@ export default function CorporateBuyersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <style>{`
+        @keyframes gradient {
+          0% {
+            background-position: 0% 0%;
+          }
+          50% {
+            background-position: 100% 100%;
+          }
+          100% {
+            background-position: 0% 0%;
+          }
+        }
+
+        @keyframes wave {
+          2% {
+            transform: translateX(1);
+          }
+          25% {
+            transform: translateX(-25%);
+          }
+          50% {
+            transform: translateX(-50%);
+          }
+          75% {
+            transform: translateX(-25%);
+          }
+          100% {
+            transform: translateX(1);
+          }
+        }
+
+        .hero-gradient {
+          background: linear-gradient(315deg, rgba(101,0,94,1) 3%, rgba(60,132,206,1) 38%, rgba(48,238,226,1) 68%, rgba(255,25,25,1) 98%);
+          animation: gradient 15s ease infinite;
+          background-size: 400% 400%;
+        }
+
+        .wave {
+          background: rgb(255 255 255 / 25%);
+          border-radius: 1000% 1000% 0 0;
+          position: absolute;
+          width: 200%;
+          height: 12em;
+          animation: wave 10s -3s linear infinite;
+          transform: translate3d(0, 0, 0);
+          opacity: 0.8;
+          bottom: 0;
+          left: 0;
+          z-index: 1;
+        }
+
+        .wave:nth-of-type(2) {
+          bottom: -1.25em;
+          animation: wave 18s linear reverse infinite;
+          opacity: 0.8;
+        }
+
+        .wave:nth-of-type(3) {
+          bottom: -2.5em;
+          animation: wave 20s -1s reverse infinite;
+          opacity: 0.9;
+        }
+      `}</style>
       <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
       
       {/* Hero Section */}
       <section 
-        className="relative min-h-[70vh] flex items-center justify-center text-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+        className="hero-gradient relative min-h-[70vh] flex items-center justify-center text-center overflow-hidden"
         data-testid="corporate-hero-section"
       >
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+        <div className="wave"></div>
+        <div className="wave"></div>
+        <div className="wave"></div>
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
           <Badge className="mb-6 text-sm font-semibold px-4 py-2 bg-white/20 text-white border-white/30" data-testid="hero-badge">
             Corporate Buyers
