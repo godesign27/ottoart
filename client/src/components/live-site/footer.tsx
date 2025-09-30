@@ -33,7 +33,8 @@ export function Footer() {
     { href: "/originals", label: "Originals" },
     { href: "/prints", label: "Prints" },
     { href: "/accessories", label: "Accessories" },
-    { href: "/mail-club", label: "Mail Club" }
+    { href: "/mail-club", label: "Mail Club" },
+    { href: "/corporate-buyers", label: "Corporate Buyers" }
   ];
 
   // Page-based navigation items (filtered by page settings)
