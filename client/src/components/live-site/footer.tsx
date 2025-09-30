@@ -127,7 +127,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Logo and Description */}
           <div className="space-y-4">
-            <Link href="/" className="text-2xl font-bold text-foreground" data-testid="footer-logo">
+            <Link href="/" onClick={() => window.scrollTo(0, 0)} className="text-2xl font-bold text-foreground" data-testid="footer-logo">
               Otto Art
             </Link>
             <p className="text-muted-foreground text-sm">
@@ -143,6 +143,7 @@ export function Footer() {
                 <Link 
                   key={item.href}
                   href={item.href}
+                  onClick={() => window.scrollTo(0, 0)}
                   className={`text-sm transition-colors ${
                     location === item.href 
                       ? 'text-primary font-medium' 
