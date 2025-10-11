@@ -284,7 +284,7 @@ export default function CorporateBuyersPage() {
               size="lg" 
               className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-6 text-lg font-semibold"
               data-testid="button-schedule-consultation"
-              onClick={() => setLocation('/contact')}
+              onClick={() => window.open('https://cal.com/timothy-mcguire-27', '_blank')}
             >
               Schedule a Consultation
             </Button>
@@ -292,10 +292,10 @@ export default function CorporateBuyersPage() {
               size="lg" 
               variant="outline"
               className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold"
-              data-testid="button-request-portfolio"
+              data-testid="button-lets-talk"
               onClick={() => setLocation('/contact')}
             >
-              Request a Portfolio PDF
+              Let's Talk
             </Button>
           </div>
         </div>
