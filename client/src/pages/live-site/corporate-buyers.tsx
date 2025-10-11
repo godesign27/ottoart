@@ -284,7 +284,7 @@ export default function CorporateBuyersPage() {
               size="lg" 
               className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-6 text-lg font-semibold"
               data-testid="button-schedule-consultation"
-              onClick={() => window.open('https://cal.com/timothy-mcguire-27', '_blank')}
+              onClick={() => window.open('https://cal.com/ottoart', '_blank')}
             >
               Schedule a Consultation
             </Button>
