@@ -255,47 +255,58 @@ export default function ProductDetailPage() {
               {product.pricingTiers && product.pricingTiers.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-foreground">Available Options:</h3>
-                  <div className="space-y-3">
-                    {product.pricingTiers.map((tier) => (
-                      <div 
-                        key={tier.id} 
-                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                          selectedTierId === tier.id 
-                            ? 'border-primary bg-primary/5' 
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                        onClick={() => setSelectedTierId(tier.id)}
-                        data-testid={`tier-option-${tier.id}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                selectedTierId === tier.id 
-                                  ? 'border-primary bg-primary' 
-                                  : 'border-muted-foreground'
-                              }`}
-                            >
-                              {selectedTierId === tier.id && (
-                                <div className="w-2 h-2 rounded-full bg-white"></div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">
-                                <span className="font-bold">{tier.type}:</span> {tier.size}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Stock: {tier.stock}
-                              </p>
+                  
+                  {/* Original Tiers */}
+                  {product.pricingTiers.filter(tier => tier.type === 'Original').length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-base font-semibold text-foreground">Original</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {product.pricingTiers.filter(tier => tier.type === 'Original').map((tier) => (
+                          <div 
+                            key={tier.id} 
+                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                              selectedTierId === tier.id 
+                                ? 'border-primary bg-primary/5' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            onClick={() => setSelectedTierId(tier.id)}
+                            data-testid={`tier-option-${tier.id}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-base text-foreground">{tier.size}</p>
+                              <p className="text-xl font-bold text-foreground">${tier.price}</p>
                             </div>
                           </div>
-                          <p className="text-xl font-bold text-foreground">
-                            ${tier.price}
-                          </p>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Print Tiers */}
+                  {product.pricingTiers.filter(tier => tier.type === 'Print').length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-base font-semibold text-foreground">Print</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {product.pricingTiers.filter(tier => tier.type === 'Print').map((tier) => (
+                          <div 
+                            key={tier.id} 
+                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                              selectedTierId === tier.id 
+                                ? 'border-primary bg-primary/5' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            onClick={() => setSelectedTierId(tier.id)}
+                            data-testid={`tier-option-${tier.id}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-base text-foreground">{tier.size}</p>
+                              <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
