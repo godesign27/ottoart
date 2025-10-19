@@ -307,6 +307,32 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Canvas Tiers */}
+                  {product.pricingTiers.filter(tier => tier.type === 'Canvas').length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-base font-semibold text-foreground">Canvas</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {product.pricingTiers.filter(tier => tier.type === 'Canvas').map((tier) => (
+                          <div 
+                            key={tier.id} 
+                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                              selectedTierId === tier.id 
+                                ? 'border-primary bg-primary/5' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            onClick={() => setSelectedTierId(tier.id)}
+                            data-testid={`tier-option-${tier.id}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-base text-foreground">{tier.size}</p>
+                              <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
