@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Upload, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Plus, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -887,11 +887,66 @@ function ImagesTab({
   onRemoveImage: (index: number) => void;
 }) {
   const images = form.watch("images");
+  const { toast } = useToast();
+
+  const analyzeArtworkMutation = useMutation({
+    mutationFn: async (imageUrl: string) => {
+      const response = await apiRequest('/api/ai/analyze-artwork', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl }),
+      });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      form.setValue('name', data.title);
+      form.setValue('description', data.description);
+      toast({
+        title: "AI Analysis Complete",
+        description: "Title and description have been generated!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze artwork. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAnalyzeArtwork = () => {
+    if (images.length === 0) {
+      toast({
+        title: "No Image",
+        description: "Please add an image first before analyzing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    analyzeArtworkMutation.mutate(images[0]);
+  };
 
   return (
     <>
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Product Images</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Product Images</h3>
+          {images.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAnalyzeArtwork}
+              disabled={analyzeArtworkMutation.isPending}
+              data-testid="analyze-artwork-button"
+              className="flex items-center gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {analyzeArtworkMutation.isPending ? "Analyzing..." : "AI Generate Title & Description"}
+            </Button>
+          )}
+        </div>
         
         {/* Real Image Upload */}
         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
