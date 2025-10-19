@@ -266,7 +266,7 @@ export default function ProductDetailPage() {
                             key={tier.id} 
                             className={`border rounded-lg p-4 cursor-pointer transition-all ${
                               selectedTierId === tier.id 
-                                ? 'border-primary bg-primary/5' 
+                                ? 'border-2 border-primary bg-primary/5' 
                                 : 'border-border hover:border-primary/50'
                             }`}
                             onClick={() => setSelectedTierId(tier.id)}
@@ -292,7 +292,7 @@ export default function ProductDetailPage() {
                             key={tier.id} 
                             className={`border rounded-lg p-4 cursor-pointer transition-all ${
                               selectedTierId === tier.id 
-                                ? 'border-primary bg-primary/5' 
+                                ? 'border-2 border-primary bg-primary/5' 
                                 : 'border-border hover:border-primary/50'
                             }`}
                             onClick={() => setSelectedTierId(tier.id)}
@@ -318,7 +318,7 @@ export default function ProductDetailPage() {
                             key={tier.id} 
                             className={`border rounded-lg p-4 cursor-pointer transition-all ${
                               selectedTierId === tier.id 
-                                ? 'border-primary bg-primary/5' 
+                                ? 'border-2 border-primary bg-primary/5' 
                                 : 'border-border hover:border-primary/50'
                             }`}
                             onClick={() => setSelectedTierId(tier.id)}
