@@ -891,11 +891,7 @@ function ImagesTab({
 
   const analyzeArtworkMutation = useMutation({
     mutationFn: async (imageUrl: string) => {
-      const response = await apiRequest('/api/ai/analyze-artwork', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl }),
-      });
+      const response = await apiRequest('/api/ai/analyze-artwork', 'POST', { imageUrl });
       return response;
     },
     onSuccess: (data: any) => {
