@@ -726,19 +726,57 @@ function PricingTab({ form }: { form: any }) {
                     <FormField
                       control={form.control}
                       name={`pricingTiers.${index}.size`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Size</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="e.g., 42x42"
-                              {...field}
-                              data-testid={`tier-size-${index}`}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const standardSizes = [
+                          "16 x 20 inches",
+                          "18 x 24 inches",
+                          "18 x 18 inches",
+                          "24 x 30 inches",
+                          "24 x 24 inches",
+                          "30 x 36 inches",
+                          "30 x 30 inches",
+                          "36 x 48 inches",
+                          "36 x 36 inches",
+                          "48 x 48 inches"
+                        ];
+                        const isCustom = !standardSizes.includes(field.value);
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel>Size</FormLabel>
+                            <Select 
+                              onValueChange={(value) => {
+                                if (value !== "custom") {
+                                  field.onChange(value);
+                                }
+                              }} 
+                              value={isCustom ? "custom" : field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid={`tier-size-${index}`}>
+                                  <SelectValue placeholder="Select size" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {standardSizes.map((size) => (
+                                  <SelectItem key={size} value={size}>{size}</SelectItem>
+                                ))}
+                                <SelectItem value="custom">Custom size</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {isCustom && (
+                              <Input 
+                                placeholder="e.g., 42 x 42 inches"
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                className="mt-2"
+                                data-testid={`tier-size-custom-${index}`}
+                              />
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                     
                     <FormField
