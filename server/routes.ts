@@ -2,6 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
+import OpenAI from "openai";
 import { storage } from "./storage";
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema } from "@shared/schema";
 import { z } from "zod";
@@ -17,6 +18,12 @@ if (process.env.STRIPE_SECRET_KEY) {
 } else {
   console.warn('STRIPE_SECRET_KEY not configured - payment features will be disabled');
 }
+
+// Initialize OpenAI with Replit AI Integrations
+const openai = new OpenAI({
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+});
 
 // Type declarations for global rate limiting
 declare global {
@@ -1812,6 +1819,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error handling webhook:', error);
       res.status(500).json({ error: 'Webhook handler failed' });
+    }
+  });
+
+  // AI Artwork Analysis endpoint
+  app.post('/api/ai/analyze-artwork', async (req, res) => {
+    try {
+      const { imageUrl } = req.body;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ message: "Image URL is required" });
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert art curator and creative copywriter. Analyze artwork images and provide compelling titles and descriptions that capture the essence of the piece. Your writing should be sophisticated yet accessible, evocative, and designed to engage collectors and art enthusiasts. Focus on visual elements, emotional impact, technique, and artistic merit."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Please analyze this artwork and provide:\n1. A compelling, artistic title (keep it concise, 2-6 words)\n2. A rich, engaging description (2-3 paragraphs) that captures the essence of the work, its visual impact, technique, and emotional resonance. Write in a voice that blends art curation with creative copywriting.\n\nRespond in this exact JSON format:\n{\n  \"title\": \"your title here\",\n  \"description\": \"your description here\"\n}"
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 800,
+      });
+
+      const responseText = completion.choices[0]?.message?.content;
+      
+      if (!responseText) {
+        return res.status(500).json({ message: "Failed to generate artwork analysis" });
+      }
+
+      // Parse the JSON response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        return res.status(500).json({ message: "Invalid response format from AI" });
+      }
+
+      const analysis = JSON.parse(jsonMatch[0]);
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing artwork:", error);
+      res.status(500).json({ message: "Failed to analyze artwork" });
     }
   });
 
