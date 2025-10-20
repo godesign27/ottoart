@@ -814,7 +814,7 @@ function PricingTab({ form }: { form: any }) {
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="Original">Original</SelectItem>
-                              <SelectItem value="Canvas">Canvas</SelectItem>
+                              <SelectItem value="Canvas Print">Canvas Print</SelectItem>
                               <SelectItem value="Print">Print</SelectItem>
                               <SelectItem value="Framed">Framed</SelectItem>
                             </SelectContent>
