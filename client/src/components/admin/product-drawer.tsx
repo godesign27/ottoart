@@ -555,7 +555,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
           </div>
 
           {/* Form Content */}
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit, (errors) => {
                 console.log('Form validation errors:', errors);
@@ -564,8 +564,8 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   description: "Please check all fields for errors.",
                   variant: "destructive",
                 });
-              })} className="flex-1 min-h-0 flex flex-col">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
+              })} className="h-full flex flex-col">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   {/* Tab Navigation */}
                   <div className="shrink-0 px-6 pt-4 border-b">
                     <TabsList className="grid w-full grid-cols-4">
@@ -576,8 +576,8 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                     </TabsList>
                   </div>
 
-                  {/* Tab Content */}
-                  <div className="flex-1 min-h-0 overflow-y-auto pb-24">
+                  {/* Tab Content - Scrollable Area */}
+                  <div className="flex-1 overflow-y-auto scroll-smooth">
                     <TabsContent value="content" className="space-y-6 mt-0 p-6 pb-24">
                       <ContentTab form={form} />
                     </TabsContent>
