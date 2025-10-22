@@ -739,6 +739,35 @@ function PricingTab({ form }: { form: any }) {
                           "36 x 36 inches",
                           "48 x 48 inches"
                         ];
+                        
+                        // Pricing map for auto-population
+                        const pricingMap: Record<string, Record<string, number>> = {
+                          "Print": {
+                            "16 x 20 inches": 185,
+                            "18 x 24 inches": 225,
+                            "18 x 18 inches": 200,
+                            "24 x 24 inches": 250,
+                            "24 x 30 inches": 275,
+                            "30 x 30 inches": 300,
+                            "30 x 36 inches": 350,
+                            "36 x 36 inches": 375,
+                            "36 x 48 inches": 400,
+                            "48 x 48 inches": 425,
+                          },
+                          "Canvas Print": {
+                            "16 x 20 inches": 300,
+                            "18 x 24 inches": 375,
+                            "18 x 18 inches": 350,
+                            "24 x 24 inches": 375,
+                            "24 x 30 inches": 400,
+                            "30 x 30 inches": 450,
+                            "30 x 36 inches": 500,
+                            "36 x 36 inches": 550,
+                            "36 x 48 inches": 600,
+                            "48 x 48 inches": 650,
+                          }
+                        };
+                        
                         const isCustom = !standardSizes.includes(field.value);
                         
                         return (
@@ -748,6 +777,12 @@ function PricingTab({ form }: { form: any }) {
                               onValueChange={(value) => {
                                 if (value !== "custom") {
                                   field.onChange(value);
+                                  // Auto-populate price based on size and type
+                                  const currentType = form.getValues(`pricingTiers.${index}.type`);
+                                  const price = pricingMap[currentType]?.[value];
+                                  if (price) {
+                                    form.setValue(`pricingTiers.${index}.price`, price);
+                                  }
                                 }
                               }} 
                               value={isCustom ? "custom" : field.value}
@@ -803,25 +838,66 @@ function PricingTab({ form }: { form: any }) {
                     <FormField
                       control={form.control}
                       name={`pricingTiers.${index}.type`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid={`tier-type-${index}`}>
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Original">Original</SelectItem>
-                              <SelectItem value="Canvas Print">Canvas Print</SelectItem>
-                              <SelectItem value="Print">Print</SelectItem>
-                              <SelectItem value="Framed">Framed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // Pricing map for auto-population
+                        const pricingMap: Record<string, Record<string, number>> = {
+                          "Print": {
+                            "16 x 20 inches": 185,
+                            "18 x 24 inches": 225,
+                            "18 x 18 inches": 200,
+                            "24 x 24 inches": 250,
+                            "24 x 30 inches": 275,
+                            "30 x 30 inches": 300,
+                            "30 x 36 inches": 350,
+                            "36 x 36 inches": 375,
+                            "36 x 48 inches": 400,
+                            "48 x 48 inches": 425,
+                          },
+                          "Canvas Print": {
+                            "16 x 20 inches": 300,
+                            "18 x 24 inches": 375,
+                            "18 x 18 inches": 350,
+                            "24 x 24 inches": 375,
+                            "24 x 30 inches": 400,
+                            "30 x 30 inches": 450,
+                            "30 x 36 inches": 500,
+                            "36 x 36 inches": 550,
+                            "36 x 48 inches": 600,
+                            "48 x 48 inches": 650,
+                          }
+                        };
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel>Type</FormLabel>
+                            <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                // Auto-populate price based on type and size
+                                const currentSize = form.getValues(`pricingTiers.${index}.size`);
+                                const price = pricingMap[value]?.[currentSize];
+                                if (price) {
+                                  form.setValue(`pricingTiers.${index}.price`, price);
+                                }
+                              }} 
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid={`tier-type-${index}`}>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Original">Original</SelectItem>
+                                <SelectItem value="Canvas Print">Canvas Print</SelectItem>
+                                <SelectItem value="Print">Print</SelectItem>
+                                <SelectItem value="Framed">Framed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                     
                     <FormField
