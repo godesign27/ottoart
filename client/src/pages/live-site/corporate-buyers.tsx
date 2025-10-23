@@ -4,17 +4,80 @@ import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation"
 import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Hotel, Briefcase, Heart, Plane, Palette, Sparkles, RotateCw, Check } from "lucide-react";
 
 export default function CorporateBuyersPage() {
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<null | { ok: boolean; msg: string }>(null);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
     setViewMode(mode);
     if (mode === 'admin') {
       setLocation('/admin');
     }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setStatus(null);
+
+    const form = e.currentTarget;
+    const data = new FormData(form);
+
+    // Add selected styles to form data
+    selectedStyles.forEach(style => {
+      data.append('style', style);
+    });
+
+    // Basic client-side validation
+    if (!data.get("name") || !data.get("company") || !data.get("email")) {
+      setSubmitting(false);
+      setStatus({ ok: false, msg: "Please fill in your name, company, and email." });
+      return;
+    }
+
+    try {
+      const res = await fetch("https://formspree.io/f/xqayrpoe", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: data
+      });
+
+      if (res.ok) {
+        form.reset();
+        setSelectedStyles([]);
+        setStatus({ ok: true, msg: "Thanks! Your inquiry has been sent. I'll reply soon." });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setStatus({
+          ok: false,
+          msg: err?.errors?.[0]?.message || "Something went wrong. Please try again."
+        });
+      }
+    } catch {
+      setStatus({ ok: false, msg: "Network error. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleStyle = (style: string) => {
+    setSelectedStyles(prev => 
+      prev.includes(style) 
+        ? prev.filter(s => s !== style) 
+        : [...prev, style]
+    );
   };
 
   const whoWeWorkWith = [
@@ -293,7 +356,7 @@ export default function CorporateBuyersPage() {
               variant="outline"
               className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold"
               data-testid="button-lets-talk"
-              onClick={() => setLocation('/contact')}
+              onClick={() => setIsFormOpen(true)}
             >
               Let's Talk
             </Button>
@@ -302,6 +365,209 @@ export default function CorporateBuyersPage() {
       </section>
       
       <Footer />
+
+      {/* Corporate Inquiry Form Sheet */}
+      <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Let's Talk About Your Space</SheetTitle>
+            <SheetDescription>
+              Tell me a bit about your project — I'll follow up soon.
+            </SheetDescription>
+          </SheetHeader>
+
+          <form onSubmit={handleFormSubmit} className="mt-6 space-y-6">
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input 
+                id="name"
+                name="name" 
+                required 
+                data-testid="input-corporate-name"
+              />
+            </div>
+
+            {/* Company */}
+            <div className="space-y-2">
+              <Label htmlFor="company">Company / Organization *</Label>
+              <Input 
+                id="company"
+                name="company" 
+                required 
+                data-testid="input-corporate-company"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input 
+                id="email"
+                name="email" 
+                type="email" 
+                required 
+                data-testid="input-corporate-email"
+              />
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone (optional)</Label>
+              <Input 
+                id="phone"
+                name="phone" 
+                type="tel" 
+                data-testid="input-corporate-phone"
+              />
+            </div>
+
+            {/* Project Type */}
+            <div className="space-y-2">
+              <Label htmlFor="projectType">Type of Project</Label>
+              <Select name="projectType" defaultValue="Office / Corporate HQ">
+                <SelectTrigger id="projectType" data-testid="select-project-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Office / Corporate HQ">Office / Corporate HQ</SelectItem>
+                  <SelectItem value="Hotel / Resort">Hotel / Resort</SelectItem>
+                  <SelectItem value="Healthcare / Wellness">Healthcare / Wellness</SelectItem>
+                  <SelectItem value="Real Estate Development">Real Estate Development</SelectItem>
+                  <SelectItem value="Restaurant / Hospitality">Restaurant / Hospitality</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Budget Range */}
+            <div className="space-y-2">
+              <Label htmlFor="budget">Estimated Budget Range</Label>
+              <Select name="budget" defaultValue="Under $5,000">
+                <SelectTrigger id="budget" data-testid="select-budget">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Under $5,000">Under $5,000</SelectItem>
+                  <SelectItem value="$5,000–$15,000">$5,000–$15,000</SelectItem>
+                  <SelectItem value="$15,000–$50,000">$15,000–$50,000</SelectItem>
+                  <SelectItem value="$50,000+">$50,000+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Number of Pieces */}
+            <div className="space-y-2">
+              <Label htmlFor="pieces">Number of Pieces</Label>
+              <Input 
+                id="pieces"
+                name="pieces" 
+                type="number" 
+                min="0" 
+                data-testid="input-corporate-pieces"
+              />
+            </div>
+
+            {/* Art Preference */}
+            <div className="space-y-3">
+              <Label>Art Preference</Label>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  "Abstract",
+                  "Nature-Inspired",
+                  "Textural / Mixed Media",
+                  "Custom Commission",
+                  "Unsure / Open to Ideas"
+                ].map((style) => (
+                  <div key={style} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`style-${style}`}
+                      checked={selectedStyles.includes(style)}
+                      onCheckedChange={() => toggleStyle(style)}
+                      data-testid={`checkbox-style-${style.toLowerCase().replace(/\s+/g, '-')}`}
+                    />
+                    <Label 
+                      htmlFor={`style-${style}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {style}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Project Location */}
+            <div className="space-y-2">
+              <Label htmlFor="location">Project Location</Label>
+              <Input 
+                id="location"
+                name="location" 
+                data-testid="input-corporate-location"
+              />
+            </div>
+
+            {/* Timeline */}
+            <div className="space-y-2">
+              <Label htmlFor="timeline">Deadline / Timeline</Label>
+              <Input 
+                id="timeline"
+                name="timeline" 
+                placeholder="e.g., Installation by March 2026" 
+                data-testid="input-corporate-timeline"
+              />
+            </div>
+
+            {/* Message */}
+            <div className="space-y-2">
+              <Label htmlFor="message">Message / Vision</Label>
+              <Textarea 
+                id="message"
+                name="message" 
+                rows={4} 
+                data-testid="textarea-corporate-message"
+              />
+            </div>
+
+            {/* Hidden fields */}
+            <input type="hidden" name="_subject" value="New Corporate Art Inquiry" />
+            <input type="hidden" name="source" value="Corporate Art Buyers Page" />
+            <input type="text" name="_gotcha" className="hidden" tabIndex={-1} autoComplete="off" />
+
+            {/* Consent */}
+            <div className="flex items-start space-x-2">
+              <Checkbox id="consent" name="consent" value="yes" data-testid="checkbox-consent" />
+              <Label 
+                htmlFor="consent"
+                className="text-sm font-normal leading-relaxed cursor-pointer"
+              >
+                I agree to be contacted about this inquiry. I don't sell or share your info.
+              </Label>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full"
+              data-testid="button-submit-corporate-form"
+            >
+              {submitting ? "Sending…" : "Send Inquiry"}
+            </Button>
+
+            {/* Status Message */}
+            {status && (
+              <p className={`text-sm ${status.ok ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                {status.msg}
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              I typically respond within 24–48 hours.
+            </p>
+          </form>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
