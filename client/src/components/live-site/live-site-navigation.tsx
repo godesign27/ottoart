@@ -12,6 +12,7 @@ import {
 import { User, ShoppingCart, Menu, X, Settings, Eye, ChevronDown } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 import { ProfileMenu } from "./profile-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LiveSiteNavigationProps {
   viewMode?: 'admin' | 'live';
@@ -24,6 +25,10 @@ export function LiveSiteNavigation({
 }: LiveSiteNavigationProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Check if user is admin
+  const isAdmin = user && (user as any).role === 'admin';
 
   // Fetch page settings
   const { data: pageSettings = [] } = useQuery({
@@ -297,7 +302,7 @@ export function LiveSiteNavigation({
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
-          {onViewModeChange && (
+          {onViewModeChange && isAdmin && (
             <div className="flex bg-muted rounded-lg p-1">
               <Button
                 size="sm"
@@ -342,7 +347,7 @@ export function LiveSiteNavigation({
         {/* Mobile-only Icons */}
         <div className="flex md:hidden items-center space-x-2">
           {/* Mobile View Switcher */}
-          {onViewModeChange && (
+          {onViewModeChange && isAdmin && (
             <div className="flex bg-muted rounded-lg p-1">
               <Button
                 size="sm"
