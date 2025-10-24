@@ -367,16 +367,37 @@ export default function CorporateBuyersPage() {
       <Footer />
 
       {/* Corporate Inquiry Form Sheet */}
-      <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Sheet open={isFormOpen} onOpenChange={(open) => {
+        setIsFormOpen(open);
+        if (!open) {
+          // Reset status when closing
+          setTimeout(() => setStatus(null), 300);
+        }
+      }}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Let's Talk About Your Space</SheetTitle>
-            <SheetDescription>
-              Tell me a bit about your project — I'll follow up soon.
-            </SheetDescription>
-          </SheetHeader>
+          {status?.ok ? (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-6">
+              <div className="text-6xl mb-6">✅</div>
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                Thank you for your inquiry!
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-md mb-6">
+                I've received your message and will be in touch within 1–2 business days to discuss your project.
+              </p>
+              <p className="text-base text-muted-foreground italic">
+                — Otto, Abstract Artist
+              </p>
+            </div>
+          ) : (
+            <>
+              <SheetHeader>
+                <SheetTitle>Let's Talk About Your Space</SheetTitle>
+                <SheetDescription>
+                  Tell me a bit about your project — I'll follow up soon.
+                </SheetDescription>
+              </SheetHeader>
 
-          <form onSubmit={handleFormSubmit} className="mt-6 space-y-6">
+              <form onSubmit={handleFormSubmit} className="mt-6 space-y-6">
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name *</Label>
@@ -556,8 +577,8 @@ export default function CorporateBuyersPage() {
             </Button>
 
             {/* Status Message */}
-            {status && (
-              <p className={`text-sm ${status.ok ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+            {status && !status.ok && (
+              <p className="text-sm text-red-600 dark:text-red-400">
                 {status.msg}
               </p>
             )}
@@ -566,6 +587,8 @@ export default function CorporateBuyersPage() {
               I typically respond within 24–48 hours.
             </p>
           </form>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </div>
