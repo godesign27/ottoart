@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Hotel, Briefcase, Heart, Plane, Palette, Sparkles, RotateCw, Check } from "lucide-react";
+import officeWallImage from "@assets/office-wall-corporate1_1761342062803.png";
 
 export default function CorporateBuyersPage() {
   const [, setLocation] = useLocation();
@@ -236,6 +237,18 @@ export default function CorporateBuyersPage() {
             Art is more than decoration — it's a powerful way to shape how people feel in your space. 
             My work brings bold design, texture, and energy into environments where people gather, work, and travel.
           </p>
+        </div>
+      </section>
+
+      {/* Office Wall Image */}
+      <section className="py-16 bg-white dark:bg-slate-950">
+        <div className="max-w-6xl mx-auto px-6">
+          <img 
+            src={officeWallImage} 
+            alt="Abstract art prints displayed in a modern corporate office setting" 
+            className="w-full h-auto rounded-lg shadow-2xl"
+            data-testid="office-wall-image"
+          />
         </div>
       </section>
 
