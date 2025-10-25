@@ -19,7 +19,8 @@ import {
   Home,
   Bed,
   Briefcase,
-  ChefHat
+  ChefHat,
+  X
 } from "lucide-react";
 import type { Product, RoomBackground } from "@shared/schema";
 
@@ -446,13 +447,13 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
             <CardContent>
               <div 
                 ref={containerRef}
-                className="relative bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600"
+                className="relative rounded-lg overflow-hidden"
               >
                 <canvas
                   ref={canvasRef}
                   width={canvasSize.width}
                   height={canvasSize.height}
-                  className="max-w-full h-auto cursor-crosshair"
+                  className="w-full h-auto cursor-crosshair bg-transparent"
                   onMouseDown={handleCanvasMouseDown}
                   onMouseMove={handleCanvasMouseMove}
                   onMouseUp={handleCanvasMouseUp}
@@ -460,49 +461,9 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
                   data-testid="art-wall-canvas"
                 />
                 
-                {/* Placed Artworks List */}
-                {artworks.length > 0 && (
-                  <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 max-w-xs">
-                    <h4 className="font-medium text-sm mb-2">On Wall ({artworks.length})</h4>
-                    <div className="space-y-1">
-                      {artworks.map(artwork => {
-                        const product = products.find(p => p.id === artwork.productId);
-                        // Use second image (standalone artwork) or fall back to first image
-                        const artworkImage = product?.images?.[1] || product?.images?.[0];
-                        return (
-                          <div
-                            key={artwork.productId}
-                            className={`flex items-center gap-2 text-xs p-2 rounded cursor-pointer transition-colors ${
-                              selectedArtwork === artwork.productId
-                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
-                            onClick={() => setSelectedArtwork(artwork.productId)}
-                            data-testid={`artwork-item-${artwork.productId}`}
-                          >
-                            {artworkImage && (
-                              <img 
-                                src={artworkImage} 
-                                alt=""
-                                className="w-6 h-6 object-cover rounded"
-                              />
-                            )}
-                            <span className="truncate flex-1">
-                              {product?.name || 'Unknown'}
-                            </span>
-                            <Badge variant="secondary" className="text-xs">
-                              {Math.round(artwork.width)}px
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {/* Usage Instructions */}
                 {artworks.length === 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="text-center text-gray-500 dark:text-gray-400 space-y-2">
                       <Move className="w-8 h-8 mx-auto opacity-50" />
                       <p className="text-sm font-medium">Click artwork to add to wall</p>
@@ -511,6 +472,58 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
                   </div>
                 )}
               </div>
+
+              {/* Placed Artworks List - Below Canvas */}
+              {artworks.length > 0 && (
+                <div className="mt-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                  <h4 className="font-medium text-sm mb-3">On Wall ({artworks.length})</h4>
+                  <div className="space-y-2">
+                    {artworks.map(artwork => {
+                      const product = products.find(p => p.id === artwork.productId);
+                      // Use second image (standalone artwork) or fall back to first image
+                      const artworkImage = product?.images?.[1] || product?.images?.[0];
+                      return (
+                        <div
+                          key={artwork.productId}
+                          className={`flex items-center gap-2 text-xs p-2 rounded cursor-pointer transition-colors ${
+                            selectedArtwork === artwork.productId
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                              : 'bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => setSelectedArtwork(artwork.productId)}
+                          data-testid={`artwork-item-${artwork.productId}`}
+                        >
+                          {artworkImage && (
+                            <img 
+                              src={artworkImage} 
+                              alt=""
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          )}
+                          <span className="truncate flex-1">
+                            {product?.name || 'Unknown'}
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            {Math.round(artwork.width)}px
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeArtwork(artwork.productId);
+                            }}
+                            data-testid={`button-remove-${artwork.productId}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
