@@ -130,7 +130,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                         productId={product.id} 
                         size="sm" 
                         iconOnly
-                        className="bg-white/80 backdrop-blur-sm hover:bg-white"
+                        className="shadow-sm"
                       />
                     </div>
                   </div>
@@ -191,7 +191,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                   productId={product.id} 
                   size="sm" 
                   iconOnly
-                  className="bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm"
+                  className="shadow-sm"
                 />
               </div>
             </div>
