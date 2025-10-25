@@ -66,7 +66,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
 
   // Favorites
-  getUserFavorites(userId: string): Promise<Favorite[]>;
+  getUserFavorites(userId: string): Promise<Product[]>;
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
   removeFavorite(userId: string, productId: string): Promise<boolean>;
   isFavorite(userId: string, productId: string): Promise<boolean>;
@@ -326,9 +326,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Favorites methods
-  async getUserFavorites(userId: string): Promise<Favorite[]> {
-    const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
-    return userFavorites;
+  async getUserFavorites(userId: string): Promise<Product[]> {
+    const userFavorites = await db
+      .select({
+        product: products,
+      })
+      .from(favorites)
+      .innerJoin(products, eq(favorites.productId, products.id))
+      .where(eq(favorites.userId, userId));
+    
+    return userFavorites.map(f => f.product);
   }
 
   async addFavorite(favorite: InsertFavorite): Promise<Favorite> {

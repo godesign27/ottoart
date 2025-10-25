@@ -2,12 +2,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import type { Product } from "@shared/schema";
 
 export function useFavorites() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  const { data: favorites = [], isLoading } = useQuery({
+  const { data: favorites = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/favorites'],
     enabled: isAuthenticated,
   });
@@ -51,7 +52,8 @@ export function useFavorites() {
   });
 
   const isFavorite = (productId: string) => {
-    return (favorites as any[]).some((fav: any) => fav.id === productId || fav.productId === productId);
+    // favorites now contains full Product objects, so we check product.id
+    return favorites.some((product: Product) => product.id === productId);
   };
 
   const toggleFavorite = (productId: string) => {

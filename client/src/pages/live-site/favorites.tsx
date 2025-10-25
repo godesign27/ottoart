@@ -129,7 +129,7 @@ export default function FavoritesPage() {
                       productId={product.id} 
                       size="sm" 
                       iconOnly
-                      className="bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm"
+                      className="shadow-sm"
                     />
                   </div>
                 </div>
