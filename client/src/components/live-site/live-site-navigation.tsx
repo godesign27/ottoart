@@ -302,7 +302,7 @@ export function LiveSiteNavigation({
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
-          {onViewModeChange && isAdmin && (
+          {onViewModeChange && isAdmin ? (
             <div className="flex bg-muted rounded-lg p-1">
               <Button
                 size="sm"
@@ -323,7 +323,7 @@ export function LiveSiteNavigation({
                 <Eye className="h-4 w-4" />
               </Button>
             </div>
-          )}
+          ) : null}
 
           <Link href="/checkout">
             <Button 
@@ -347,7 +347,7 @@ export function LiveSiteNavigation({
         {/* Mobile-only Icons */}
         <div className="flex md:hidden items-center space-x-2">
           {/* Mobile View Switcher */}
-          {onViewModeChange && isAdmin && (
+          {onViewModeChange && isAdmin ? (
             <div className="flex bg-muted rounded-lg p-1">
               <Button
                 size="sm"
@@ -368,7 +368,7 @@ export function LiveSiteNavigation({
                 <Eye className="h-4 w-4" />
               </Button>
             </div>
-          )}
+          ) : null}
           
           <Link href="/checkout">
             <Button 
