@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Button } from "@/components/ui/button";
@@ -35,17 +36,22 @@ export default function ProfilePage() {
     },
   });
 
-  // Update form when user data loads
+  // Fetch current user data
   const { data: currentUser } = useQuery({
     queryKey: ["/api/auth/user"],
     enabled: isAuthenticated,
-    onSuccess: (data: any) => {
-      form.reset({
-        firstName: data?.firstName || "",
-        lastName: data?.lastName || "",
-      });
-    },
   });
+
+  // Update form when user data loads
+  React.useEffect(() => {
+    if (currentUser) {
+      const userData = currentUser as any;
+      form.reset({
+        firstName: userData?.firstName || "",
+        lastName: userData?.lastName || "",
+      });
+    }
+  }, [currentUser]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
