@@ -40,6 +40,7 @@ import FavoritesPage from "@/pages/live-site/favorites";
 import MailClubPage from "@/pages/live-site/mail-club";
 import MailClubSuccessPage from "@/pages/live-site/mail-club-success";
 import AccountPage from "@/pages/live-site/account";
+import OrdersPage from "@/pages/orders";
 import { ArtWallPage } from "@/pages/live-site/art-wall";
 import CorporateBuyersPage from "@/pages/live-site/corporate-buyers";
 
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/corporate-buyers" component={CorporateBuyersPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/favorites" component={FavoritesPage} />
+      <Route path="/orders" component={OrdersPage} />
       <Route path="/account" component={AccountPage} />
       <Route path="/mail-club/success" component={MailClubSuccessPage} />
       <Route path="/mail-club" component={MailClubPage} />
