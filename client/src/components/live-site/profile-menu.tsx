@@ -26,31 +26,38 @@ export function ProfileMenu() {
   }
 
   if (!isAuthenticated) {
-    // Unauthenticated state
+    // Unauthenticated state with improved UI
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" data-testid="button-profile-menu">
+          <Button variant="ghost" size="sm" className="gap-2" data-testid="button-profile-menu">
             <UserIcon className="h-5 w-5" />
+            <span className="hidden md:inline-block text-sm font-medium">Sign In</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Account</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel className="pb-3">
+            <div className="text-sm font-normal text-muted-foreground">
+              Sign in to access favorites, orders, and more
+            </div>
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           
-          <DropdownMenuItem asChild data-testid="menu-login">
-            <a href="/api/login">
-              <LogIn className="mr-2 h-4 w-4" />
-              Log In
+          <div className="p-2 space-y-2">
+            <a href="/api/login" className="block" data-testid="menu-login">
+              <Button className="w-full justify-start gap-2" variant="default">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Button>
             </a>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem asChild data-testid="menu-register">
-            <a href="/api/login">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Register
+            
+            <a href="/api/login" className="block" data-testid="menu-register">
+              <Button className="w-full justify-start gap-2" variant="outline">
+                <UserPlus className="h-4 w-4" />
+                Create Account
+              </Button>
             </a>
-          </DropdownMenuItem>
+          </div>
 
           <DropdownMenuSeparator />
           
@@ -73,26 +80,53 @@ export function ProfileMenu() {
     );
   }
 
-  // Authenticated state
-  const userInitials = (user as any)?.name 
-    ? (user as any).name.split(' ').map((n: string) => n[0]).join('').toUpperCase() 
-    : (user as any)?.email?.[0]?.toUpperCase() || '?';
+  // Authenticated state - properly typed user data
+  const userData = user as any;
+  const fullName = userData?.firstName && userData?.lastName 
+    ? `${userData.firstName} ${userData.lastName}` 
+    : userData?.firstName || userData?.email?.split('@')[0] || 'User';
+  
+  const userInitials = userData?.firstName && userData?.lastName
+    ? `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase()
+    : userData?.firstName?.[0]?.toUpperCase() || userData?.email?.[0]?.toUpperCase() || '?';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" data-testid="button-profile-menu">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={(user as any)?.image || undefined} alt={(user as any)?.name || (user as any)?.email || 'User'} />
-            <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+        <Button variant="ghost" size="sm" className="gap-2" data-testid="button-profile-menu">
+          <Avatar className="h-7 w-7">
+            <AvatarImage 
+              src={userData?.profileImageUrl || undefined} 
+              alt={fullName} 
+            />
+            <AvatarFallback className="text-xs font-medium bg-primary text-primary-foreground">
+              {userInitials}
+            </AvatarFallback>
           </Avatar>
+          <span className="hidden md:inline-block text-sm font-medium max-w-[120px] truncate">
+            {fullName}
+          </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>
-          <div>
-            <div className="font-medium">{(user as any)?.name || 'User'}</div>
-            <div className="text-xs text-muted-foreground">{(user as any)?.email}</div>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage 
+                src={userData?.profileImageUrl || undefined} 
+                alt={fullName} 
+              />
+              <AvatarFallback className="text-sm font-medium bg-primary text-primary-foreground">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-xs text-muted-foreground truncate">{userData?.email}</div>
+              {userData?.role === 'admin' && (
+                <div className="text-xs font-medium text-primary mt-0.5">Admin</div>
+              )}
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
