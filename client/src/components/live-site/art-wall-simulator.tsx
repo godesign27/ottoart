@@ -72,7 +72,9 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
   const selectedBg = roomBackgrounds.find(bg => bg.id === selectedBackground);
 
   const addArtwork = (product: Product) => {
-    if (!product.images?.[0]) return;
+    // Use second image (standalone artwork) or fall back to first image
+    const artworkImage = product.images?.[1] || product.images?.[0];
+    if (!artworkImage) return;
     
     const newArtwork: ArtworkPlacement = {
       productId: product.id,
@@ -190,7 +192,9 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
           .sort((a, b) => a.zIndex - b.zIndex)
           .forEach(artwork => {
             const product = products.find(p => p.id === artwork.productId);
-            if (!product?.images?.[0]) return;
+            // Use second image (standalone artwork) or fall back to first image
+            const artworkImageSrc = product?.images?.[1] || product?.images?.[0];
+            if (!artworkImageSrc) return;
 
             const artImage = new Image();
             artImage.onload = () => {
@@ -222,7 +226,7 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
               
               ctx.restore();
             };
-            artImage.src = product.images[0];
+            artImage.src = artworkImageSrc;
           });
       };
       bgImage.src = selectedBg.imageUrl;
@@ -301,31 +305,35 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-2">
-                {products.slice(0, 8).map(product => (
-                  <button
-                    key={product.id}
-                    onClick={() => addArtwork(product)}
-                    className="group relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all"
-                    data-testid={`button-add-artwork-${product.id}`}
-                  >
-                    {product.images?.[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        No Image
+                {products.slice(0, 8).map(product => {
+                  // Use second image (standalone artwork) or fall back to first image
+                  const artworkImage = product.images?.[1] || product.images?.[0];
+                  return (
+                    <button
+                      key={product.id}
+                      onClick={() => addArtwork(product)}
+                      className="group relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all"
+                      data-testid={`button-add-artwork-${product.id}`}
+                    >
+                      {artworkImage ? (
+                        <img
+                          src={artworkImage}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          No Image
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-white text-xs font-medium px-2 py-1 bg-blue-500 rounded">
+                          Add to Wall
+                        </span>
                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white text-xs font-medium px-2 py-1 bg-blue-500 rounded">
-                        Add to Wall
-                      </span>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
               {products.length === 0 && (
                 <p className="text-center text-gray-500 py-4">
@@ -459,6 +467,8 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
                     <div className="space-y-1">
                       {artworks.map(artwork => {
                         const product = products.find(p => p.id === artwork.productId);
+                        // Use second image (standalone artwork) or fall back to first image
+                        const artworkImage = product?.images?.[1] || product?.images?.[0];
                         return (
                           <div
                             key={artwork.productId}
@@ -470,9 +480,9 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
                             onClick={() => setSelectedArtwork(artwork.productId)}
                             data-testid={`artwork-item-${artwork.productId}`}
                           >
-                            {product?.images?.[0] && (
+                            {artworkImage && (
                               <img 
-                                src={product.images[0]} 
+                                src={artworkImage} 
                                 alt=""
                                 className="w-6 h-6 object-cover rounded"
                               />
