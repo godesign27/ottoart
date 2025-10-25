@@ -482,6 +482,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User orders (protected route)
+  app.get("/api/user/orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user.claims.email;
+      const orders = await storage.getOrdersByEmail(userEmail);
+      res.json(orders);
+    } catch (error) {
+      console.error("Failed to fetch user orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
   app.patch("/api/orders/:id", async (req, res) => {
     try {
       const { id } = req.params;
