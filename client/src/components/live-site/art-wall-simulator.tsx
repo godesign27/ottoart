@@ -173,6 +173,25 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
     });
   };
 
+  const downloadCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Create a download link
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `art-wall-${Date.now()}.png`;
+      link.href = url;
+      link.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+
   // Canvas drawing effect
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -436,10 +455,11 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
                   <Button
                     variant="outline" 
                     size="sm"
-                    data-testid="button-save-simulation"
+                    onClick={downloadCanvas}
+                    data-testid="button-download-simulation"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Save
+                    Download
                   </Button>
                 </div>
               </div>
