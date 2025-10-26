@@ -77,12 +77,16 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
     const artworkImage = product.images?.[1] || product.images?.[0];
     if (!artworkImage) return;
     
+    // Artworks are 16"x20" (portrait orientation, aspect ratio 0.8)
+    const baseHeight = 200;
+    const baseWidth = 160; // 16:20 ratio
+    
     const newArtwork: ArtworkPlacement = {
       productId: product.id,
-      x: canvasSize.width / 2 - 100,
-      y: canvasSize.height / 2 - 100,
-      width: 200,
-      height: 200,
+      x: canvasSize.width / 2 - baseWidth / 2,
+      y: canvasSize.height / 2 - baseHeight / 2,
+      width: baseWidth,
+      height: baseHeight,
       rotation: 0,
       zIndex: artworks.length + 1,
     };
@@ -166,8 +170,9 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
 
   const resetArtwork = () => {
     if (!selectedArtwork || !selectedArtworkData) return;
+    // Reset to 16:20 aspect ratio (portrait)
     updateArtwork(selectedArtwork, {
-      width: 200,
+      width: 160,
       height: 200,
       rotation: 0,
     });
@@ -223,6 +228,33 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
               // Apply transformations
               ctx.translate(artwork.x + artwork.width / 2, artwork.y + artwork.height / 2);
               ctx.rotate((artwork.rotation * Math.PI) / 180);
+              
+              // Calculate frame and matboard dimensions (proportional to artwork size)
+              const frameWidth = Math.max(8, artwork.width * 0.05); // 5% of artwork width, min 8px
+              const matboardWidth = Math.max(12, artwork.width * 0.08); // 8% of artwork width, min 12px
+              
+              const totalWidth = artwork.width + (matboardWidth * 2) + (frameWidth * 2);
+              const totalHeight = artwork.height + (matboardWidth * 2) + (frameWidth * 2);
+              
+              // Draw brown frame (outer layer)
+              ctx.fillStyle = '#8B4513'; // Saddle brown
+              ctx.fillRect(
+                -totalWidth / 2,
+                -totalHeight / 2,
+                totalWidth,
+                totalHeight
+              );
+              
+              // Draw white matboard (middle layer)
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(
+                -totalWidth / 2 + frameWidth,
+                -totalHeight / 2 + frameWidth,
+                totalWidth - (frameWidth * 2),
+                totalHeight - (frameWidth * 2)
+              );
+              
+              // Draw artwork (inner layer)
               ctx.drawImage(
                 artImage,
                 -artwork.width / 2,
@@ -231,16 +263,16 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
                 artwork.height
               );
 
-              // Draw selection indicator
+              // Draw selection indicator around the entire frame
               if (selectedArtwork === artwork.productId) {
                 ctx.strokeStyle = '#3b82f6';
                 ctx.lineWidth = 3;
                 ctx.setLineDash([5, 5]);
                 ctx.strokeRect(
-                  -artwork.width / 2 - 2,
-                  -artwork.height / 2 - 2,
-                  artwork.width + 4,
-                  artwork.height + 4
+                  -totalWidth / 2 - 2,
+                  -totalHeight / 2 - 2,
+                  totalWidth + 4,
+                  totalHeight + 4
                 );
               }
               
