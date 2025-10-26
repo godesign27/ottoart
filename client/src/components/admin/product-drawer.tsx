@@ -537,11 +537,11 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       />
       
       {/* Drawer */}
-      <div className={`fixed right-0 top-0 h-full w-[600px] bg-background border-l border-border z-50 shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed right-0 top-0 h-full w-full sm:w-[600px] bg-background border-l border-border z-50 shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full min-h-0">
           {/* Header */}
-          <div className="shrink-0 flex items-center justify-between p-6 border-b border-border">
-            <h2 className="text-xl font-semibold text-foreground">
+          <div className="shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-border">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">
               {isEditing ? "Edit Product" : "Add Product"}
             </h2>
             <Button 
@@ -567,26 +567,26 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
               })} className="h-full flex flex-col">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   {/* Tab Navigation */}
-                  <div className="shrink-0 px-6 pt-4 border-b">
+                  <div className="shrink-0 px-4 sm:px-6 pt-4 border-b">
                     <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="content" data-testid="tab-content">Content</TabsTrigger>
-                      <TabsTrigger value="pricing" data-testid="tab-pricing">Pricing</TabsTrigger>
-                      <TabsTrigger value="images" data-testid="tab-images">Images</TabsTrigger>
-                      <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
+                      <TabsTrigger value="content" data-testid="tab-content" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Content</TabsTrigger>
+                      <TabsTrigger value="pricing" data-testid="tab-pricing" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Pricing</TabsTrigger>
+                      <TabsTrigger value="images" data-testid="tab-images" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Images</TabsTrigger>
+                      <TabsTrigger value="categories" data-testid="tab-categories" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Categories</TabsTrigger>
                     </TabsList>
                   </div>
 
                   {/* Tab Content - Scrollable Area */}
                   <div className="flex-1 overflow-y-auto scroll-smooth">
-                    <TabsContent value="content" className="space-y-6 mt-0 p-6 pb-24">
+                    <TabsContent value="content" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
                       <ContentTab form={form} />
                     </TabsContent>
 
-                    <TabsContent value="pricing" className="space-y-6 mt-0 p-6 pb-24">
+                    <TabsContent value="pricing" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
                       <PricingTab form={form} />
                     </TabsContent>
 
-                    <TabsContent value="images" className="space-y-6 mt-0 p-6 pb-24">
+                    <TabsContent value="images" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
                       <ImagesTab 
                         form={form} 
                         imageUrl={imageUrl}
@@ -596,7 +596,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                       />
                     </TabsContent>
 
-                    <TabsContent value="categories" className="space-y-6 mt-0 p-6 pb-24">
+                    <TabsContent value="categories" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
                       <CategoriesTab 
                         form={form} 
                         categories={categories || []}
@@ -607,12 +607,13 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                 </Tabs>
 
                 {/* Footer - Sticky */}
-                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-6 border-t border-border bg-background">
+                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-3 p-4 sm:p-6 border-t border-border bg-background">
                   <Button 
                     type="button" 
                     variant="outline" 
                     onClick={onClose}
                     data-testid="cancel-button"
+                    className="flex-1 sm:flex-none"
                   >
                     Cancel
                   </Button>
@@ -620,6 +621,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                     type="submit" 
                     disabled={createProductMutation.isPending}
                     data-testid="add-product-submit"
+                    className="flex-1 sm:flex-none"
                   >
                     {createProductMutation.isPending 
                       ? (isEditing ? "Updating..." : "Adding...") 
