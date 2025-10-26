@@ -237,7 +237,7 @@ export function ArtWallSimulator({ products = [], className }: ArtWallSimulatorP
               const totalHeight = artwork.height + (matboardWidth * 2) + (frameWidth * 2);
               
               // Draw brown frame (outer layer)
-              ctx.fillStyle = '#8B4513'; // Saddle brown
+              ctx.fillStyle = '#DEB887'; // Light natural brown (burlywood)
               ctx.fillRect(
                 -totalWidth / 2,
                 -totalHeight / 2,
