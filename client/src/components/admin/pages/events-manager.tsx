@@ -17,6 +17,7 @@ export function EventsManager() {
   const [isEditing, setIsEditing] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [formImageUrl, setFormImageUrl] = useState<string>("");
+  const [formIsPublished, setFormIsPublished] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -27,6 +28,7 @@ export function EventsManager() {
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(null);
     setFormImageUrl("");
+    setFormIsPublished(false);
     setIsDragging(false);
     setIsUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -37,6 +39,7 @@ export function EventsManager() {
     if (event) {
       setSelectedEvent(event);
       setFormImageUrl(event.imageUrl || "");
+      setFormIsPublished(event.isPublished ?? false);
     } else {
       setSelectedEvent(null);
     }
@@ -260,8 +263,8 @@ export function EventsManager() {
       location: data.get('location') as string,
       websiteUrl: (data.get('websiteUrl') as string) || null,
       imageUrl: formImageUrl || null,
-      isPublished: data.get('isPublished') === 'on',
-      registrationRequired: data.get('registrationRequired') === 'on',
+      isPublished: formIsPublished,
+      registrationRequired: false,
     };
 
     if (selectedEvent) {
@@ -508,6 +511,23 @@ export function EventsManager() {
                 />
               </div>
             </div>
+
+            {/* Publish Settings */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div>
+                <Label htmlFor="isPublished" className="font-medium">Publish Event</Label>
+                <p className="text-sm text-muted-foreground">
+                  Published events will appear on the public events page
+                </p>
+              </div>
+              <Switch
+                id="isPublished"
+                checked={formIsPublished}
+                onCheckedChange={setFormIsPublished}
+                data-testid="event-publish-toggle"
+              />
+            </div>
+
             <div className="flex items-center justify-end gap-2">
               <Button type="button" variant="outline" onClick={closeForm} data-testid="cancel-event-button">
                 Cancel
