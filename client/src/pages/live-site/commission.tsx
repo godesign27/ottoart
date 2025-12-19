@@ -212,6 +212,53 @@ export default function CommissionPage() {
 
               <FormField
                 control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Phone</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="tel"
+                        placeholder="(555) 123-4567"
+                        className="h-12 text-base"
+                        data-testid="input-phone"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="preferredContact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Preferred Contact Method</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex gap-6"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="email" id="contact-email" className="h-5 w-5" />
+                          <Label htmlFor="contact-email" className="text-base cursor-pointer">Email</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="text" id="contact-text" className="h-5 w-5" />
+                          <Label htmlFor="contact-text" className="text-base cursor-pointer">Text</Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="commissionType"
                 render={({ field }) => (
                   <FormItem>
@@ -321,57 +368,6 @@ export default function CommissionPage() {
                   </FormItem>
                 )}
               />
-
-              <div className="border-t pt-6">
-                <p className="text-sm text-muted-foreground mb-4">Optional fields</p>
-                
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem className="mb-4">
-                      <FormLabel className="text-base">Phone</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="tel"
-                          placeholder="(555) 123-4567"
-                          className="h-12 text-base"
-                          data-testid="input-phone"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="preferredContact"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">Preferred Contact Method</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex gap-6"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="email" id="contact-email" className="h-5 w-5" />
-                            <Label htmlFor="contact-email" className="text-base cursor-pointer">Email</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="text" id="contact-text" className="h-5 w-5" />
-                            <Label htmlFor="contact-text" className="text-base cursor-pointer">Text</Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
               <div className="pt-4 pb-8">
                 <Button 
