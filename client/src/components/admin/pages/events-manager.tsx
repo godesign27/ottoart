@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { PageSettings } from "@shared/schema";
+import type { PageSettings, Event } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,20 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye, Link, Image, Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate?: string;
-  time: string;
-  location: string;
-  imageUrl?: string;
-  websiteUrl?: string;
-  isPublished: boolean;
-  registrationRequired: boolean;
-}
 
 export function EventsManager() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -186,48 +172,71 @@ export function EventsManager() {
     }
   });
 
-  // Mock data - in real app this would come from API
-  const mockEvents: Event[] = [
-    {
-      id: "1",
-      title: "Abstract Art Workshop",
-      description: "Join me for a hands-on workshop exploring abstract painting techniques. Learn about color theory, composition, and expressive mark-making in this interactive session.",
-      startDate: "2024-03-15",
-      endDate: "2024-03-17",
-      time: "14:00-17:00",
-      location: "Studio Gallery, Chicago",
-      imageUrl: "https://images.unsplash.com/photo-1456327102063-fb5054efe647?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200",
-      websiteUrl: "https://example.com/workshop",
-      isPublished: true,
-      registrationRequired: true
-    },
-    {
-      id: "2",
-      title: "Gallery Opening: New Works",
-      description: "Opening reception for my latest collection of abstract paintings. Meet the artist, enjoy refreshments, and be among the first to see these new works.",
-      startDate: "2024-04-08",
-      time: "18:00-21:00",
-      location: "River North Gallery, Chicago",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200",
-      isPublished: true,
-      registrationRequired: false
-    },
-    {
-      id: "3",
-      title: "Artist Talk: Color & Emotion",
-      description: "A discussion on the role of color in contemporary abstract art and how emotional expression translates through visual elements.",
-      startDate: "2024-05-20",
-      time: "19:00-20:30",
-      location: "Art Institute of Chicago",
-      websiteUrl: "https://artic.edu/events",
-      isPublished: false,
-      registrationRequired: true
-    }
-  ];
-
-  const { data: events = mockEvents, isLoading } = useQuery({
+  // Fetch events from API
+  const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ['/api/events'],
-    queryFn: () => Promise.resolve(mockEvents)
+  });
+
+  // Create event mutation
+  const createEventMutation = useMutation({
+    mutationFn: (eventData: Partial<Event>) =>
+      apiRequest('POST', '/api/events', eventData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      toast({
+        title: "Event created",
+        description: "Your event has been created successfully!",
+      });
+      closeForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to create event",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update event mutation
+  const updateEventMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Event> }) =>
+      apiRequest('PUT', `/api/events/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      toast({
+        title: "Event updated",
+        description: "Your event has been updated successfully!",
+      });
+      closeForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to update event",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete event mutation
+  const deleteEventMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest('DELETE', `/api/events/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      toast({
+        title: "Event deleted",
+        description: "The event has been deleted.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete event",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
   });
 
   const handleEdit = (event: Event) => {
@@ -236,14 +245,30 @@ export function EventsManager() {
 
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this event?')) {
-      // Implementation for delete
-      console.log('Delete event:', id);
+      deleteEventMutation.mutate(id);
     }
   };
 
-  const handleSave = () => {
-    // Implementation for save
-    closeForm();
+  const handleSave = (formData: HTMLFormElement) => {
+    const data = new FormData(formData);
+    const eventData = {
+      title: data.get('title') as string,
+      description: data.get('description') as string,
+      startDate: data.get('startDate') as string,
+      endDate: (data.get('endDate') as string) || null,
+      time: data.get('time') as string,
+      location: data.get('location') as string,
+      websiteUrl: (data.get('websiteUrl') as string) || null,
+      imageUrl: formImageUrl || null,
+      isPublished: data.get('isPublished') === 'on',
+      registrationRequired: data.get('registrationRequired') === 'on',
+    };
+
+    if (selectedEvent) {
+      updateEventMutation.mutate({ id: selectedEvent.id, data: eventData });
+    } else {
+      createEventMutation.mutate(eventData);
+    }
   };
 
   const handlePageSave = () => {
@@ -326,13 +351,16 @@ export function EventsManager() {
               {selectedEvent ? 'Update the event details' : 'Create a new event for your calendar'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <form id="event-form" onSubmit={(e) => { e.preventDefault(); handleSave(e.currentTarget); }} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Event Title</Label>
               <Input
                 id="title"
+                name="title"
                 defaultValue={selectedEvent?.title}
                 placeholder="Enter event title"
+                required
                 data-testid="event-title-input"
               />
             </div>
@@ -340,7 +368,8 @@ export function EventsManager() {
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                defaultValue={selectedEvent?.description}
+                name="description"
+                defaultValue={selectedEvent?.description ?? ""}
                 placeholder="Describe your event"
                 rows={3}
                 data-testid="event-description-input"
@@ -429,7 +458,8 @@ export function EventsManager() {
               </Label>
               <Input
                 id="websiteUrl"
-                defaultValue={selectedEvent?.websiteUrl}
+                name="websiteUrl"
+                defaultValue={selectedEvent?.websiteUrl ?? ""}
                 placeholder="https://example.com/event-page"
                 data-testid="event-website-url-input"
               />
@@ -444,8 +474,10 @@ export function EventsManager() {
                 <Label htmlFor="startDate">Start Date</Label>
                 <Input
                   id="startDate"
+                  name="startDate"
                   type="date"
-                  defaultValue={selectedEvent?.startDate}
+                  defaultValue={selectedEvent?.startDate ?? ""}
+                  required
                   data-testid="event-start-date-input"
                 />
               </div>
@@ -453,8 +485,9 @@ export function EventsManager() {
                 <Label htmlFor="endDate">End Date (optional)</Label>
                 <Input
                   id="endDate"
+                  name="endDate"
                   type="date"
-                  defaultValue={selectedEvent?.endDate}
+                  defaultValue={selectedEvent?.endDate ?? ""}
                   data-testid="event-end-date-input"
                 />
               </div>
@@ -462,7 +495,8 @@ export function EventsManager() {
                 <Label htmlFor="time">Time</Label>
                 <Input
                   id="time"
-                  defaultValue={selectedEvent?.time}
+                  name="time"
+                  defaultValue={selectedEvent?.time ?? ""}
                   placeholder="e.g., 14:00-17:00"
                   data-testid="event-time-input"
                 />
@@ -471,20 +505,25 @@ export function EventsManager() {
                 <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
-                  defaultValue={selectedEvent?.location}
+                  name="location"
+                  defaultValue={selectedEvent?.location ?? ""}
                   placeholder="Enter venue location"
                   data-testid="event-location-input"
                 />
               </div>
             </div>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={closeForm} data-testid="cancel-event-button">
+              <Button type="button" variant="outline" onClick={closeForm} data-testid="cancel-event-button">
                 Cancel
               </Button>
-              <Button onClick={handleSave} data-testid="save-event-button">
+              <Button type="submit" disabled={createEventMutation.isPending || updateEventMutation.isPending} data-testid="save-event-button">
+                {(createEventMutation.isPending || updateEventMutation.isPending) && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
                 {selectedEvent ? 'Update' : 'Add'} Event
               </Button>
             </div>
+            </form>
           </CardContent>
         </Card>
       )}

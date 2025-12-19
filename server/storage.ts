@@ -34,6 +34,8 @@ import {
   type InsertArtWallSimulation,
   type GalleryItem,
   type InsertGalleryItem,
+  type Event,
+  type InsertEvent,
   type CartItem,
   type InsertCartItem,
   users,
@@ -52,6 +54,7 @@ import {
   roomBackgrounds,
   artWallSimulations,
   galleryItems,
+  events,
   cartItems,
   favorites
 } from "@shared/schema";
@@ -159,6 +162,14 @@ export interface IStorage {
   updateGalleryItem(id: string, item: Partial<InsertGalleryItem>): Promise<GalleryItem | undefined>;
   deleteGalleryItem(id: string): Promise<boolean>;
   reorderGalleryItems(itemIds: string[]): Promise<GalleryItem[]>;
+
+  // Events
+  getEvents(): Promise<Event[]>;
+  getPublishedEvents(): Promise<Event[]>;
+  getEvent(id: string): Promise<Event | undefined>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: string, event: Partial<InsertEvent>): Promise<Event | undefined>;
+  deleteEvent(id: string): Promise<boolean>;
 
   // Room Backgrounds
   getRoomBackgrounds(): Promise<RoomBackground[]>;
@@ -913,6 +924,41 @@ export class DatabaseStorage implements IStorage {
     
     // Return updated items
     return await this.getGalleryItems();
+  }
+
+  // Events
+  async getEvents(): Promise<Event[]> {
+    return await db.select().from(events).orderBy(events.sortOrder, desc(events.createdAt));
+  }
+
+  async getPublishedEvents(): Promise<Event[]> {
+    return await db.select().from(events).where(eq(events.isPublished, true)).orderBy(events.sortOrder, events.startDate);
+  }
+
+  async getEvent(id: string): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
+  }
+
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const [event] = await db.insert(events).values({
+      ...insertEvent,
+      sortOrder: insertEvent.sortOrder ?? 0
+    }).returning();
+    return event;
+  }
+
+  async updateEvent(id: string, updateData: Partial<InsertEvent>): Promise<Event | undefined> {
+    const [event] = await db.update(events)
+      .set(updateData)
+      .where(eq(events.id, id))
+      .returning();
+    return event || undefined;
+  }
+
+  async deleteEvent(id: string): Promise<boolean> {
+    const result = await db.delete(events).where(eq(events.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Room Backgrounds

@@ -282,6 +282,23 @@ export const galleryItems = pgTable("gallery_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const events = pgTable("events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  time: text("time"),
+  location: text("location"),
+  imageUrl: text("image_url"),
+  websiteUrl: text("website_url"),
+  isPublished: boolean("is_published").default(false),
+  registrationRequired: boolean("registration_required").default(false),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -381,6 +398,12 @@ export const insertGalleryItemSchema = createInsertSchema(galleryItems).omit({
   updatedAt: true,
 });
 
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -436,3 +459,6 @@ export type InsertArtWallSimulation = z.infer<typeof insertArtWallSimulationSche
 
 export type GalleryItem = typeof galleryItems.$inferSelect;
 export type InsertGalleryItem = z.infer<typeof insertGalleryItemSchema>;
+
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
