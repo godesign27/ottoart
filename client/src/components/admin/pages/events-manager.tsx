@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye, Link, Image, Upload, X, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Eye, Link, Image, Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function EventsManager() {
@@ -310,10 +310,6 @@ export function EventsManager() {
           <Button onClick={togglePreview} variant="outline" className="flex items-center gap-2">
             {isPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             {isPreview ? 'Edit' : 'Preview'}
-          </Button>
-          <Button onClick={handlePageSave} className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            Save Changes
           </Button>
         </div>
       </div>
