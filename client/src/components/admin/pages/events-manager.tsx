@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PageSettings } from "@shared/schema";
@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye, Link, Image } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye, Link, Image, Upload, X, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Event {
   id: string;
@@ -29,6 +30,145 @@ export function EventsManager() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
+  const [formImageUrl, setFormImageUrl] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const resetFormState = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview(null);
+    setFormImageUrl("");
+    setIsDragging(false);
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const openForm = (event?: Event) => {
+    resetFormState();
+    if (event) {
+      setSelectedEvent(event);
+      setFormImageUrl(event.imageUrl || "");
+    } else {
+      setSelectedEvent(null);
+    }
+    setIsEditing(true);
+  };
+
+  const closeForm = () => {
+    resetFormState();
+    setIsEditing(false);
+    setSelectedEvent(null);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    try {
+      const uploadResponse = await fetch("/api/objects/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": "dev-admin-key-2024",
+        },
+      });
+
+      if (!uploadResponse.ok) throw new Error("Failed to get upload URL");
+
+      const { uploadURL } = await uploadResponse.json();
+
+      const uploadFileResponse = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!uploadFileResponse.ok) throw new Error("Failed to upload file");
+
+      const finalizeResponse = await fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": "dev-admin-key-2024",
+        },
+        body: JSON.stringify({ imageURL: uploadURL }),
+      });
+
+      if (!finalizeResponse.ok) throw new Error("Failed to finalize upload");
+
+      const { url } = await finalizeResponse.json();
+      setFormImageUrl(url);
+      
+      toast({
+        title: "Image uploaded",
+        description: "Event image uploaded successfully!",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive",
+      });
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setImagePreview(null);
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageUpload(file);
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageUpload(file);
+  };
+
+  const clearImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview(null);
+    setFormImageUrl("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Fetch page settings
   const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
@@ -91,8 +231,7 @@ export function EventsManager() {
   });
 
   const handleEdit = (event: Event) => {
-    setSelectedEvent(event);
-    setIsEditing(true);
+    openForm(event);
   };
 
   const handleDelete = (id: string) => {
@@ -104,8 +243,7 @@ export function EventsManager() {
 
   const handleSave = () => {
     // Implementation for save
-    setIsEditing(false);
-    setSelectedEvent(null);
+    closeForm();
   };
 
   const handlePageSave = () => {
@@ -175,7 +313,7 @@ export function EventsManager() {
         </CardHeader>
       </Card>
 
-      <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2 mb-6">
+      <Button onClick={() => openForm()} className="flex items-center gap-2 mb-6">
         <Plus className="h-4 w-4" />
         Add Event
       </Button>
@@ -209,21 +347,78 @@ export function EventsManager() {
               />
             </div>
             
-            {/* Image URL */}
+            {/* Image Upload */}
             <div className="space-y-2">
-              <Label htmlFor="imageUrl" className="flex items-center gap-2">
+              <Label className="flex items-center gap-2">
                 <Image className="h-4 w-4" />
-                Event Image URL
+                Event Image
               </Label>
-              <Input
-                id="imageUrl"
-                defaultValue={selectedEvent?.imageUrl}
-                placeholder="https://example.com/event-image.jpg"
-                data-testid="event-image-url-input"
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                data-testid="event-image-file-input"
               />
-              <p className="text-xs text-muted-foreground">
-                Add a URL to an image for this event (recommended size: 800x400)
-              </p>
+
+              {imagePreview || formImageUrl ? (
+                <div className="relative">
+                  <img
+                    src={imagePreview || formImageUrl}
+                    alt="Event preview"
+                    className="w-full h-48 object-cover rounded-lg border"
+                    data-testid="event-image-preview"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={clearImage}
+                    disabled={isUploading}
+                    data-testid="clear-event-image"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                    isDragging 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                  }`}
+                  data-testid="event-image-dropzone"
+                >
+                  {isUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
+                      <p className="text-sm text-muted-foreground">Uploading...</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="w-10 h-10 text-muted-foreground" />
+                      <p className="text-sm font-medium">
+                        Drag and drop an image here
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        or click to browse (recommended: 800x400)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Website URL */}
@@ -283,7 +478,7 @@ export function EventsManager() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditing(false)} data-testid="cancel-event-button">
+              <Button variant="outline" onClick={closeForm} data-testid="cancel-event-button">
                 Cancel
               </Button>
               <Button onClick={handleSave} data-testid="save-event-button">
