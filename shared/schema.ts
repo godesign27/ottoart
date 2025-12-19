@@ -300,6 +300,23 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const commissionRequests = pgTable("commission_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  commissionType: text("commission_type").notNull(),
+  sizePreference: text("size_preference").notNull(),
+  budgetRange: text("budget_range").notNull(),
+  vision: text("vision").notNull(),
+  preferredContact: text("preferred_contact"),
+  referenceFileUrl: text("reference_file_url"),
+  status: text("status").default("new"),
+  isRead: boolean("is_read").default(false),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -405,6 +422,11 @@ export const insertEventSchema = createInsertSchema(events).omit({
   updatedAt: true,
 });
 
+export const insertCommissionRequestSchema = createInsertSchema(commissionRequests).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -463,3 +485,6 @@ export type InsertGalleryItem = z.infer<typeof insertGalleryItemSchema>;
 
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+export type CommissionRequest = typeof commissionRequests.$inferSelect;
+export type InsertCommissionRequest = z.infer<typeof insertCommissionRequestSchema>;

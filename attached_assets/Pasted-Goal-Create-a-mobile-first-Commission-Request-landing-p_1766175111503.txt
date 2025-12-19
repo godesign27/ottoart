@@ -1,0 +1,83 @@
+Goal: Create a mobile-first “Commission Request” landing page that I can link to from a QR code at an art fair. The page must load fast, be simple, and easy to complete in under 60 seconds.
+
+1) Create a new route/page
+	•	Route: /commission
+	•	Page title (H1): Commission Request
+	•	Short intro text: Quick form — submitting doesn’t commit you to anything. It just starts the conversation.
+
+2) Build the form (minimal required fields)
+
+Required fields:
+	•	fullName (text)
+	•	email (email)
+	•	commissionType (radio or select)
+	•	Options: Original Artwork, Pet / Animal Portrait, Abstract Commission, Corporate / Hospitality, Not Sure Yet
+	•	sizePreference (select)
+	•	Options: Small (under 24"), Medium (24–40"), Large (40"+), Open to recommendation
+	•	budgetRange (select)
+	•	Options: Under $1,000, $1,000–$2,500, $2,500–$5,000, $5,000+, Not sure yet
+	•	vision (textarea, 2–4 sentences max prompt)
+
+Optional:
+	•	referenceUpload (file upload for images only: jpg/png/webp/heic)
+	•	phone (optional text)
+	•	preferredContact (radio: Email / Text)
+
+Validation:
+	•	required fields must block submit
+	•	email format validation
+	•	file upload size limit 10MB, images only
+
+UX requirements:
+	•	Large tap targets, single-column layout, sticky “Submit” button on mobile if possible
+	•	Show progress subtly (or just keep it short with no steps)
+	•	After submit: show a thank-you state with:
+	•	Thanks — I’ll reply within 48 hours.
+	•	Button: View my work (link to homepage)
+	•	Button: Submit another
+
+3) Submission handling
+
+On submit:
+	•	Save submission to a database table commission_requests with:
+	•	id, created_at, fullName, email, commissionType, sizePreference, budgetRange, vision, phone, preferredContact, referenceFileUrl
+	•	Send an email notification to MY_EMAIL_ADDRESS with a clean summary of the submission
+	•	Also send an auto-confirmation email to the user:
+	•	subject: Commission request received
+	•	short message + expectation setting
+
+4) Tech choices (pick the simplest for this project)
+
+Use whichever stack the project already uses. If starting fresh, use:
+	•	Frontend: Next.js (App Router) + React
+	•	Styling: Tailwind
+	•	Backend: simple API route or server action
+	•	Database: Supabase (preferred). If Supabase isn’t configured, fall back to SQLite or Replit DB.
+	•	Email: Resend (preferred) or SendGrid or Nodemailer SMTP (choose one and implement end-to-end)
+
+5) Environment variables
+
+Add and document env vars required (example):
+	•	SUPABASE_URL
+	•	SUPABASE_ANON_KEY
+	•	SUPABASE_SERVICE_ROLE_KEY (server-side only)
+	•	RESEND_API_KEY
+	•	NOTIFY_TO_EMAIL (my inbox)
+	•	SITE_URL (for links in emails)
+
+6) QR code asset
+
+Generate a QR code that points to: https://MYDOMAIN.com/commission
+	•	Provide an SVG and PNG file in the repo (e.g. /public/qr/commission-qr.png and .svg)
+	•	Also create a simple printable page /commission/qr that shows the QR large with “Scan to request a commission”
+
+7) Deliverables
+	•	Working /commission page
+	•	Working storage + email notifications
+	•	QR code files generated and saved
+	•	Short README section: “How to configure env vars + where to change form options”
+
+Important constraints
+	•	Keep the UI minimal and elegant (art-forward, not corporate)
+	•	Prioritize speed and mobile completion
+	•	No unnecessary fields or multi-step flows

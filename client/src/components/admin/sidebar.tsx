@@ -68,6 +68,12 @@ const navItems = [
     view: "messages"
   },
   {
+    title: "Commissions",
+    icon: Palette,
+    href: "/admin/commissions",
+    view: "commissions"
+  },
+  {
     title: "Mail Club",
     icon: Mail,
     href: "/admin/mail-club",

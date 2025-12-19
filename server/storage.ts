@@ -38,6 +38,8 @@ import {
   type InsertEvent,
   type CartItem,
   type InsertCartItem,
+  type CommissionRequest,
+  type InsertCommissionRequest,
   users,
   subscriptionPlans,
   userSubscriptions,
@@ -56,7 +58,8 @@ import {
   galleryItems,
   events,
   cartItems,
-  favorites
+  favorites,
+  commissionRequests
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -193,6 +196,14 @@ export interface IStorage {
   updateCartItem(id: string, item: Partial<InsertCartItem>): Promise<CartItem | undefined>;
   removeFromCart(id: string): Promise<boolean>;
   clearCart(): Promise<boolean>;
+
+  // Commission Requests
+  getCommissionRequests(): Promise<CommissionRequest[]>;
+  getCommissionRequest(id: string): Promise<CommissionRequest | undefined>;
+  createCommissionRequest(request: InsertCommissionRequest): Promise<CommissionRequest>;
+  updateCommissionRequest(id: string, request: Partial<InsertCommissionRequest>): Promise<CommissionRequest | undefined>;
+  markCommissionAsRead(id: string): Promise<boolean>;
+  deleteCommissionRequest(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1034,6 +1045,41 @@ export class DatabaseStorage implements IStorage {
 
   async deleteArtWallSimulation(id: string): Promise<boolean> {
     const result = await db.delete(artWallSimulations).where(eq(artWallSimulations.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Commission Requests
+  async getCommissionRequests(): Promise<CommissionRequest[]> {
+    return await db.select().from(commissionRequests).orderBy(desc(commissionRequests.createdAt));
+  }
+
+  async getCommissionRequest(id: string): Promise<CommissionRequest | undefined> {
+    const [request] = await db.select().from(commissionRequests).where(eq(commissionRequests.id, id));
+    return request || undefined;
+  }
+
+  async createCommissionRequest(insertRequest: InsertCommissionRequest): Promise<CommissionRequest> {
+    const [request] = await db.insert(commissionRequests).values(insertRequest).returning();
+    return request;
+  }
+
+  async updateCommissionRequest(id: string, updateData: Partial<InsertCommissionRequest>): Promise<CommissionRequest | undefined> {
+    const [request] = await db.update(commissionRequests)
+      .set(updateData)
+      .where(eq(commissionRequests.id, id))
+      .returning();
+    return request || undefined;
+  }
+
+  async markCommissionAsRead(id: string): Promise<boolean> {
+    const result = await db.update(commissionRequests)
+      .set({ isRead: true })
+      .where(eq(commissionRequests.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteCommissionRequest(id: string): Promise<boolean> {
+    const result = await db.delete(commissionRequests).where(eq(commissionRequests.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 }

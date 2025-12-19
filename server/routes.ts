@@ -817,6 +817,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Commission Requests
+  app.get("/api/commissions", async (req, res) => {
+    try {
+      const commissions = await storage.getCommissionRequests();
+      res.json(commissions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch commission requests" });
+    }
+  });
+
+  app.get("/api/commissions/:id", async (req, res) => {
+    try {
+      const commission = await storage.getCommissionRequest(req.params.id);
+      if (!commission) {
+        return res.status(404).json({ message: "Commission request not found" });
+      }
+      res.json(commission);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch commission request" });
+    }
+  });
+
+  app.post("/api/commissions", async (req, res) => {
+    try {
+      const { insertCommissionRequestSchema } = await import("@shared/schema");
+      const validatedData = insertCommissionRequestSchema.parse(req.body);
+      
+      // Create commission request in database
+      const commission = await storage.createCommissionRequest(validatedData);
+
+      // Also create a message in the inbox
+      const messageData = {
+        name: validatedData.fullName,
+        email: validatedData.email,
+        subject: `Commission Request: ${validatedData.commissionType}`,
+        message: `Commission Type: ${validatedData.commissionType}\nSize Preference: ${validatedData.sizePreference}\nBudget Range: ${validatedData.budgetRange}\nPreferred Contact: ${validatedData.preferredContact || 'Not specified'}\nPhone: ${validatedData.phone || 'Not provided'}\n\nVision:\n${validatedData.vision}${validatedData.referenceFileUrl ? `\n\nReference Image: ${validatedData.referenceFileUrl}` : ''}`
+      };
+      await storage.createMessage(messageData);
+
+      // Send email notification
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
+      if (brevoApiKey) {
+        try {
+          const emailData = {
+            sender: {
+              name: "Otto Art Commissions",
+              email: "noreply@ottoart.com"
+            },
+            to: [
+              {
+                email: notifyEmail,
+                name: "Otto Art"
+              }
+            ],
+            subject: `New Commission Request: ${validatedData.commissionType}`,
+            htmlContent: `
+              <h2>New Commission Request</h2>
+              <p><strong>Name:</strong> ${validatedData.fullName}</p>
+              <p><strong>Email:</strong> ${validatedData.email}</p>
+              ${validatedData.phone ? `<p><strong>Phone:</strong> ${validatedData.phone}</p>` : ''}
+              <p><strong>Preferred Contact:</strong> ${validatedData.preferredContact || 'Not specified'}</p>
+              <hr>
+              <p><strong>Commission Type:</strong> ${validatedData.commissionType}</p>
+              <p><strong>Size Preference:</strong> ${validatedData.sizePreference}</p>
+              <p><strong>Budget Range:</strong> ${validatedData.budgetRange}</p>
+              <hr>
+              <p><strong>Vision:</strong></p>
+              <p>${validatedData.vision.replace(/\n/g, '<br>')}</p>
+              ${validatedData.referenceFileUrl ? `<p><strong>Reference Image:</strong> <a href="${validatedData.referenceFileUrl}">View Image</a></p>` : ''}
+              <hr>
+              <p><em>This commission request was submitted via the Otto Art website.</em></p>
+            `
+          };
+
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'api-key': brevoApiKey,
+            },
+            body: JSON.stringify(emailData)
+          });
+
+          // Send confirmation email to the user
+          const confirmationEmail = {
+            sender: {
+              name: "Otto Art",
+              email: "noreply@ottoart.com"
+            },
+            to: [
+              {
+                email: validatedData.email,
+                name: validatedData.fullName
+              }
+            ],
+            subject: "Commission request received",
+            htmlContent: `
+              <h2>Thank you for your commission request!</h2>
+              <p>Hi ${validatedData.fullName},</p>
+              <p>I've received your commission request for <strong>${validatedData.commissionType}</strong> and I'm excited to learn more about your vision.</p>
+              <p>I'll review your request and get back to you within <strong>48 hours</strong>.</p>
+              <p>In the meantime, feel free to explore more of my work at <a href="${process.env.SITE_URL || 'https://ottoart.com'}">ottoart.com</a>.</p>
+              <p>Looking forward to creating something special together!</p>
+              <p>Best,<br>Otto</p>
+            `
+          };
+
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'api-key': brevoApiKey,
+            },
+            body: JSON.stringify(confirmationEmail)
+          });
+        } catch (emailError) {
+          console.error('Failed to send commission emails:', emailError);
+        }
+      }
+
+      res.status(201).json(commission);
+    } catch (error) {
+      console.error("Failed to create commission request:", error);
+      res.status(400).json({ message: "Invalid commission request data" });
+    }
+  });
+
+  app.put("/api/commissions/:id", async (req, res) => {
+    try {
+      const { insertCommissionRequestSchema } = await import("@shared/schema");
+      const validatedData = insertCommissionRequestSchema.partial().parse(req.body);
+      const commission = await storage.updateCommissionRequest(req.params.id, validatedData);
+      if (!commission) {
+        return res.status(404).json({ message: "Commission request not found" });
+      }
+      res.json(commission);
+    } catch (error) {
+      console.error("Failed to update commission request:", error);
+      res.status(400).json({ message: "Invalid commission request data" });
+    }
+  });
+
+  app.put("/api/commissions/:id/read", async (req, res) => {
+    try {
+      const success = await storage.markCommissionAsRead(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Commission request not found" });
+      }
+      res.json({ message: "Commission marked as read" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark commission as read" });
+    }
+  });
+
+  app.delete("/api/commissions/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteCommissionRequest(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Commission request not found" });
+      }
+      res.json({ message: "Commission request deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete commission request" });
+    }
+  });
+
   // Page Settings
   app.get("/api/page-settings", async (req, res) => {
     try {
