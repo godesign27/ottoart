@@ -9,16 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, MapPin, EyeOff, Save, Eye, Link, Image } from "lucide-react";
 
 interface Event {
   id: string;
   title: string;
   description: string;
-  date: string;
+  startDate: string;
+  endDate?: string;
   time: string;
   location: string;
   imageUrl?: string;
+  websiteUrl?: string;
   isPublished: boolean;
   registrationRequired: boolean;
 }
@@ -50,10 +52,12 @@ export function EventsManager() {
       id: "1",
       title: "Abstract Art Workshop",
       description: "Join me for a hands-on workshop exploring abstract painting techniques. Learn about color theory, composition, and expressive mark-making in this interactive session.",
-      date: "2024-03-15",
+      startDate: "2024-03-15",
+      endDate: "2024-03-17",
       time: "14:00-17:00",
       location: "Studio Gallery, Chicago",
       imageUrl: "https://images.unsplash.com/photo-1456327102063-fb5054efe647?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200",
+      websiteUrl: "https://example.com/workshop",
       isPublished: true,
       registrationRequired: true
     },
@@ -61,7 +65,7 @@ export function EventsManager() {
       id: "2",
       title: "Gallery Opening: New Works",
       description: "Opening reception for my latest collection of abstract paintings. Meet the artist, enjoy refreshments, and be among the first to see these new works.",
-      date: "2024-04-08",
+      startDate: "2024-04-08",
       time: "18:00-21:00",
       location: "River North Gallery, Chicago",
       imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200",
@@ -72,9 +76,10 @@ export function EventsManager() {
       id: "3",
       title: "Artist Talk: Color & Emotion",
       description: "A discussion on the role of color in contemporary abstract art and how emotional expression translates through visual elements.",
-      date: "2024-05-20",
+      startDate: "2024-05-20",
       time: "19:00-20:30",
       location: "Art Institute of Chicago",
+      websiteUrl: "https://artic.edu/events",
       isPublished: false,
       registrationRequired: true
     }
@@ -190,6 +195,7 @@ export function EventsManager() {
                 id="title"
                 defaultValue={selectedEvent?.title}
                 placeholder="Enter event title"
+                data-testid="event-title-input"
               />
             </div>
             <div className="space-y-2">
@@ -199,15 +205,62 @@ export function EventsManager() {
                 defaultValue={selectedEvent?.description}
                 placeholder="Describe your event"
                 rows={3}
+                data-testid="event-description-input"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            {/* Image URL */}
+            <div className="space-y-2">
+              <Label htmlFor="imageUrl" className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                Event Image URL
+              </Label>
+              <Input
+                id="imageUrl"
+                defaultValue={selectedEvent?.imageUrl}
+                placeholder="https://example.com/event-image.jpg"
+                data-testid="event-image-url-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Add a URL to an image for this event (recommended size: 800x400)
+              </p>
+            </div>
+
+            {/* Website URL */}
+            <div className="space-y-2">
+              <Label htmlFor="websiteUrl" className="flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Event Website URL
+              </Label>
+              <Input
+                id="websiteUrl"
+                defaultValue={selectedEvent?.websiteUrl}
+                placeholder="https://example.com/event-page"
+                data-testid="event-website-url-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Link to the event's official website or registration page
+              </p>
+            </div>
+
+            {/* Date Range and Time */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="startDate">Start Date</Label>
                 <Input
-                  id="date"
+                  id="startDate"
                   type="date"
-                  defaultValue={selectedEvent?.date}
+                  defaultValue={selectedEvent?.startDate}
+                  data-testid="event-start-date-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">End Date (optional)</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  defaultValue={selectedEvent?.endDate}
+                  data-testid="event-end-date-input"
                 />
               </div>
               <div className="space-y-2">
@@ -216,6 +269,7 @@ export function EventsManager() {
                   id="time"
                   defaultValue={selectedEvent?.time}
                   placeholder="e.g., 14:00-17:00"
+                  data-testid="event-time-input"
                 />
               </div>
               <div className="space-y-2">
@@ -224,14 +278,15 @@ export function EventsManager() {
                   id="location"
                   defaultValue={selectedEvent?.location}
                   placeholder="Enter venue location"
+                  data-testid="event-location-input"
                 />
               </div>
             </div>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <Button variant="outline" onClick={() => setIsEditing(false)} data-testid="cancel-event-button">
                 Cancel
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} data-testid="save-event-button">
                 {selectedEvent ? 'Update' : 'Add'} Event
               </Button>
             </div>
@@ -291,7 +346,10 @@ export function EventsManager() {
                   <div className="flex flex-col gap-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(event.date).toLocaleDateString()}</span>
+                      <span>
+                        {new Date(event.startDate).toLocaleDateString()}
+                        {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString()}`}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Clock className="h-4 w-4" />
@@ -301,6 +359,19 @@ export function EventsManager() {
                       <MapPin className="h-4 w-4" />
                       <span>{event.location}</span>
                     </div>
+                    {event.websiteUrl && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Link className="h-4 w-4" />
+                        <a 
+                          href={event.websiteUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          Event Website
+                        </a>
+                      </div>
+                    )}
                   </div>
                   
                   <p className="text-muted-foreground text-sm">{event.description}</p>
