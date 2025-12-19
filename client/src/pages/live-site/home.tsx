@@ -3,11 +3,13 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { HeroSection } from "@/components/live-site/hero-section";
 import { ProductGrid } from "@/components/live-site/product-grid";
 import { Footer } from "@/components/live-site/footer";
-import type { Product } from "@shared/schema";
+import { Calendar, Clock, MapPin, ExternalLink } from "lucide-react";
+import type { Product, Event } from "@shared/schema";
 
 // Custom component to display featured products using ProductGrid
 function FeaturedProductsSection() {
@@ -75,6 +77,102 @@ function FeaturedProductsSection() {
   );
 }
 
+function FeaturedEventSection() {
+  const { data: featuredEvent, isLoading } = useQuery<Event | null>({
+    queryKey: ['/api/events/featured'],
+  });
+
+  const formatDate = (dateStr: string, endDateStr?: string | null) => {
+    const startDate = new Date(dateStr);
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    const formattedStart = startDate.toLocaleDateString('en-US', options);
+    
+    if (endDateStr) {
+      const endDate = new Date(endDateStr);
+      const formattedEnd = endDate.toLocaleDateString('en-US', options);
+      return `${formattedStart} - ${formattedEnd}`;
+    }
+    return formattedStart;
+  };
+
+  if (isLoading || !featuredEvent) {
+    return null;
+  }
+
+  return (
+    <section className="py-16 px-6 bg-muted/30" data-testid="featured-event">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-foreground mb-2">Upcoming Event</h2>
+          <p className="text-muted-foreground">Join me at this special event</p>
+        </div>
+
+        <Card className="overflow-hidden shadow-md">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+              {featuredEvent.imageUrl && (
+                <div>
+                  <img 
+                    src={featuredEvent.imageUrl} 
+                    alt={featuredEvent.title}
+                    className="w-full h-64 md:h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className={`${featuredEvent.imageUrl ? '' : 'md:col-span-2'} p-8 flex flex-col justify-center`}>
+                <h3 className="text-2xl font-bold text-foreground mb-4">{featuredEvent.title}</h3>
+                
+                <div className="flex flex-col gap-3 mb-6">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <Calendar className="h-5 w-5" />
+                    <span>{formatDate(featuredEvent.startDate, featuredEvent.endDate)}</span>
+                  </div>
+                  {featuredEvent.time && (
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Clock className="h-5 w-5" />
+                      <span>{featuredEvent.time}</span>
+                    </div>
+                  )}
+                  {featuredEvent.location && (
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <MapPin className="h-5 w-5" />
+                      <span>{featuredEvent.location}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {featuredEvent.description && (
+                  <p className="text-muted-foreground leading-relaxed mb-6">{featuredEvent.description}</p>
+                )}
+
+                <div className="flex gap-3">
+                  {featuredEvent.websiteUrl && (
+                    <Button asChild>
+                      <a href={featuredEvent.websiteUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Learn More
+                      </a>
+                    </Button>
+                  )}
+                  <Link href="/events">
+                    <Button variant="outline">
+                      View All Events
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
 export default function LiveSiteHome() {
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
@@ -92,6 +190,7 @@ export default function LiveSiteHome() {
       
       <main className="bg-background">
         <HeroSection />
+        <FeaturedEventSection />
         <FeaturedProductsSection />
       </main>
       

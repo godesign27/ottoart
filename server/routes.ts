@@ -757,6 +757,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/events/featured", async (req, res) => {
+    try {
+      const event = await storage.getFeaturedEvent();
+      res.json(event || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch featured event" });
+    }
+  });
+
   app.get("/api/events/:id", async (req, res) => {
     try {
       const event = await storage.getEvent(req.params.id);

@@ -166,6 +166,7 @@ export interface IStorage {
   // Events
   getEvents(): Promise<Event[]>;
   getPublishedEvents(): Promise<Event[]>;
+  getFeaturedEvent(): Promise<Event | undefined>;
   getEvent(id: string): Promise<Event | undefined>;
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(id: string, event: Partial<InsertEvent>): Promise<Event | undefined>;
@@ -933,6 +934,14 @@ export class DatabaseStorage implements IStorage {
 
   async getPublishedEvents(): Promise<Event[]> {
     return await db.select().from(events).where(eq(events.isPublished, true)).orderBy(events.sortOrder, events.startDate);
+  }
+
+  async getFeaturedEvent(): Promise<Event | undefined> {
+    const [event] = await db.select().from(events)
+      .where(and(eq(events.isPublished, true), eq(events.isFeatured, true)))
+      .orderBy(events.startDate)
+      .limit(1);
+    return event || undefined;
   }
 
   async getEvent(id: string): Promise<Event | undefined> {

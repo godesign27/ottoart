@@ -18,6 +18,7 @@ export function EventsManager() {
   const [isPreview, setIsPreview] = useState(false);
   const [formImageUrl, setFormImageUrl] = useState<string>("");
   const [formIsPublished, setFormIsPublished] = useState(false);
+  const [formIsFeatured, setFormIsFeatured] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,6 +30,7 @@ export function EventsManager() {
     setImagePreview(null);
     setFormImageUrl("");
     setFormIsPublished(false);
+    setFormIsFeatured(false);
     setIsDragging(false);
     setIsUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -40,6 +42,7 @@ export function EventsManager() {
       setSelectedEvent(event);
       setFormImageUrl(event.imageUrl || "");
       setFormIsPublished(event.isPublished ?? false);
+      setFormIsFeatured(event.isFeatured ?? false);
     } else {
       setSelectedEvent(null);
     }
@@ -264,6 +267,7 @@ export function EventsManager() {
       websiteUrl: (data.get('websiteUrl') as string) || null,
       imageUrl: formImageUrl || null,
       isPublished: formIsPublished,
+      isFeatured: formIsFeatured,
       registrationRequired: false,
     };
 
@@ -528,6 +532,22 @@ export function EventsManager() {
               />
             </div>
 
+            {/* Featured Settings */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div>
+                <Label htmlFor="isFeatured" className="font-medium">Feature on Home Page</Label>
+                <p className="text-sm text-muted-foreground">
+                  Featured events will be displayed prominently on the home page
+                </p>
+              </div>
+              <Switch
+                id="isFeatured"
+                checked={formIsFeatured}
+                onCheckedChange={setFormIsFeatured}
+                data-testid="event-featured-toggle"
+              />
+            </div>
+
             <div className="flex items-center justify-end gap-2">
               <Button type="button" variant="outline" onClick={closeForm} data-testid="cancel-event-button">
                 Cancel
@@ -562,10 +582,15 @@ export function EventsManager() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-xl font-semibold">{event.title}</h3>
-                      <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <Badge variant={event.isPublished ? "default" : "secondary"}>
                           {event.isPublished ? "Published" : "Draft"}
                         </Badge>
+                        {event.isFeatured && (
+                          <Badge variant="outline" className="border-amber-500 text-amber-600">
+                            Featured
+                          </Badge>
+                        )}
                         {event.registrationRequired && (
                           <Badge variant="outline">Registration Required</Badge>
                         )}

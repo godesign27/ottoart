@@ -293,6 +293,7 @@ export const events = pgTable("events", {
   imageUrl: text("image_url"),
   websiteUrl: text("website_url"),
   isPublished: boolean("is_published").default(false),
+  isFeatured: boolean("is_featured").default(false),
   registrationRequired: boolean("registration_required").default(false),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
