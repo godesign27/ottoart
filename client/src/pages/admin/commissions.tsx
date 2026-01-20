@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
@@ -213,6 +213,12 @@ export default function CommissionsPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <Badge variant="secondary">{unreadCount} new</Badge>
+                  <Link href="/commission" target="_blank">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <ExternalLink className="h-4 w-4" />
+                      View Form
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
