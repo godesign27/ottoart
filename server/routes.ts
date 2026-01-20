@@ -513,8 +513,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const emailData = {
             sender: {
-              name: "Otto Art Orders",
-              email: "noreply@ottoart.com"
+              name: "Otto Art",
+              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
             },
             to: [
               {
@@ -617,8 +617,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const emailData = {
             sender: {
-              name: "Otto Art Contact Form",
-              email: "noreply@ottoart.com"
+              name: "Otto Art",
+              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
             },
             to: [
               {
@@ -915,8 +915,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const emailData = {
             sender: {
-              name: "Otto Art Commissions",
-              email: "noreply@ottoart.com"
+              name: "Otto Art",
+              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
             },
             to: [
               {
@@ -957,7 +957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const confirmationEmail = {
             sender: {
               name: "Otto Art",
-              email: "noreply@ottoart.com"
+              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
             },
             to: [
               {
@@ -1361,8 +1361,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const notificationEmail = {
             sender: {
-              name: "Otto Art Newsletter",
-              email: "noreply@ottoart.com"
+              name: "Otto Art",
+              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
             },
             to: [
               {
