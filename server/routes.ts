@@ -971,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p>Hi ${validatedData.fullName},</p>
               <p>I've received your commission request for <strong>${validatedData.commissionType}</strong> and I'm excited to learn more about your vision.</p>
               <p>I'll review your request and get back to you within <strong>48 hours</strong>.</p>
-              <p>In the meantime, feel free to explore more of my work at <a href="${process.env.SITE_URL || 'https://ottoart.com'}">ottoart.com</a>.</p>
+              <p>In the meantime, feel free to explore more of my work at <a href="https://ottoart.app">ottoart.app</a>.</p>
               <p>Looking forward to creating something special together!</p>
               <p>Best,<br>Otto</p>
             `
@@ -1113,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(contactSettings || {
         getInTouchText: "I'd love to hear from you! Whether you're interested in commissioning a piece, purchasing artwork, or collaborating on a project, please don't hesitate to reach out.",
         contactInfo: {
-          email: "hello@ottoart.com",
+          email: "ottoart27@gmail.com",
           phone: "(555) 123-4567",
           address: "123 Artist Lane, Chicago, IL 60601"
         },
