@@ -515,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ).join('');
           
           await resend.emails.send({
-            from: 'Otto Art <onboarding@resend.dev>',
+            from: 'Otto Art <hello@ottoart.app>',
             to: notifyEmail,
             subject: `New Order: $${(validatedData.total / 100).toFixed(2)}`,
             html: `
@@ -599,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (resend) {
         try {
           await resend.emails.send({
-            from: 'Otto Art <onboarding@resend.dev>',
+            from: 'Otto Art <hello@ottoart.app>',
             to: 'ottoart27@gmail.com',
             subject: validatedData.subject ? `Contact Form: ${validatedData.subject}` : "New Contact Form Inquiry",
             html: `
@@ -837,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Send notification to owner
           console.log(`[Resend] Sending commission notification to: ${notifyEmail}`);
           const ownerResult = await resend.emails.send({
-            from: 'Otto Art <onboarding@resend.dev>',
+            from: 'Otto Art <hello@ottoart.app>',
             to: notifyEmail,
             subject: `New Commission Request: ${validatedData.commissionType}`,
             html: `
@@ -863,7 +863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Send confirmation email to the user
           console.log(`[Resend] Sending confirmation to customer: ${validatedData.email}`);
           const customerResult = await resend.emails.send({
-            from: 'Otto Art <onboarding@resend.dev>',
+            from: 'Otto Art <hello@ottoart.app>',
             to: validatedData.email,
             subject: "Commission request received",
             html: `
@@ -1255,7 +1255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
           try {
             await resend.emails.send({
-              from: 'Otto Art <onboarding@resend.dev>',
+              from: 'Otto Art <hello@ottoart.app>',
               to: notifyEmail,
               subject: "New Newsletter Subscriber",
               html: `
