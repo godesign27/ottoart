@@ -835,7 +835,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (resend) {
         try {
           // Send notification to owner
-          await resend.emails.send({
+          console.log(`[Resend] Sending commission notification to: ${notifyEmail}`);
+          const ownerResult = await resend.emails.send({
             from: 'Otto Art <onboarding@resend.dev>',
             to: notifyEmail,
             subject: `New Commission Request: ${validatedData.commissionType}`,
@@ -857,9 +858,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p><em>This commission request was submitted via the Otto Art website.</em></p>
             `
           });
+          console.log(`[Resend] Owner notification result:`, JSON.stringify(ownerResult));
 
           // Send confirmation email to the user
-          await resend.emails.send({
+          console.log(`[Resend] Sending confirmation to customer: ${validatedData.email}`);
+          const customerResult = await resend.emails.send({
             from: 'Otto Art <onboarding@resend.dev>',
             to: validatedData.email,
             subject: "Commission request received",
@@ -873,9 +876,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p>Best,<br>Otto</p>
             `
           });
-        } catch (emailError) {
-          console.error('Failed to send commission emails:', emailError);
+          console.log(`[Resend] Customer confirmation result:`, JSON.stringify(customerResult));
+        } catch (emailError: any) {
+          console.error('[Resend] Failed to send commission emails:', emailError?.message || emailError);
         }
+      } else {
+        console.log('[Resend] Resend not initialized - RESEND_API_KEY may be missing');
       }
 
       res.status(201).json(commission);
