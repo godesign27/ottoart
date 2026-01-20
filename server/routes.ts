@@ -3,7 +3,11 @@ import express from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import OpenAI from "openai";
+import { Resend } from "resend";
 import { storage } from "./storage";
+
+// Initialize Resend for email notifications
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -500,30 +504,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(validatedData);
 
-      // Send email notification for new order
-      const brevoApiKey = process.env.BREVO_API_KEY;
+      // Send email notification for new order using Resend
       const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
       
-      if (brevoApiKey) {
+      if (resend) {
         try {
           const items = validatedData.items as Array<{ name: string; quantity: number; price: number }>;
           const itemsList = items.map((item: { name: string; quantity: number; price: number }) => 
             `<li>${item.name} x ${item.quantity} - $${(item.price * item.quantity / 100).toFixed(2)}</li>`
           ).join('');
           
-          const emailData = {
-            sender: {
-              name: "Otto Art",
-              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
-            },
-            to: [
-              {
-                email: notifyEmail,
-                name: "Otto Art"
-              }
-            ],
+          await resend.emails.send({
+            from: 'Otto Art <onboarding@resend.dev>',
+            to: notifyEmail,
             subject: `New Order: $${(validatedData.total / 100).toFixed(2)}`,
-            htmlContent: `
+            html: `
               <h2>New Order Received!</h2>
               <p><strong>Customer:</strong> ${validatedData.customerName}</p>
               <p><strong>Email:</strong> ${validatedData.customerEmail}</p>
@@ -536,15 +531,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <hr>
               <p><em>View this order in your admin panel.</em></p>
             `
-          };
-
-          await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'api-key': brevoApiKey,
-            },
-            body: JSON.stringify(emailData)
           });
         } catch (emailError) {
           console.error('Failed to send order notification email:', emailError);
@@ -609,25 +595,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage(validatedData);
 
-      // Get Brevo API key for additional functionality
-      const brevoApiKey = process.env.BREVO_API_KEY;
-      
-      if (brevoApiKey) {
-        // Send email notification to ottoart27@gmail.com
+      // Send email notification using Resend
+      if (resend) {
         try {
-          const emailData = {
-            sender: {
-              name: "Otto Art",
-              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
-            },
-            to: [
-              {
-                email: "ottoart27@gmail.com",
-                name: "Otto Art"
-              }
-            ],
+          await resend.emails.send({
+            from: 'Otto Art <onboarding@resend.dev>',
+            to: 'ottoart27@gmail.com',
             subject: validatedData.subject ? `Contact Form: ${validatedData.subject}` : "New Contact Form Inquiry",
-            htmlContent: `
+            html: `
               <h2>New Contact Form Submission</h2>
               <p><strong>Name:</strong> ${validatedData.name}</p>
               <p><strong>Email:</strong> ${validatedData.email}</p>
@@ -637,62 +612,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <hr>
               <p><em>This message was sent via the Otto Art website contact form.</em></p>
             `
-          };
-
-          await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'api-key': brevoApiKey,
-            },
-            body: JSON.stringify(emailData),
           });
         } catch (emailError) {
           console.error('Failed to send email notification:', emailError);
-          // Don't fail the whole request if email fails
-        }
-
-        // Add contact to Brevo list #2
-        try {
-          const contactData = {
-            email: validatedData.email.trim().toLowerCase(),
-            updateEnabled: true,
-            emailBlacklisted: false,
-            listIds: [2], // Add to list #2
-            attributes: {
-              FIRSTNAME: validatedData.name.split(' ')[0],
-              LASTNAME: validatedData.name.split(' ').slice(1).join(' ') || ''
-            }
-          };
-
-          const brevoResponse = await fetch('https://api.brevo.com/v3/contacts', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'api-key': brevoApiKey,
-            },
-            body: JSON.stringify(contactData),
-          });
-
-          if (!brevoResponse.ok && brevoResponse.status === 409) {
-            // Contact already exists - add them to list #2
-            try {
-              await fetch(`https://api.brevo.com/v3/contacts/lists/2/contacts/add`, {
-                method: 'POST',
-                headers: {
-                  'content-type': 'application/json',
-                  'api-key': brevoApiKey,
-                },
-                body: JSON.stringify({
-                  emails: [validatedData.email.trim().toLowerCase()]
-                }),
-              });
-            } catch (listError) {
-              console.error('Failed to add existing contact to list #2:', listError);
-            }
-          }
-        } catch (brevoError) {
-          console.error('Failed to add contact to Brevo:', brevoError);
           // Don't fail the whole request if Brevo fails
         }
       }
@@ -908,24 +830,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       await storage.createMessage(messageData);
 
-      // Send email notification
-      const brevoApiKey = process.env.BREVO_API_KEY;
+      // Send email notification using Resend
       const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
-      if (brevoApiKey) {
+      if (resend) {
         try {
-          const emailData = {
-            sender: {
-              name: "Otto Art",
-              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
-            },
-            to: [
-              {
-                email: notifyEmail,
-                name: "Otto Art"
-              }
-            ],
+          // Send notification to owner
+          await resend.emails.send({
+            from: 'Otto Art <onboarding@resend.dev>',
+            to: notifyEmail,
             subject: `New Commission Request: ${validatedData.commissionType}`,
-            htmlContent: `
+            html: `
               <h2>New Commission Request</h2>
               <p><strong>Name:</strong> ${validatedData.fullName}</p>
               <p><strong>Email:</strong> ${validatedData.email}</p>
@@ -942,31 +856,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <hr>
               <p><em>This commission request was submitted via the Otto Art website.</em></p>
             `
-          };
-
-          await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'api-key': brevoApiKey,
-            },
-            body: JSON.stringify(emailData)
           });
 
           // Send confirmation email to the user
-          const confirmationEmail = {
-            sender: {
-              name: "Otto Art",
-              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
-            },
-            to: [
-              {
-                email: validatedData.email,
-                name: validatedData.fullName
-              }
-            ],
+          await resend.emails.send({
+            from: 'Otto Art <onboarding@resend.dev>',
+            to: validatedData.email,
             subject: "Commission request received",
-            htmlContent: `
+            html: `
               <h2>Thank you for your commission request!</h2>
               <p>Hi ${validatedData.fullName},</p>
               <p>I've received your commission request for <strong>${validatedData.commissionType}</strong> and I'm excited to learn more about your vision.</p>
@@ -975,15 +872,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p>Looking forward to creating something special together!</p>
               <p>Best,<br>Otto</p>
             `
-          };
-
-          await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'api-key': brevoApiKey,
-            },
-            body: JSON.stringify(confirmationEmail)
           });
         } catch (emailError) {
           console.error('Failed to send commission emails:', emailError);
@@ -1356,41 +1244,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (brevoResponse.ok) {
-        // Send notification email for new subscriber
-        const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
-        try {
-          const notificationEmail = {
-            sender: {
-              name: "Otto Art",
-              email: process.env.SENDER_EMAIL || "ottoart27@gmail.com"
-            },
-            to: [
-              {
-                email: notifyEmail,
-                name: "Otto Art"
-              }
-            ],
-            subject: "New Newsletter Subscriber",
-            htmlContent: `
-              <h2>New Newsletter Subscriber!</h2>
-              <p><strong>Email:</strong> ${email}</p>
-              ${firstName ? `<p><strong>First Name:</strong> ${firstName}</p>` : ''}
-              ${lastName ? `<p><strong>Last Name:</strong> ${lastName}</p>` : ''}
-              <hr>
-              <p><em>This person just joined your mailing list.</em></p>
-            `
-          };
-
-          await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'api-key': brevoApiKey,
-            },
-            body: JSON.stringify(notificationEmail)
-          });
-        } catch (emailError) {
-          console.error('Failed to send subscriber notification email:', emailError);
+        // Send notification email for new subscriber using Resend
+        if (resend) {
+          const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
+          try {
+            await resend.emails.send({
+              from: 'Otto Art <onboarding@resend.dev>',
+              to: notifyEmail,
+              subject: "New Newsletter Subscriber",
+              html: `
+                <h2>New Newsletter Subscriber!</h2>
+                <p><strong>Email:</strong> ${email}</p>
+                ${firstName ? `<p><strong>First Name:</strong> ${firstName}</p>` : ''}
+                ${lastName ? `<p><strong>Last Name:</strong> ${lastName}</p>` : ''}
+                <hr>
+                <p><em>This person just joined your mailing list.</em></p>
+              `
+            });
+          } catch (emailError) {
+            console.error('Failed to send subscriber notification email:', emailError);
+          }
         }
         
         res.status(201).json({ message: "Successfully subscribed to newsletter" });
