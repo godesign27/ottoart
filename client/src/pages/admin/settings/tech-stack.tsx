@@ -1,3 +1,7 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { AdminSidebar } from "@/components/admin/sidebar";
+import { AdminHeader } from "@/components/admin/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
@@ -141,43 +145,127 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function TechStackPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Tech Stack</h1>
-        <p className="text-muted-foreground mt-1">
-          Technologies and services powering your Otto Art platform
-        </p>
-      </div>
+  const [, setLocation] = useLocation();
+  const [viewMode, setViewMode] = useState<'admin' | 'live'>('admin');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('admin-sidebar-collapsed') === 'true';
+    }
+    return false;
+  });
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {techStack.map((tech) => (
-          <Card key={tech.name} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-lg">{tech.name}</CardTitle>
-                <Badge className={categoryColors[tech.category] || "bg-gray-100 text-gray-800"}>
-                  {tech.category}
-                </Badge>
+  const handleNavigate = (href: string) => {
+    setLocation(href);
+  };
+
+  const handleViewModeChange = (mode: 'admin' | 'live') => {
+    setViewMode(mode);
+    if (mode === 'live') {
+      setLocation('/');
+    }
+  };
+
+  const handleMobileMenuToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleMobileMenuClose = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleSidebarToggle = () => {
+    const newCollapsed = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newCollapsed);
+    localStorage.setItem('admin-sidebar-collapsed', newCollapsed.toString());
+  };
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobileMenuOpen]);
+
+  return (
+    <div className="flex h-screen bg-background">
+      <AdminSidebar 
+        onNavigate={handleNavigate} 
+        isCollapsed={isSidebarCollapsed}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onClose={handleMobileMenuClose}
+      />
+      
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
+        isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
+      }`}>
+        <AdminHeader 
+          viewMode={viewMode} 
+          onViewModeChange={handleViewModeChange}
+          onMenuToggle={handleMobileMenuToggle}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onSidebarToggle={handleSidebarToggle}
+          isSidebarCollapsed={isSidebarCollapsed}
+        />
+        
+        <main className="flex-1 overflow-auto p-6 bg-background">
+          <div className="max-w-7xl mx-auto fade-in">
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Tech Stack</h1>
+                <p className="text-muted-foreground mt-1">
+                  Technologies and services powering your Otto Art platform
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-sm mb-3">
-                {tech.description}
-              </CardDescription>
-              {tech.url && (
-                <a
-                  href={tech.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  Learn more <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {techStack.map((tech) => (
+                  <Card key={tech.name} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg">{tech.name}</CardTitle>
+                        <Badge className={categoryColors[tech.category] || "bg-gray-100 text-gray-800"}>
+                          {tech.category}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-sm mb-3">
+                        {tech.description}
+                      </CardDescription>
+                      {tech.url && (
+                        <a
+                          href={tech.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          Learn more <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
