@@ -499,6 +499,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(validatedData);
+
+      // Send email notification for new order
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
+      
+      if (brevoApiKey) {
+        try {
+          const items = validatedData.items as Array<{ name: string; quantity: number; price: number }>;
+          const itemsList = items.map((item: { name: string; quantity: number; price: number }) => 
+            `<li>${item.name} x ${item.quantity} - $${(item.price * item.quantity / 100).toFixed(2)}</li>`
+          ).join('');
+          
+          const emailData = {
+            sender: {
+              name: "Otto Art Orders",
+              email: "noreply@ottoart.com"
+            },
+            to: [
+              {
+                email: notifyEmail,
+                name: "Otto Art"
+              }
+            ],
+            subject: `New Order: $${(validatedData.total / 100).toFixed(2)}`,
+            htmlContent: `
+              <h2>New Order Received!</h2>
+              <p><strong>Customer:</strong> ${validatedData.customerName}</p>
+              <p><strong>Email:</strong> ${validatedData.customerEmail}</p>
+              <h3>Items:</h3>
+              <ul>${itemsList}</ul>
+              <p><strong>Total:</strong> $${(validatedData.total / 100).toFixed(2)}</p>
+              <hr>
+              <h3>Shipping Address:</h3>
+              <p>${validatedData.shippingAddress}</p>
+              <hr>
+              <p><em>View this order in your admin panel.</em></p>
+            `
+          };
+
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'api-key': brevoApiKey,
+            },
+            body: JSON.stringify(emailData)
+          });
+        } catch (emailError) {
+          console.error('Failed to send order notification email:', emailError);
+        }
+      }
+
       res.status(201).json(order);
     } catch (error) {
       res.status(400).json({ message: "Invalid order data" });
@@ -1304,6 +1356,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (brevoResponse.ok) {
+        // Send notification email for new subscriber
+        const notifyEmail = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
+        try {
+          const notificationEmail = {
+            sender: {
+              name: "Otto Art Newsletter",
+              email: "noreply@ottoart.com"
+            },
+            to: [
+              {
+                email: notifyEmail,
+                name: "Otto Art"
+              }
+            ],
+            subject: "New Newsletter Subscriber",
+            htmlContent: `
+              <h2>New Newsletter Subscriber!</h2>
+              <p><strong>Email:</strong> ${email}</p>
+              ${firstName ? `<p><strong>First Name:</strong> ${firstName}</p>` : ''}
+              ${lastName ? `<p><strong>Last Name:</strong> ${lastName}</p>` : ''}
+              <hr>
+              <p><em>This person just joined your mailing list.</em></p>
+            `
+          };
+
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'api-key': brevoApiKey,
+            },
+            body: JSON.stringify(notificationEmail)
+          });
+        } catch (emailError) {
+          console.error('Failed to send subscriber notification email:', emailError);
+        }
+        
         res.status(201).json({ message: "Successfully subscribed to newsletter" });
       } else if (brevoResponse.status === 409) {
         // Contact already exists - need to ensure they're added to the list if specified
