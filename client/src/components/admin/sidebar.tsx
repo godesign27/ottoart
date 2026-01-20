@@ -27,7 +27,8 @@ import {
   ImageIcon,
   Calendar,
   FileTextIcon,
-  Mail
+  Mail,
+  Layers
 } from "lucide-react";
 
 const navItems = [
@@ -205,6 +206,11 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
       title: "Social Media",
       href: "/admin/settings/social",
       icon: Share2
+    },
+    {
+      title: "Tech Stack",
+      href: "/admin/settings/tech-stack",
+      icon: Layers
     }
   ];
 

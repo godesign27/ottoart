@@ -24,6 +24,7 @@ import ArtistSettingsPage from "@/pages/admin/settings/artist";
 import BusinessSettingsPage from "@/pages/admin/settings/business";
 import ThemeSettingsPage from "@/pages/admin/settings/theme";
 import SocialSettingsPage from "@/pages/admin/settings/social";
+import TechStackPage from "@/pages/admin/settings/tech-stack";
 import LiveSiteHome from "@/pages/live-site/home";
 import ShopAllPage from "@/pages/live-site/shop-all";
 import OriginalsPage from "@/pages/live-site/originals";
@@ -92,6 +93,7 @@ function Router() {
       <Route path="/admin/settings/business" component={BusinessSettingsPage} />
       <Route path="/admin/settings/theme" component={ThemeSettingsPage} />
       <Route path="/admin/settings/social" component={SocialSettingsPage} />
+      <Route path="/admin/settings/tech-stack" component={TechStackPage} />
       <Route component={NotFound} />
     </Switch>
   );
