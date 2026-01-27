@@ -1131,10 +1131,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cart
+  // Cart - uses x-cart-session header for per-visitor cart isolation
   app.get("/api/cart", async (req, res) => {
     try {
-      const cartItems = await storage.getCartItems();
+      const sessionId = req.headers['x-cart-session'] as string;
+      if (!sessionId) {
+        return res.json([]); // Return empty cart if no session
+      }
+      const cartItems = await storage.getCartItems(sessionId);
       res.json(cartItems);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cart items" });
@@ -1143,7 +1147,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req, res) => {
     try {
-      const validatedData = insertCartItemSchema.parse(req.body);
+      const sessionId = req.headers['x-cart-session'] as string;
+      if (!sessionId) {
+        return res.status(400).json({ message: "Cart session required" });
+      }
+      const validatedData = insertCartItemSchema.parse({ ...req.body, sessionId });
       const cartItem = await storage.addToCart(validatedData);
       res.status(201).json(cartItem);
     } catch (error) {
@@ -1179,7 +1187,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", async (req, res) => {
     try {
-      const success = await storage.clearCart();
+      const sessionId = req.headers['x-cart-session'] as string;
+      if (!sessionId) {
+        return res.status(400).json({ message: "Cart session required" });
+      }
+      const success = await storage.clearCart(sessionId);
       res.json({ message: "Cart cleared successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to clear cart" });

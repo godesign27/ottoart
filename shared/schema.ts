@@ -165,6 +165,7 @@ export const pageSettings = pgTable("page_settings", {
 
 export const cartItems = pgTable("cart_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(), // Unique identifier for each visitor's cart
   productId: varchar("product_id").notNull().references(() => products.id),
   tierId: text("tier_id"), // null for base product, tier id for pricing tiers
   productName: text("product_name").notNull(),

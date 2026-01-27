@@ -190,12 +190,12 @@ export interface IStorage {
   deleteArtWallSimulation(id: string): Promise<boolean>;
 
   // Cart
-  getCartItems(): Promise<CartItem[]>;
+  getCartItems(sessionId: string): Promise<CartItem[]>;
   getCartItem(id: string): Promise<CartItem | undefined>;
   addToCart(item: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: string, item: Partial<InsertCartItem>): Promise<CartItem | undefined>;
   removeFromCart(id: string): Promise<boolean>;
-  clearCart(): Promise<boolean>;
+  clearCart(sessionId: string): Promise<boolean>;
 
   // Commission Requests
   getCommissionRequests(): Promise<CommissionRequest[]>;
@@ -861,8 +861,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Cart
-  async getCartItems(): Promise<CartItem[]> {
-    return await db.select().from(cartItems).orderBy(desc(cartItems.createdAt));
+  async getCartItems(sessionId: string): Promise<CartItem[]> {
+    return await db.select().from(cartItems)
+      .where(eq(cartItems.sessionId, sessionId))
+      .orderBy(desc(cartItems.createdAt));
   }
 
   async getCartItem(id: string): Promise<CartItem | undefined> {
@@ -888,8 +890,8 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async clearCart(): Promise<boolean> {
-    const result = await db.delete(cartItems);
+  async clearCart(sessionId: string): Promise<boolean> {
+    const result = await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
     return (result.rowCount ?? 0) >= 0; // Returns true even if cart was already empty
   }
 
