@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Pencil, Copy, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ProductDrawer } from "@/components/admin/product-drawer";
 import type { Product } from "@shared/schema";
 import {
@@ -53,6 +54,26 @@ export function ProductGrid() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const duplicateProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      return apiRequest('POST', `/api/products/${productId}/duplicate`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Product duplicated",
+        description: "A copy has been created as a draft. You can now edit it.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to duplicate product",
         variant: "destructive",
       });
     },
@@ -137,29 +158,56 @@ export function ProductGrid() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Stock: {product.stock}</span>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-primary hover:text-primary/80" 
-                    onClick={() => {
-                      setEditingProduct(product);
-                      setIsDrawerOpen(true);
-                    }}
-                    data-testid={`edit-product-${product.id}`}
-                  >
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-muted-foreground hover:text-destructive" 
-                    onClick={() => setProductToDelete(product)}
-                    data-testid={`delete-product-${product.id}`}
-                  >
-                    Delete
-                  </Button>
-                </div>
+                <TooltipProvider>
+                  <div className="flex space-x-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-primary hover:text-primary/80" 
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setIsDrawerOpen(true);
+                          }}
+                          data-testid={`edit-product-${product.id}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-blue-600" 
+                          onClick={() => duplicateProductMutation.mutate(product.id)}
+                          disabled={duplicateProductMutation.isPending}
+                          data-testid={`duplicate-product-${product.id}`}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Duplicate</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive" 
+                          onClick={() => setProductToDelete(product)}
+                          data-testid={`delete-product-${product.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>

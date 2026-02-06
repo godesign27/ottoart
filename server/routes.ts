@@ -422,6 +422,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/products/:id/duplicate", async (req, res) => {
+    try {
+      const original = await storage.getProduct(req.params.id);
+      if (!original) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      const { id, createdAt, updatedAt, sku, ...rest } = original;
+      const duplicateData = {
+        ...rest,
+        name: `${original.name} (Copy)`,
+        price: original.price ?? "0",
+        status: "draft",
+        sku: sku ? `${sku}-copy-${Date.now()}` : null,
+      };
+      const newProduct = await storage.createProduct(duplicateData as any);
+      res.status(201).json(newProduct);
+    } catch (error) {
+      console.error("Duplicate product error:", error);
+      res.status(500).json({ message: "Failed to duplicate product" });
+    }
+  });
+
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
