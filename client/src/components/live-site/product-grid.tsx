@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import type { Product } from "@shared/schema";
 
-// Helper function to format pricing display
 function formatProductPricing(product: Product): string {
   if (!product.pricingTiers || product.pricingTiers.length === 0) {
     return `$${parseFloat(product.price).toFixed(2)}`;
@@ -25,25 +24,46 @@ function formatProductPricing(product: Product): string {
     priceParts.push(`$${printTier.price} Print`);
   }
 
-  // If we have both original and print tiers
   if (priceParts.length > 1) {
     return priceParts.join(' / ');
   }
 
-  // If we only have one tier or no recognized tiers, fall back to main price
   return priceParts.length > 0 ? priceParts[0] : `$${parseFloat(product.price).toFixed(2)}`;
 }
+
+export type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "name-az" | "name-za";
 
 interface ProductGridProps {
   category?: string;
   searchQuery?: string;
   viewMode?: "grid" | "list";
   filterByPrintTiers?: boolean;
-  products?: Product[]; // Optional products prop to display custom product list
+  products?: Product[];
+  sortBy?: SortOption;
 }
 
-export function ProductGrid({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false, products: customProducts }: ProductGridProps) {
-  // Convert category name to slug for API call
+function sortProducts(products: Product[], sortBy: SortOption): Product[] {
+  return [...products].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      case "oldest":
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      case "price-low":
+        return parseFloat(a.price) - parseFloat(b.price);
+      case "price-high":
+        return parseFloat(b.price) - parseFloat(a.price);
+      case "name-az":
+        return a.name.localeCompare(b.name);
+      case "name-za":
+        return b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
+}
+
+export function ProductGrid({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false, products: customProducts, sortBy = "newest" }: ProductGridProps) {
   const categorySlug = category ? category.toLowerCase().replace(/\s+/g, '-') : undefined;
   
   const { data: fetchedProducts, isLoading } = useQuery<Product[]>({
@@ -60,7 +80,6 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
     select: (data) => {
       let filtered = data || [];
       
-      // Filter by search query
       if (searchQuery) {
         filtered = filtered.filter(product =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,21 +87,19 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
         );
       }
       
-      // Filter by print tiers if requested
       if (filterByPrintTiers) {
         filtered = filtered.filter(product => 
           product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print')
         );
       }
       
-      // Only show active products
       return filtered.filter(product => product.status === 'active');
     },
-    enabled: !customProducts // Only fetch if custom products are not provided
+    enabled: !customProducts
   });
 
-  // Use custom products if provided, otherwise use fetched products
-  const products = customProducts || fetchedProducts;
+  const rawProducts = customProducts || fetchedProducts;
+  const products = rawProducts ? sortProducts(rawProducts, sortBy) : [];
 
   if (isLoading && !customProducts) {
     return (
@@ -145,11 +162,8 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                       </div>
                       <div className="flex items-center gap-2">
                         {(() => {
-                          // Check if original is sold out (case-insensitive and safer fallback)
                           const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
                           const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
-                          
-                          // Check if prints are available (case-insensitive)
                           const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
                           
                           return (
@@ -204,11 +218,8 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                 <p className="text-sm font-medium text-foreground">{formatProductPricing(product)}</p>
                 <div className="flex gap-2 justify-start">
                   {(() => {
-                    // Check if original is sold out (case-insensitive and safer fallback)
                     const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
                     const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
-                    
-                    // Check if prints are available (case-insensitive)
                     const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
                     
                     return (

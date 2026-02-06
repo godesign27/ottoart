@@ -587,7 +587,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.categoryId, categoryId));
+    return await db.select().from(products).where(eq(products.categoryId, categoryId)).orderBy(desc(products.createdAt));
   }
 
   // Categories
