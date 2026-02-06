@@ -59,6 +59,26 @@ export function ProductGrid() {
     },
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ productId, newStatus }: { productId: string; newStatus: string }) => {
+      return apiRequest('PUT', `/api/products/${productId}`, { status: newStatus });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Status updated",
+        description: "Product status has been changed.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const duplicateProductMutation = useMutation({
     mutationFn: async (productId: string) => {
       return apiRequest('POST', `/api/products/${productId}/duplicate`);
@@ -149,12 +169,23 @@ export function ProductGrid() {
                   <p className="text-sm text-muted-foreground">{product.categoryId}</p>
                   <p className="text-lg font-bold text-foreground mt-2">${product.price}</p>
                 </div>
-                <Badge 
-                  variant={product.status === 'active' ? 'default' : 'secondary'}
-                  className={product.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' : ''}
-                >
-                  {product.status}
-                </Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge 
+                        variant={product.status === 'active' ? 'default' : 'secondary'}
+                        className={`cursor-pointer transition-colors ${product.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40' : 'hover:bg-muted-foreground/20'}`}
+                        onClick={() => toggleStatusMutation.mutate({ 
+                          productId: product.id, 
+                          newStatus: product.status === 'active' ? 'draft' : 'active' 
+                        })}
+                      >
+                        {product.status}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>Click to {product.status === 'active' ? 'set as draft' : 'set as active'}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Stock: {product.stock}</span>
