@@ -428,13 +428,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!original) {
         return res.status(404).json({ message: "Product not found" });
       }
-      const { id, createdAt, updatedAt, sku, ...rest } = original;
+      const { id, createdAt, updatedAt, sku, slug, ...rest } = original;
+      const timestamp = Date.now();
       const duplicateData = {
         ...rest,
         name: `${original.name} (Copy)`,
         price: original.price ?? "0",
         status: "draft",
-        sku: sku ? `${sku}-copy-${Date.now()}` : null,
+        sku: sku ? `${sku}-copy-${timestamp}` : null,
+        slug: slug ? `${slug}-copy-${timestamp}` : null,
       };
       const newProduct = await storage.createProduct(duplicateData as any);
       res.status(201).json(newProduct);
