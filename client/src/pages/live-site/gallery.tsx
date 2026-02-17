@@ -95,15 +95,15 @@ export default function GalleryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {publishedGalleryItems.map((item) => (
                 <div key={item.id} className="group cursor-pointer">
-                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg bg-white">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-end">
-                      <div className="p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-end">
+                      <div className="p-4 text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/80 w-full">
                         <h3 className="font-semibold">{item.title}</h3>
                         {item.year && <p className="text-sm">{item.year}</p>}
                         {item.medium && <p className="text-xs mt-1">{item.medium}</p>}
