@@ -227,13 +227,11 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
       
       {/* Sidebar */}
       <div 
-        className={`admin-sidebar bg-card border-r border-border flex flex-col shadow-sm transition-all duration-200 ${
-          // Mobile styles
+        className={`admin-sidebar bg-card border-r border-border flex flex-col shadow-sm transition-all duration-200 fixed left-0 top-0 bottom-0 z-50 ${
           isMobileMenuOpen 
-            ? 'fixed left-0 top-0 bottom-0 w-64 z-50 md:relative md:translate-x-0' 
-            : 'fixed left-0 top-0 bottom-0 w-64 z-50 -translate-x-full md:relative md:translate-x-0'
+            ? 'w-64 translate-x-0' 
+            : 'w-64 -translate-x-full md:translate-x-0'
         } ${
-          // Desktop collapsed styles  
           isCollapsed ? 'md:w-16' : 'md:w-64'
         }`}
         id="mobile-sidebar"
