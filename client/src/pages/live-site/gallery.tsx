@@ -6,6 +6,7 @@ import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Palette, ArrowRight, Eye } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import type { GalleryItem } from "@shared/schema";
 
 export default function GalleryPage() {
@@ -97,7 +98,14 @@ export default function GalleryPage() {
                 <div key={item.id} className="group cursor-pointer">
                   <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg bg-white">
                     {item.isSold && (
-                      <div className="absolute top-3 right-3 z-10 w-4 h-4 bg-red-500 rounded-full shadow-md border-2 border-white" title="Sold" />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="absolute top-3 right-3 z-10 w-4 h-4 bg-red-500 rounded-full shadow-md border-2 border-white cursor-default" />
+                          </TooltipTrigger>
+                          <TooltipContent>Sold</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     <img
                       src={item.imageUrl}
