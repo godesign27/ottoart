@@ -278,6 +278,7 @@ export const galleryItems = pgTable("gallery_items", {
   medium: text("medium"),
   dimensions: text("dimensions"),
   isPublished: boolean("is_published").default(true),
+  isSold: boolean("is_sold").default(false),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

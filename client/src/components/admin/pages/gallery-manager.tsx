@@ -18,6 +18,7 @@ export function GalleryManager() {
   const [isEditing, setIsEditing] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [isSold, setIsSold] = useState(false);
 
   // Fetch page settings
   const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
@@ -70,6 +71,7 @@ export function GalleryManager() {
   const handleEdit = (item: GalleryItem) => {
     setSelectedItem(item);
     setImageUrl(item.imageUrl);
+    setIsSold(item.isSold ?? false);
     setIsEditing(true);
   };
 
@@ -108,6 +110,7 @@ export function GalleryManager() {
       medium: mediumElement?.value || undefined,
       dimensions: dimensionsElement?.value || undefined,
       isPublished: true,
+      isSold: isSold,
       sortOrder: 0
     };
 
@@ -123,6 +126,7 @@ export function GalleryManager() {
       setIsEditing(false);
       setSelectedItem(null);
       setImageUrl('');
+      setIsSold(false);
     } catch (error) {
       console.error('Failed to save gallery item:', error);
       alert('Failed to save gallery item. Please try again.');
@@ -252,6 +256,14 @@ export function GalleryManager() {
                 placeholder="Brief description of the artwork"
               />
             </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is-sold"
+                checked={isSold}
+                onCheckedChange={setIsSold}
+              />
+              <Label htmlFor="is-sold">Mark as Sold</Label>
+            </div>
             <div className="space-y-2">
               <Label>Image</Label>
               <ImageUploader
@@ -305,7 +317,10 @@ export function GalleryManager() {
                 alt={item.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute top-2 right-2">
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                {item.isSold && (
+                  <Badge variant="destructive">Sold</Badge>
+                )}
                 <Badge variant={item.isPublished ? "default" : "secondary"}>
                   {item.isPublished ? "Published" : "Draft"}
                 </Badge>

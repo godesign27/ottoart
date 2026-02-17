@@ -96,6 +96,9 @@ export default function GalleryPage() {
               {publishedGalleryItems.map((item) => (
                 <div key={item.id} className="group cursor-pointer">
                   <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg bg-white">
+                    {item.isSold && (
+                      <div className="absolute top-3 right-3 z-10 w-4 h-4 bg-red-500 rounded-full shadow-md border-2 border-white" title="Sold" />
+                    )}
                     <img
                       src={item.imageUrl}
                       alt={item.title}
