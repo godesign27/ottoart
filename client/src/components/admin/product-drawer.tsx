@@ -196,6 +196,28 @@ function ContentTab({ form }: { form: any }) {
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="showInGallery"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox 
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    data-testid="checkbox-show-in-gallery"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Show in Gallery</FormLabel>
+                  <FormDescription>
+                    Display this artwork in the gallery using the second image (framed version)
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
         </AccordionContent>
       </AccordionItem>
 
@@ -396,6 +418,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       status: editProduct.status || "active",
       stock: editProduct.stock || 0,
       isFeatured: editProduct.isFeatured || false,
+      showInGallery: editProduct.showInGallery || false,
       images: editProduct.images || [],
       tags: editProduct.tags || [],
       categoryId: editProduct.categoryId || undefined,
@@ -409,6 +432,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       status: "active",
       stock: 0,
       isFeatured: false,
+      showInGallery: false,
       images: [],
       tags: [],
       categoryId: undefined,
@@ -461,11 +485,11 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
         status: editProduct.status || "active",
         stock: editProduct.stock || 0,
         isFeatured: editProduct.isFeatured || false,
+        showInGallery: editProduct.showInGallery || false,
         images: editProduct.images || [],
         tags: editProduct.tags || [],
         categoryId: editProduct.categoryId || undefined,
         pricingTiers: editProduct.pricingTiers || [],
-        // Product detail fields
         year: editProduct.year || undefined,
         medium: editProduct.medium || "",
         dimensions: editProduct.dimensions || "",
@@ -485,11 +509,11 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
         status: "active",
         stock: 0,
         isFeatured: false,
+        showInGallery: false,
         images: [],
         tags: [],
         categoryId: undefined,
         pricingTiers: [],
-        // Product detail fields
         year: undefined,
         medium: "",
         dimensions: "",

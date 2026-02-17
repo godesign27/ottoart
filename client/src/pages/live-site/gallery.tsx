@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Palette, ArrowRight, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import type { GalleryItem } from "@shared/schema";
+import type { GalleryItem, Product } from "@shared/schema";
 
 export default function GalleryPage() {
   const [, setLocation] = useLocation();
@@ -20,16 +20,33 @@ export default function GalleryPage() {
     }
   };
 
-  // Fetch gallery items from the API
-  const { data: galleryItems = [], isLoading } = useQuery<GalleryItem[]>({
+  const { data: galleryItems = [], isLoading: isLoadingGallery } = useQuery<GalleryItem[]>({
     queryKey: ['/api/gallery'],
     queryFn: () => fetch('/api/gallery').then(res => res.json())
   });
 
-  // Show only published items and sort by order
+  const { data: galleryProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
+    queryKey: ['/api/products/gallery'],
+    queryFn: () => fetch('/api/products/gallery').then(res => res.json())
+  });
+
+  const isLoading = isLoadingGallery || isLoadingProducts;
+
   const publishedGalleryItems = galleryItems
     .filter(item => item.isPublished)
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+  const productGalleryItems = galleryProducts.map(product => ({
+    id: `product-${product.id}`,
+    productId: product.id,
+    title: product.name,
+    imageUrl: (product.images && product.images.length > 1) ? product.images[1] : (product.images?.[0] || ''),
+    year: product.year?.toString() || null,
+    medium: product.medium || null,
+    dimensions: product.dimensions || null,
+    isSold: false,
+    isProduct: true as const,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,7 +102,7 @@ export default function GalleryPage() {
             <div className="flex justify-center items-center py-12">
               <div className="text-lg text-muted-foreground">Loading gallery...</div>
             </div>
-          ) : publishedGalleryItems.length === 0 ? (
+          ) : (publishedGalleryItems.length === 0 && productGalleryItems.length === 0) ? (
             <div className="flex justify-center items-center py-12">
               <div className="text-center">
                 <h3 className="text-lg font-medium text-muted-foreground mb-2">No gallery items yet</h3>
@@ -123,6 +140,28 @@ export default function GalleryPage() {
                     </div>
                   </div>
                 </div>
+              ))}
+              {productGalleryItems.map((item) => (
+                <Link key={item.id} href={`/product/${item.productId}`}>
+                  <div className="group cursor-pointer">
+                    <div className="relative aspect-square rounded-lg overflow-hidden shadow-lg bg-white">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-contain p-2"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="mt-3">
+                      <h3 className="font-medium text-foreground">{item.title}</h3>
+                      <div className="space-y-1">
+                        {item.year && <p className="text-sm text-muted-foreground">{item.year}</p>}
+                        {item.medium && <p className="text-xs text-muted-foreground">{item.medium}</p>}
+                        {item.dimensions && <p className="text-xs text-muted-foreground">{item.dimensions}</p>}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           )}

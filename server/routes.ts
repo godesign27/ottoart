@@ -367,6 +367,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/products/gallery", async (req, res) => {
+    try {
+      const allProducts = await storage.getProducts();
+      const galleryProducts = allProducts.filter(p => p.showInGallery && p.status === 'active');
+      res.json(galleryProducts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch gallery products" });
+    }
+  });
+
   app.get("/api/products/:id", async (req, res) => {
     try {
       const product = await storage.getProduct(req.params.id);
