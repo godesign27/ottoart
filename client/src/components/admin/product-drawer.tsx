@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Upload, Image as ImageIcon, Plus, Trash2, Sparkles } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Plus, Trash2, Sparkles, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -601,7 +601,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                   </div>
 
                   {/* Tab Content - Scrollable Area */}
-                  <div className="flex-1 overflow-y-auto scroll-smooth">
+                  <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth">
                     <TabsContent value="content" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
                       <ContentTab form={form} />
                     </TabsContent>
@@ -988,8 +988,10 @@ function ImagesTab({
   onAddImage: () => void;
   onRemoveImage: (index: number) => void;
 }) {
-  const images = form.watch("images");
+  const images = form.watch("images") as string[];
   const { toast } = useToast();
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const analyzeArtworkMutation = useMutation({
     mutationFn: async (imageUrl: string) => {
@@ -1025,97 +1027,135 @@ function ImagesTab({
     analyzeArtworkMutation.mutate(images[0]);
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (dragIndex !== null && dragIndex !== targetIndex) {
+      const newImages = [...images];
+      const [removed] = newImages.splice(dragIndex, 1);
+      newImages.splice(targetIndex, 0, removed);
+      form.setValue('images', newImages);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
   return (
-    <>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Product Images</h3>
-          {images.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAnalyzeArtwork}
-              disabled={analyzeArtworkMutation.isPending}
-              data-testid="analyze-artwork-button"
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              {analyzeArtworkMutation.isPending ? "Analyzing..." : "AI Generate Title & Description"}
-            </Button>
-          )}
-        </div>
-        
-        {/* Real Image Upload */}
-        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-          <div className="text-center mb-4">
-            <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50 mb-2" />
-            <p className="text-muted-foreground">Upload product images</p>
-          </div>
-          <ImageUploader
-            onImageUploaded={(imageUrl) => {
-              const currentImages = form.getValues('images');
-              form.setValue('images', [...currentImages, imageUrl]);
-            }}
-            maxFiles={1}
-            maxFileSize={10 * 1024 * 1024} // 10MB
-            data-testid="image-uploader"
-          >
-            Select Image File
-          </ImageUploader>
-        </div>
-
-        {/* Image URL Input */}
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <div className="flex gap-2">
-            <Input
-              id="imageUrl"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/photo-..."
-              data-testid="input-image-url"
-            />
-            <Button 
-              type="button" 
-              onClick={onAddImage}
-              disabled={!imageUrl.trim()}
-              data-testid="add-image-button"
-            >
-              Add
-            </Button>
-          </div>
-        </div>
-
-        {/* Current Images */}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-lg font-medium">Product Images</h3>
         {images.length > 0 && (
-          <div className="space-y-2">
-            <Label>Current Images</Label>
-            <div className="grid grid-cols-2 gap-4">
-              {images.map((image: string, index: number) => (
-                <div key={index} className="relative group">
-                  <img 
-                    src={image} 
-                    alt={`Product image ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => onRemoveImage(index)}
-                    data-testid={`remove-image-${index}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAnalyzeArtwork}
+            disabled={analyzeArtworkMutation.isPending}
+            data-testid="analyze-artwork-button"
+            className="flex items-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            {analyzeArtworkMutation.isPending ? "Analyzing..." : "AI Generate Title & Description"}
+          </Button>
         )}
       </div>
-    </>
+      
+      <ImageUploader
+        onImageUploaded={(imageUrl) => {
+          const currentImages = form.getValues('images');
+          form.setValue('images', [...currentImages, imageUrl]);
+        }}
+        maxFileSize={10 * 1024 * 1024}
+        multiple={true}
+      >
+        Click or drag images here to upload
+      </ImageUploader>
+
+      <div className="space-y-2">
+        <Label htmlFor="imageUrl">Or add by URL</Label>
+        <div className="flex gap-2">
+          <Input
+            id="imageUrl"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://example.com/image.jpg"
+            data-testid="input-image-url"
+          />
+          <Button 
+            type="button" 
+            onClick={onAddImage}
+            disabled={!imageUrl.trim()}
+            data-testid="add-image-button"
+          >
+            Add
+          </Button>
+        </div>
+      </div>
+
+      {images.length > 0 && (
+        <div className="space-y-2">
+          <Label>Current Images (drag to reorder)</Label>
+          <div className="grid grid-cols-2 gap-3">
+            {images.map((image: string, index: number) => (
+              <div
+                key={`${image}-${index}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`relative group rounded-lg border-2 transition-all ${
+                  dragOverIndex === index ? 'border-primary scale-[1.02]' : 'border-transparent'
+                } ${dragIndex === index ? 'opacity-50' : ''}`}
+              >
+                <div className="absolute top-1 left-1 z-10 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                  {index + 1}
+                </div>
+                <div className="absolute top-1 left-1/2 -translate-x-1/2 z-10 cursor-grab active:cursor-grabbing">
+                  <GripVertical className="h-5 w-5 text-white drop-shadow-md" />
+                </div>
+                <img 
+                  src={image} 
+                  alt={`Product image ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg border"
+                  draggable={false}
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => onRemoveImage(index)}
+                  data-testid={`remove-image-${index}`}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
