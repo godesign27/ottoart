@@ -181,11 +181,11 @@ export default function ProductDetailPage() {
             {/* Product Images */}
             <div className="space-y-4">
               {/* Main Image */}
-              <div className={`relative aspect-[3/4] rounded-lg overflow-hidden shadow-lg group bg-neutral-100 dark:bg-neutral-800 ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
+              <div className={`relative rounded-lg overflow-hidden shadow-lg group bg-neutral-100 dark:bg-neutral-800 ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
                 <img 
                   src={product.images?.[selectedImageIndex] || "/placeholder.svg"} 
                   alt={product.name} 
-                  className="w-full h-full object-contain transition-transform group-hover:scale-105" 
+                  className="w-full h-auto block transition-transform group-hover:scale-105" 
                   onClick={() => product.images && product.images.length > 0 && setIsImageModalOpen(true)}
                   data-testid="product-main-image"
                 />
