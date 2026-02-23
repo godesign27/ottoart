@@ -398,6 +398,7 @@ export default function AdminBoardDetailPage() {
                     <div className="p-3">
                       <p className="text-sm font-medium text-foreground truncate">{item.product.name}</p>
                       {item.product.medium && <p className="text-xs text-muted-foreground">{item.product.medium}</p>}
+                      {item.product.dimensions && <p className="text-xs text-muted-foreground">{item.product.dimensions}</p>}
                     </div>
                     <Button
                       variant="destructive"
