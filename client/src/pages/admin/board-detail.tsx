@@ -110,10 +110,15 @@ export default function AdminBoardDetailPage() {
 
   const reorderMutation = useMutation({
     mutationFn: async (itemIds: string[]) => {
-      const res = await apiRequest('PATCH', `/api/boards/${boardId}/items/reorder`, { itemIds });
+      const res = await apiRequest('PUT', `/api/boards/${boardId}/items/reorder`, { itemIds });
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/boards', boardId, 'items'] });
+      toast({ title: "Board order updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to reorder", description: error.message, variant: "destructive" });
       queryClient.invalidateQueries({ queryKey: ['/api/boards', boardId, 'items'] });
     },
   });

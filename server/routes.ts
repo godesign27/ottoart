@@ -2322,11 +2322,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reorder board items
-  app.patch('/api/boards/:id/items/reorder', async (req, res) => {
+  app.put('/api/boards/:id/items/reorder', async (req, res) => {
     try {
       const { itemIds } = req.body;
-      if (!Array.isArray(itemIds)) {
-        return res.status(400).json({ message: "itemIds must be an array" });
+      if (!Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ message: "itemIds must be a non-empty array" });
       }
       for (let i = 0; i < itemIds.length; i++) {
         await storage.updateBoardItemOrder(itemIds[i], i);
