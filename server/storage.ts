@@ -226,6 +226,7 @@ export interface IStorage {
   getBoardItems(boardId: string): Promise<(BoardItem & { product: Product })[]>;
   addBoardItem(item: InsertBoardItem): Promise<BoardItem>;
   removeBoardItem(id: string): Promise<boolean>;
+  updateBoardItemOrder(id: string, sortOrder: number): Promise<boolean>;
 
   // Board Stars
   getBoardStars(boardId: string): Promise<(BoardStar & { product: Product })[]>;
@@ -1165,6 +1166,11 @@ export class DatabaseStorage implements IStorage {
 
   async removeBoardItem(id: string): Promise<boolean> {
     const result = await db.delete(boardItems).where(eq(boardItems.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateBoardItemOrder(id: string, sortOrder: number): Promise<boolean> {
+    const result = await db.update(boardItems).set({ sortOrder }).where(eq(boardItems.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 

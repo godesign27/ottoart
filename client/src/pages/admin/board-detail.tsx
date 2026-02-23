@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ChevronLeft, Plus, X, Copy, Star, ExternalLink, Search, Pencil, Check, LayoutGrid, Users } from "lucide-react";
+import { ChevronLeft, Plus, X, Copy, Star, ExternalLink, Search, Pencil, Check, LayoutGrid, Users, GripVertical } from "lucide-react";
 import type { Board, Product, BoardItem, BoardStar } from "@shared/schema";
 
 type BoardItemWithProduct = BoardItem & { product: Product };
@@ -35,6 +35,8 @@ export default function AdminBoardDetailPage() {
   const [editName, setEditName] = useState("");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editDescription, setEditDescription] = useState("");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { data: board, isLoading: boardLoading } = useQuery<Board>({
@@ -105,6 +107,24 @@ export default function AdminBoardDetailPage() {
       toast({ title: "Product removed from board" });
     },
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const res = await apiRequest('PATCH', `/api/boards/${boardId}/items/reorder`, { itemIds });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/boards', boardId, 'items'] });
+    },
+  });
+
+  const handleDrop = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const reordered = [...boardItems];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    reorderMutation.mutate(reordered.map(item => item.id));
+  };
 
   const handleNavigate = (href: string) => setLocation(href);
   const handleViewModeChange = (mode: 'admin' | 'live') => {
@@ -346,13 +366,33 @@ export default function AdminBoardDetailPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {boardItems.map((item) => (
-                  <div key={item.id} className="relative group rounded-lg overflow-hidden border bg-card">
+                {boardItems.map((item, index) => (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={() => setDragIndex(index)}
+                    onDragOver={(e) => { e.preventDefault(); setDropIndex(index); }}
+                    onDragLeave={() => setDropIndex(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragIndex !== null) handleDrop(dragIndex, index);
+                      setDragIndex(null);
+                      setDropIndex(null);
+                    }}
+                    onDragEnd={() => { setDragIndex(null); setDropIndex(null); }}
+                    className={`relative group rounded-lg overflow-hidden border bg-card cursor-grab active:cursor-grabbing transition-all ${
+                      dragIndex === index ? 'opacity-50 scale-95' : ''
+                    } ${dropIndex === index && dragIndex !== index ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                  >
+                    <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-black/60 text-white rounded px-1.5 py-0.5 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      <GripVertical className="h-3 w-3" />
+                      {index + 1}
+                    </div>
                     <div className="aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                       <img
                         src={item.product.images?.[0] || '/placeholder.svg'}
                         alt={item.product.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain pointer-events-none"
                       />
                     </div>
                     <div className="p-3">
@@ -363,7 +403,7 @@ export default function AdminBoardDetailPage() {
                       variant="destructive"
                       size="icon"
                       className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeItemMutation.mutate(item.id)}
+                      onClick={(e) => { e.stopPropagation(); removeItemMutation.mutate(item.id); }}
                     >
                       <X className="h-4 w-4" />
                     </Button>

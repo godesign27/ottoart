@@ -2321,6 +2321,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder board items
+  app.patch('/api/boards/:id/items/reorder', async (req, res) => {
+    try {
+      const { itemIds } = req.body;
+      if (!Array.isArray(itemIds)) {
+        return res.status(400).json({ message: "itemIds must be an array" });
+      }
+      for (let i = 0; i < itemIds.length; i++) {
+        await storage.updateBoardItemOrder(itemIds[i], i);
+      }
+      const items = await storage.getBoardItems(req.params.id);
+      res.json(items);
+    } catch (error) {
+      console.error("Error reordering board items:", error);
+      res.status(500).json({ message: "Failed to reorder board items" });
+    }
+  });
+
   // Remove item from board
   app.delete('/api/boards/:id/items/:itemId', async (req, res) => {
     try {
