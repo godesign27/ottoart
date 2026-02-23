@@ -142,11 +142,11 @@ export default function BoardViewPage() {
         {items.length === 0 ? (
           <p className="text-center text-gray-400 py-16">This board is empty.</p>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {items.map((item) => {
               const starred = isStarred(item.productId);
               return (
-                <div key={item.id} className="break-inside-avoid group">
+                <div key={item.id} className="group">
                   <div className="rounded-lg overflow-hidden bg-gray-50 relative">
                     <img
                       src={item.product.images?.[0] || '/placeholder.svg'}
