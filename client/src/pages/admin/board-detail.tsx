@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ChevronLeft, Plus, X, Copy, Star, ExternalLink, Search } from "lucide-react";
+import { ChevronLeft, Plus, X, Copy, Star, ExternalLink, Search, Pencil, Check } from "lucide-react";
 import type { Board, Product, BoardItem, BoardStar } from "@shared/schema";
 
 type BoardItemWithProduct = BoardItem & { product: Product };
@@ -31,6 +31,10 @@ export default function AdminBoardDetailPage() {
   });
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editDescription, setEditDescription] = useState("");
   const { toast } = useToast();
 
   const { data: board, isLoading: boardLoading } = useQuery<Board>({
@@ -114,7 +118,7 @@ export default function AdminBoardDetailPage() {
 
   const boardItemProductIds = new Set(boardItems.map(item => item.productId));
   const availableProducts = allProducts
-    .filter(p => p.status === 'active' && !boardItemProductIds.has(p.id))
+    .filter(p => !boardItemProductIds.has(p.id))
     .filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const shareUrl = board ? `${window.location.origin}/board/${board.slug}` : '';
@@ -191,9 +195,74 @@ export default function AdminBoardDetailPage() {
           </Button>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">{board.name}</h2>
-              {board.description && <p className="text-muted-foreground mt-1">{board.description}</p>}
+            <div className="flex-1">
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-2xl font-bold h-auto py-1"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        updateBoardMutation.mutate({ name: editName }, {
+                          onSuccess: () => { setIsEditingName(false); toast({ title: "Board name updated" }); }
+                        });
+                      }
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    updateBoardMutation.mutate({ name: editName }, {
+                      onSuccess: () => { setIsEditingName(false); toast({ title: "Board name updated" }); }
+                    });
+                  }}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <h2
+                  className="text-2xl font-bold text-foreground group/name inline-flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => { setEditName(board.name); setIsEditingName(true); }}
+                >
+                  {board.name}
+                  <Pencil className="h-4 w-4 opacity-0 group-hover/name:opacity-100 transition-opacity text-muted-foreground" />
+                </h2>
+              )}
+              {isEditingDescription ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="text-sm h-auto py-1"
+                    placeholder="Board description..."
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        updateBoardMutation.mutate({ description: editDescription }, {
+                          onSuccess: () => { setIsEditingDescription(false); toast({ title: "Description updated" }); }
+                        });
+                      }
+                      if (e.key === 'Escape') setIsEditingDescription(false);
+                    }}
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    updateBoardMutation.mutate({ description: editDescription }, {
+                      onSuccess: () => { setIsEditingDescription(false); toast({ title: "Description updated" }); }
+                    });
+                  }}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <p
+                  className="text-muted-foreground mt-1 cursor-pointer hover:text-foreground transition-colors group/desc inline-flex items-center gap-2"
+                  onClick={() => { setEditDescription(board.description || ''); setIsEditingDescription(true); }}
+                >
+                  {board.description || 'Click to add description'}
+                  <Pencil className="h-3 w-3 opacity-0 group-hover/desc:opacity-100 transition-opacity" />
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">Draft</span>
