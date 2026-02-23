@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ChevronLeft, Plus, X, Copy, Star, ExternalLink, Search, Pencil, Check } from "lucide-react";
+import { ChevronLeft, Plus, X, Copy, Star, ExternalLink, Search, Pencil, Check, LayoutGrid, Users } from "lucide-react";
 import type { Board, Product, BoardItem, BoardStar } from "@shared/schema";
 
 type BoardItemWithProduct = BoardItem & { product: Product };
@@ -193,6 +193,37 @@ export default function AdminBoardDetailPage() {
           <Button variant="ghost" onClick={() => setLocation('/admin/boards')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground -ml-2">
             <ChevronLeft className="h-4 w-4" /> Back to Boards
           </Button>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <LayoutGrid className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                <div className="text-2xl font-bold text-foreground">{boardItems.length}</div>
+                <div className="text-sm text-muted-foreground">Total Items</div>
+              </CardContent>
+            </Card>
+            <Card className={boardStars.length > 0 ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800' : ''}>
+              <CardContent className="p-4 text-center">
+                <Star className={`h-6 w-6 mx-auto mb-2 ${boardStars.length > 0 ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} />
+                <div className="text-2xl font-bold text-foreground">{boardStars.length}</div>
+                <div className="text-sm text-muted-foreground">Starred</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Users className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                <div className="text-2xl font-bold text-foreground">{Object.keys(starsByCurator).length}</div>
+                <div className="text-sm text-muted-foreground">Curators</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className={`h-6 w-6 mx-auto mb-2 rounded-full ${board.status === 'active' ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div className="text-2xl font-bold text-foreground capitalize">{board.status}</div>
+                <div className="text-sm text-muted-foreground">Status</div>
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex-1">

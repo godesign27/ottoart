@@ -22,6 +22,13 @@ export default function BoardViewPage() {
   const [email, setEmail] = useState(() => localStorage.getItem('curator_email') || '');
   const [selectedImage, setSelectedImage] = useState<{ src: string; name: string } | null>(null);
 
+  const { data: siteSettings } = useQuery<any[]>({
+    queryKey: ['/api/site-settings'],
+  });
+
+  const artistName = siteSettings?.find((s: any) => s.key === 'artist_artistName')?.value || 'Otto Art';
+  const artistPhoto = siteSettings?.find((s: any) => s.key === 'artist_profileImage')?.value || '';
+
   const { data, isLoading, error } = useQuery<{ board: Board; items: BoardItemWithProduct[] }>({
     queryKey: ['/api/boards/public', slug],
     queryFn: async () => {
@@ -113,6 +120,12 @@ export default function BoardViewPage() {
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            {artistPhoto && (
+              <img src={artistPhoto} alt={artistName} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
+            )}
+            <span className="text-sm font-medium text-gray-500 tracking-wide uppercase">{artistName}</span>
+          </div>
           <h1 className="text-3xl md:text-4xl font-light tracking-tight text-gray-900">{board.name}</h1>
           {board.description && (
             <p className="mt-3 text-lg text-gray-500 max-w-2xl mx-auto">{board.description}</p>
