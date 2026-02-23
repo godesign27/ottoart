@@ -28,7 +28,8 @@ import {
   Calendar,
   FileTextIcon,
   Mail,
-  Layers
+  Layers,
+  ClipboardList
 } from "lucide-react";
 
 const navItems = [
@@ -79,6 +80,12 @@ const navItems = [
     icon: Mail,
     href: "/admin/mail-club",
     view: "mail-club"
+  },
+  {
+    title: "Boards",
+    icon: ClipboardList,
+    href: "/admin/boards",
+    view: "boards"
   },
   {
     title: "Categories & Tags",

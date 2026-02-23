@@ -40,6 +40,12 @@ import {
   type InsertCartItem,
   type CommissionRequest,
   type InsertCommissionRequest,
+  type Board,
+  type InsertBoard,
+  type BoardItem,
+  type InsertBoardItem,
+  type BoardStar,
+  type InsertBoardStar,
   users,
   subscriptionPlans,
   userSubscriptions,
@@ -59,7 +65,10 @@ import {
   events,
   cartItems,
   favorites,
-  commissionRequests
+  commissionRequests,
+  boards,
+  boardItems,
+  boardStars
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -204,6 +213,24 @@ export interface IStorage {
   updateCommissionRequest(id: string, request: Partial<InsertCommissionRequest>): Promise<CommissionRequest | undefined>;
   markCommissionAsRead(id: string): Promise<boolean>;
   deleteCommissionRequest(id: string): Promise<boolean>;
+
+  // Boards
+  getBoards(): Promise<Board[]>;
+  getBoard(id: string): Promise<Board | undefined>;
+  getBoardBySlug(slug: string): Promise<Board | undefined>;
+  createBoard(board: InsertBoard): Promise<Board>;
+  updateBoard(id: string, board: Partial<InsertBoard>): Promise<Board | undefined>;
+  deleteBoard(id: string): Promise<boolean>;
+
+  // Board Items
+  getBoardItems(boardId: string): Promise<(BoardItem & { product: Product })[]>;
+  addBoardItem(item: InsertBoardItem): Promise<BoardItem>;
+  removeBoardItem(id: string): Promise<boolean>;
+
+  // Board Stars
+  getBoardStars(boardId: string): Promise<(BoardStar & { product: Product })[]>;
+  addBoardStar(star: InsertBoardStar): Promise<BoardStar>;
+  removeBoardStar(boardId: string, productId: string, curatorEmail: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1082,6 +1109,87 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCommissionRequest(id: string): Promise<boolean> {
     const result = await db.delete(commissionRequests).where(eq(commissionRequests.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Boards
+  async getBoards(): Promise<Board[]> {
+    return await db.select().from(boards).orderBy(desc(boards.createdAt));
+  }
+
+  async getBoard(id: string): Promise<Board | undefined> {
+    const [board] = await db.select().from(boards).where(eq(boards.id, id));
+    return board || undefined;
+  }
+
+  async getBoardBySlug(slug: string): Promise<Board | undefined> {
+    const [board] = await db.select().from(boards).where(eq(boards.slug, slug));
+    return board || undefined;
+  }
+
+  async createBoard(insertBoard: InsertBoard): Promise<Board> {
+    const [board] = await db.insert(boards).values(insertBoard).returning();
+    return board;
+  }
+
+  async updateBoard(id: string, updateData: Partial<InsertBoard>): Promise<Board | undefined> {
+    const [board] = await db.update(boards)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(boards.id, id))
+      .returning();
+    return board || undefined;
+  }
+
+  async deleteBoard(id: string): Promise<boolean> {
+    const result = await db.delete(boards).where(eq(boards.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Board Items
+  async getBoardItems(boardId: string): Promise<(BoardItem & { product: Product })[]> {
+    const items = await db.select().from(boardItems).where(eq(boardItems.boardId, boardId)).orderBy(boardItems.sortOrder);
+    const result: (BoardItem & { product: Product })[] = [];
+    for (const item of items) {
+      const [product] = await db.select().from(products).where(eq(products.id, item.productId));
+      if (product) {
+        result.push({ ...item, product });
+      }
+    }
+    return result;
+  }
+
+  async addBoardItem(item: InsertBoardItem): Promise<BoardItem> {
+    const [boardItem] = await db.insert(boardItems).values(item).returning();
+    return boardItem;
+  }
+
+  async removeBoardItem(id: string): Promise<boolean> {
+    const result = await db.delete(boardItems).where(eq(boardItems.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Board Stars
+  async getBoardStars(boardId: string): Promise<(BoardStar & { product: Product })[]> {
+    const stars = await db.select().from(boardStars).where(eq(boardStars.boardId, boardId)).orderBy(desc(boardStars.createdAt));
+    const result: (BoardStar & { product: Product })[] = [];
+    for (const star of stars) {
+      const [product] = await db.select().from(products).where(eq(products.id, star.productId));
+      if (product) {
+        result.push({ ...star, product });
+      }
+    }
+    return result;
+  }
+
+  async addBoardStar(star: InsertBoardStar): Promise<BoardStar> {
+    const [boardStar] = await db.insert(boardStars).values(star).returning();
+    return boardStar;
+  }
+
+  async removeBoardStar(boardId: string, productId: string, curatorEmail: string): Promise<boolean> {
+    const result = await db.delete(boardStars).where(
+      and(eq(boardStars.boardId, boardId), eq(boardStars.productId, productId), eq(boardStars.curatorEmail, curatorEmail))
+    );
     return (result.rowCount ?? 0) > 0;
   }
 }

@@ -320,6 +320,38 @@ export const commissionRequests = pgTable("commission_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Boards for curator collaboration
+export const boards = pgTable("boards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  slug: text("slug").notNull().unique(),
+  status: text("status").default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const boardItems = pgTable("board_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  boardId: varchar("board_id").notNull().references(() => boards.id, { onDelete: "cascade" }),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_board_items_board_id").on(table.boardId),
+]);
+
+export const boardStars = pgTable("board_stars", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  boardId: varchar("board_id").notNull().references(() => boards.id, { onDelete: "cascade" }),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  curatorName: text("curator_name").notNull(),
+  curatorEmail: text("curator_email").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_board_stars_board_id").on(table.boardId),
+]);
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -430,6 +462,22 @@ export const insertCommissionRequestSchema = createInsertSchema(commissionReques
   createdAt: true,
 });
 
+export const insertBoardSchema = createInsertSchema(boards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBoardItemSchema = createInsertSchema(boardItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBoardStarSchema = createInsertSchema(boardStars).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -491,3 +539,12 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 
 export type CommissionRequest = typeof commissionRequests.$inferSelect;
 export type InsertCommissionRequest = z.infer<typeof insertCommissionRequestSchema>;
+
+export type Board = typeof boards.$inferSelect;
+export type InsertBoard = z.infer<typeof insertBoardSchema>;
+
+export type BoardItem = typeof boardItems.$inferSelect;
+export type InsertBoardItem = z.infer<typeof insertBoardItemSchema>;
+
+export type BoardStar = typeof boardStars.$inferSelect;
+export type InsertBoardStar = z.infer<typeof insertBoardStarSchema>;

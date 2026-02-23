@@ -43,7 +43,11 @@ The application uses **PostgreSQL** as the primary database with the following k
 - **Messages**: Customer contact form submissions
 - **Site Settings**: Configurable site-wide settings
 
-The database schema supports features like product variants, image galleries, inventory tracking, and order management.
+The database schema supports features like product variants, image galleries, inventory tracking, order management, and curator boards.
+
+- **Boards**: Curated collections of artworks that can be shared with art curators for review
+- **Board Items**: Products assigned to specific boards
+- **Board Stars**: Curator selections/favorites on shared boards
 
 ### Authentication and Authorization
 - Session-based authentication using Express sessions

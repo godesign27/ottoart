@@ -8,7 +8,7 @@ import { storage } from "./storage";
 
 // Initialize Resend for email notifications
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema, insertBoardSchema, insertBoardStarSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -2169,6 +2169,178 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error analyzing artwork:", error);
       res.status(500).json({ message: "Failed to analyze artwork" });
+    }
+  });
+
+  // ==================== BOARDS ====================
+
+  // Get all boards (admin)
+  app.get('/api/boards', async (req, res) => {
+    try {
+      const allBoards = await storage.getBoards();
+      const boardsWithCounts = await Promise.all(allBoards.map(async (board) => {
+        const items = await storage.getBoardItems(board.id);
+        const stars = await storage.getBoardStars(board.id);
+        return { ...board, itemCount: items.length, starCount: stars.length };
+      }));
+      res.json(boardsWithCounts);
+    } catch (error) {
+      console.error("Error fetching boards:", error);
+      res.status(500).json({ message: "Failed to fetch boards" });
+    }
+  });
+
+  // Create board
+  app.post('/api/boards', async (req, res) => {
+    try {
+      const parsed = insertBoardSchema.parse(req.body);
+      const board = await storage.createBoard(parsed);
+      res.status(201).json(board);
+    } catch (error) {
+      console.error("Error creating board:", error);
+      res.status(500).json({ message: "Failed to create board" });
+    }
+  });
+
+  // Public board routes (must come before /api/boards/:id to avoid param matching)
+  app.get('/api/boards/public/:slug', async (req, res) => {
+    try {
+      const board = await storage.getBoardBySlug(req.params.slug);
+      if (!board || board.status !== 'active') {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      const items = await storage.getBoardItems(board.id);
+      res.json({ board, items });
+    } catch (error) {
+      console.error("Error fetching public board:", error);
+      res.status(500).json({ message: "Failed to fetch board" });
+    }
+  });
+
+  app.post('/api/boards/public/:slug/star', async (req, res) => {
+    try {
+      const board = await storage.getBoardBySlug(req.params.slug);
+      if (!board || board.status !== 'active') {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      const { productId, curatorName, curatorEmail, action } = req.body;
+      if (!productId || !curatorName || !curatorEmail) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      if (action === 'unstar') {
+        await storage.removeBoardStar(board.id, productId, curatorEmail);
+        res.json({ success: true, action: 'unstarred' });
+      } else {
+        const star = await storage.addBoardStar({
+          boardId: board.id,
+          productId,
+          curatorName,
+          curatorEmail,
+        });
+        res.json({ success: true, action: 'starred', star });
+      }
+    } catch (error) {
+      console.error("Error starring board item:", error);
+      res.status(500).json({ message: "Failed to star item" });
+    }
+  });
+
+  app.get('/api/boards/public/:slug/stars', async (req, res) => {
+    try {
+      const board = await storage.getBoardBySlug(req.params.slug);
+      if (!board || board.status !== 'active') {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      const stars = await storage.getBoardStars(board.id);
+      res.json(stars);
+    } catch (error) {
+      console.error("Error fetching board stars:", error);
+      res.status(500).json({ message: "Failed to fetch board stars" });
+    }
+  });
+
+  // Get single board (admin)
+  app.get('/api/boards/:id', async (req, res) => {
+    try {
+      const board = await storage.getBoard(req.params.id);
+      if (!board) return res.status(404).json({ message: "Board not found" });
+      res.json(board);
+    } catch (error) {
+      console.error("Error fetching board:", error);
+      res.status(500).json({ message: "Failed to fetch board" });
+    }
+  });
+
+  // Update board
+  app.patch('/api/boards/:id', async (req, res) => {
+    try {
+      const board = await storage.updateBoard(req.params.id, req.body);
+      if (!board) return res.status(404).json({ message: "Board not found" });
+      res.json(board);
+    } catch (error) {
+      console.error("Error updating board:", error);
+      res.status(500).json({ message: "Failed to update board" });
+    }
+  });
+
+  // Delete board
+  app.delete('/api/boards/:id', async (req, res) => {
+    try {
+      const deleted = await storage.deleteBoard(req.params.id);
+      if (!deleted) return res.status(404).json({ message: "Board not found" });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting board:", error);
+      res.status(500).json({ message: "Failed to delete board" });
+    }
+  });
+
+  // Get board items
+  app.get('/api/boards/:id/items', async (req, res) => {
+    try {
+      const items = await storage.getBoardItems(req.params.id);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching board items:", error);
+      res.status(500).json({ message: "Failed to fetch board items" });
+    }
+  });
+
+  // Add item to board
+  app.post('/api/boards/:id/items', async (req, res) => {
+    try {
+      const item = await storage.addBoardItem({
+        boardId: req.params.id,
+        productId: req.body.productId,
+        sortOrder: req.body.sortOrder || 0,
+      });
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error adding board item:", error);
+      res.status(500).json({ message: "Failed to add board item" });
+    }
+  });
+
+  // Remove item from board
+  app.delete('/api/boards/:id/items/:itemId', async (req, res) => {
+    try {
+      const deleted = await storage.removeBoardItem(req.params.itemId);
+      if (!deleted) return res.status(404).json({ message: "Board item not found" });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing board item:", error);
+      res.status(500).json({ message: "Failed to remove board item" });
+    }
+  });
+
+  // Get board stars (admin)
+  app.get('/api/boards/:id/stars', async (req, res) => {
+    try {
+      const stars = await storage.getBoardStars(req.params.id);
+      res.json(stars);
+    } catch (error) {
+      console.error("Error fetching board stars:", error);
+      res.status(500).json({ message: "Failed to fetch board stars" });
     }
   });
 

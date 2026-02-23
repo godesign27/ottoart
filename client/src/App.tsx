@@ -47,6 +47,9 @@ import ProfilePage from "@/pages/profile";
 import { ArtWallPage } from "@/pages/live-site/art-wall";
 import CorporateBuyersPage from "@/pages/live-site/corporate-buyers";
 import CommissionPage from "@/pages/live-site/commission";
+import AdminBoardsPage from "@/pages/admin/boards";
+import AdminBoardDetailPage from "@/pages/admin/board-detail";
+import BoardViewPage from "@/pages/live-site/board-view";
 
 function Router() {
   return (
@@ -64,6 +67,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/corporate-buyers" component={CorporateBuyersPage} />
       <Route path="/commission" component={CommissionPage} />
+      <Route path="/board/:slug" component={BoardViewPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/favorites" component={FavoritesPage} />
       <Route path="/orders" component={OrdersPage} />
@@ -85,6 +89,8 @@ function Router() {
       <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/gallery" component={AdminGallery} />
       <Route path="/admin/events" component={AdminEvents} />
+      <Route path="/admin/boards" component={AdminBoardsPage} />
+      <Route path="/admin/boards/:id" component={AdminBoardDetailPage} />
       <Route path="/admin/commissions" component={AdminCommissions} />
       <Route path="/admin/cv" component={AdminCV} />
       <Route path="/admin/contact" component={AdminContact} />
