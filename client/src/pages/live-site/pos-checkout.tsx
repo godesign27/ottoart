@@ -29,10 +29,14 @@ type QrCodeWithShow = ArtShowQrCode & { show: ArtShow };
 function StripePaymentForm({
   clientSecret,
   amount,
+  customerData,
+  codeInfo,
   onSuccess,
 }: {
   clientSecret: string;
   amount: number;
+  customerData: CustomerFormData;
+  codeInfo: QrCodeWithShow;
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -57,6 +61,21 @@ function StripePaymentForm({
       if (error) {
         toast({ title: error.message || "Payment failed", variant: "destructive" });
       } else if (paymentIntent?.status === "succeeded") {
+        // Send receipt email server-side
+        try {
+          await apiRequest('POST', '/api/pos/send-receipt', {
+            paymentIntentId: paymentIntent.id,
+            customerName: customerData.customerName,
+            customerEmail: customerData.customerEmail,
+            label: codeInfo.label,
+            price: codeInfo.price,
+            showName: codeInfo.show.name,
+            artistName: codeInfo.show.artistName,
+          });
+        } catch (receiptError) {
+          // Receipt failure shouldn't block showing success
+          console.error('Receipt email failed:', receiptError);
+        }
         onSuccess();
       }
     } finally {
@@ -145,11 +164,12 @@ export default function PosCheckoutPage() {
             </p>
             {customerData?.customerEmail && (
               <p className="text-sm text-muted-foreground mt-2">
-                A receipt will be sent to <span className="font-medium">{customerData.customerEmail}</span>.
+                A receipt has been sent to <span className="font-medium">{customerData.customerEmail}</span>.
               </p>
             )}
             <p className="text-sm text-muted-foreground mt-4">
               Artwork from <span className="font-medium">{codeInfo.show.name}</span>
+              {codeInfo.show.artistName && <> by <span className="font-medium">{codeInfo.show.artistName}</span></>}
             </p>
           </CardContent>
         </Card>
@@ -206,7 +226,7 @@ export default function PosCheckoutPage() {
           </Card>
         )}
 
-        {step === "payment" && clientSecret && stripePromise && (
+        {step === "payment" && clientSecret && customerData && stripePromise && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Payment</CardTitle>
@@ -216,6 +236,8 @@ export default function PosCheckoutPage() {
                 <StripePaymentForm
                   clientSecret={clientSecret}
                   amount={price}
+                  customerData={customerData}
+                  codeInfo={codeInfo}
                   onSuccess={() => setStep("success")}
                 />
               </Elements>

@@ -2474,6 +2474,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Send receipt email after successful POS payment
+  app.post('/api/pos/send-receipt', async (req, res) => {
+    try {
+      const { paymentIntentId, customerName, customerEmail, label, price, showName, artistName } = req.body;
+
+      if (!customerEmail || !paymentIntentId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Verify the payment intent succeeded before sending receipt
+      if (!stripe) {
+        return res.status(503).json({ message: "Payment processing not configured" });
+      }
+
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      } catch (e) {
+        return res.status(400).json({ message: "Invalid payment intent" });
+      }
+
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: "Payment has not succeeded" });
+      }
+
+      const amountFormatted = `$${(paymentIntent.amount / 100).toFixed(2)}`;
+      const artistLine = artistName ? `<p style="margin:0;color:#6b7280;font-size:14px;">${artistName}</p>` : '';
+
+      if (resend) {
+        // Receipt to customer
+        try {
+          await resend.emails.send({
+            from: 'Otto Art <hello@ottoart.app>',
+            to: customerEmail,
+            subject: `Your purchase receipt — ${amountFormatted}`,
+            html: `
+              <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#111827;">
+                <h2 style="margin:0 0 4px;">Thank you, ${customerName}!</h2>
+                <p style="margin:0 0 24px;color:#6b7280;">Your payment was successful.</p>
+
+                <div style="background:#f9fafb;border-radius:8px;padding:20px 24px;margin-bottom:24px;">
+                  <p style="margin:0 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;">${showName || 'Art Show'}</p>
+                  ${artistLine}
+                  <p style="margin:8px 0 4px;font-weight:600;font-size:16px;">${label}</p>
+                  <p style="margin:0;font-size:28px;font-weight:700;">${amountFormatted}</p>
+                </div>
+
+                <p style="color:#6b7280;font-size:14px;">If you have any questions about your purchase, please reply to this email.</p>
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+                <p style="color:#9ca3af;font-size:12px;margin:0;">Otto Art · Payment processed securely by Stripe</p>
+              </div>
+            `,
+          });
+        } catch (emailError) {
+          console.error('Failed to send POS receipt to customer:', emailError);
+        }
+
+        // Notification to artist
+        const notifyEmail = process.env.NOTIFY_EMAIL || 'ottoart27@gmail.com';
+        try {
+          await resend.emails.send({
+            from: 'Otto Art <hello@ottoart.app>',
+            to: notifyEmail,
+            subject: `Art Show Sale — ${amountFormatted} from ${customerName}`,
+            html: `
+              <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+                <h2>New Art Show Sale!</h2>
+                <p><strong>Amount:</strong> ${amountFormatted}</p>
+                <p><strong>Customer:</strong> ${customerName}</p>
+                <p><strong>Email:</strong> ${customerEmail}</p>
+                <p><strong>Item:</strong> ${label}</p>
+                <p><strong>Show:</strong> ${showName || 'N/A'}</p>
+                <p><strong>Payment ID:</strong> ${paymentIntentId}</p>
+              </div>
+            `,
+          });
+        } catch (emailError) {
+          console.error('Failed to send POS sale notification to artist:', emailError);
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('POS receipt error:', error);
+      res.status(500).json({ message: "Failed to send receipt" });
+    }
+  });
+
   // Public: Create payment intent for POS checkout
   app.post('/api/pos/:codeId/payment-intent', async (req, res) => {
     try {
