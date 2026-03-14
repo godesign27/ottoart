@@ -50,6 +50,9 @@ import CommissionPage from "@/pages/live-site/commission";
 import AdminBoardsPage from "@/pages/admin/boards";
 import AdminBoardDetailPage from "@/pages/admin/board-detail";
 import BoardViewPage from "@/pages/live-site/board-view";
+import AdminArtShowsPage from "@/pages/admin/art-shows";
+import AdminArtShowDetailPage from "@/pages/admin/art-show-detail";
+import PosCheckoutPage from "@/pages/live-site/pos-checkout";
 
 function Router() {
   return (
@@ -91,6 +94,9 @@ function Router() {
       <Route path="/admin/events" component={AdminEvents} />
       <Route path="/admin/boards" component={AdminBoardsPage} />
       <Route path="/admin/boards/:id" component={AdminBoardDetailPage} />
+      <Route path="/admin/art-shows" component={AdminArtShowsPage} />
+      <Route path="/admin/art-shows/:id" component={AdminArtShowDetailPage} />
+      <Route path="/pos/:id" component={PosCheckoutPage} />
       <Route path="/admin/commissions" component={AdminCommissions} />
       <Route path="/admin/cv" component={AdminCV} />
       <Route path="/admin/contact" component={AdminContact} />

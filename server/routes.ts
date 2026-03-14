@@ -8,7 +8,7 @@ import { storage } from "./storage";
 
 // Initialize Resend for email notifications
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema, insertBoardSchema, insertBoardStarSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema, insertBoardSchema, insertBoardStarSchema, insertArtShowSchema, insertArtShowQrCodeSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -2359,6 +2359,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching board stars:", error);
       res.status(500).json({ message: "Failed to fetch board stars" });
+    }
+  });
+
+  // ===================== ART SHOWS (POS) =====================
+
+  // Get all art shows (admin)
+  app.get('/api/art-shows', async (req, res) => {
+    try {
+      const shows = await storage.getArtShows();
+      res.json(shows);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch art shows" });
+    }
+  });
+
+  // Create art show (admin)
+  app.post('/api/art-shows', async (req, res) => {
+    try {
+      const data = insertArtShowSchema.parse(req.body);
+      const show = await storage.createArtShow(data);
+      res.status(201).json(show);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid art show data" });
+    }
+  });
+
+  // Get single art show (admin)
+  app.get('/api/art-shows/:id', async (req, res) => {
+    try {
+      const show = await storage.getArtShow(req.params.id);
+      if (!show) return res.status(404).json({ message: "Art show not found" });
+      res.json(show);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch art show" });
+    }
+  });
+
+  // Update art show (admin)
+  app.patch('/api/art-shows/:id', async (req, res) => {
+    try {
+      const show = await storage.updateArtShow(req.params.id, req.body);
+      if (!show) return res.status(404).json({ message: "Art show not found" });
+      res.json(show);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update art show" });
+    }
+  });
+
+  // Delete art show (admin)
+  app.delete('/api/art-shows/:id', async (req, res) => {
+    try {
+      const deleted = await storage.deleteArtShow(req.params.id);
+      if (!deleted) return res.status(404).json({ message: "Art show not found" });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete art show" });
+    }
+  });
+
+  // Get QR codes for a show (admin)
+  app.get('/api/art-shows/:id/qr-codes', async (req, res) => {
+    try {
+      const codes = await storage.getArtShowQrCodes(req.params.id);
+      res.json(codes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch QR codes" });
+    }
+  });
+
+  // Create QR code for a show (admin)
+  app.post('/api/art-shows/:id/qr-codes', async (req, res) => {
+    try {
+      const data = insertArtShowQrCodeSchema.parse({ ...req.body, showId: req.params.id });
+      const code = await storage.createArtShowQrCode(data);
+      res.status(201).json(code);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid QR code data" });
+    }
+  });
+
+  // Delete QR code (admin)
+  app.delete('/api/art-shows/qr-codes/:codeId', async (req, res) => {
+    try {
+      const deleted = await storage.deleteArtShowQrCode(req.params.codeId);
+      if (!deleted) return res.status(404).json({ message: "QR code not found" });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete QR code" });
+    }
+  });
+
+  // Public: Get QR code info (for checkout page when customer scans)
+  app.get('/api/pos/:codeId', async (req, res) => {
+    try {
+      const code = await storage.getArtShowQrCode(req.params.codeId);
+      if (!code) return res.status(404).json({ message: "QR code not found" });
+      const show = await storage.getArtShow(code.showId);
+      if (!show || show.status !== 'active') return res.status(404).json({ message: "Art show not found or not active" });
+      res.json({ ...code, show });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch QR code info" });
+    }
+  });
+
+  // Public: Create payment intent for POS checkout
+  app.post('/api/pos/:codeId/payment-intent', async (req, res) => {
+    try {
+      if (!stripe) return res.status(503).json({ message: "Payment processing not configured" });
+      const code = await storage.getArtShowQrCode(req.params.codeId);
+      if (!code) return res.status(404).json({ message: "QR code not found" });
+      const show = await storage.getArtShow(code.showId);
+      if (!show || show.status !== 'active') return res.status(404).json({ message: "Art show not active" });
+
+      const amountInCents = Math.round(parseFloat(code.price) * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: 'usd',
+        metadata: {
+          qrCodeId: code.id,
+          showId: show.id,
+          showName: show.name,
+          label: code.label,
+          customerName: req.body.customerName || '',
+          customerEmail: req.body.customerEmail || '',
+        },
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error("POS payment intent error:", error);
+      res.status(500).json({ message: "Failed to create payment intent" });
     }
   });
 

@@ -48,6 +48,8 @@ The database schema supports features like product variants, image galleries, in
 - **Boards**: Curated collections of artworks that can be shared with art curators for review
 - **Board Items**: Products assigned to specific boards
 - **Board Stars**: Curator selections/favorites on shared boards
+- **Art Shows**: POS (point-of-sale) art show events with QR code-based checkout
+- **Art Show QR Codes**: Price-tier QR codes that link to a Stripe checkout flow for in-person art show purchases
 
 ### Authentication and Authorization
 - Session-based authentication using Express sessions

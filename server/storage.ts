@@ -46,6 +46,10 @@ import {
   type InsertBoardItem,
   type BoardStar,
   type InsertBoardStar,
+  type ArtShow,
+  type InsertArtShow,
+  type ArtShowQrCode,
+  type InsertArtShowQrCode,
   users,
   subscriptionPlans,
   userSubscriptions,
@@ -68,7 +72,9 @@ import {
   commissionRequests,
   boards,
   boardItems,
-  boardStars
+  boardStars,
+  artShows,
+  artShowQrCodes
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -232,6 +238,20 @@ export interface IStorage {
   getBoardStars(boardId: string): Promise<(BoardStar & { product: Product })[]>;
   addBoardStar(star: InsertBoardStar): Promise<BoardStar>;
   removeBoardStar(boardId: string, productId: string, curatorEmail: string): Promise<boolean>;
+
+  // Art Shows
+  getArtShows(): Promise<ArtShow[]>;
+  getArtShow(id: string): Promise<ArtShow | undefined>;
+  createArtShow(show: InsertArtShow): Promise<ArtShow>;
+  updateArtShow(id: string, show: Partial<InsertArtShow>): Promise<ArtShow | undefined>;
+  deleteArtShow(id: string): Promise<boolean>;
+
+  // Art Show QR Codes
+  getArtShowQrCodes(showId: string): Promise<ArtShowQrCode[]>;
+  getArtShowQrCode(id: string): Promise<ArtShowQrCode | undefined>;
+  createArtShowQrCode(code: InsertArtShowQrCode): Promise<ArtShowQrCode>;
+  updateArtShowQrCode(id: string, code: Partial<InsertArtShowQrCode>): Promise<ArtShowQrCode | undefined>;
+  deleteArtShowQrCode(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1196,6 +1216,56 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(boardStars).where(
       and(eq(boardStars.boardId, boardId), eq(boardStars.productId, productId), eq(boardStars.curatorEmail, curatorEmail))
     );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Art Shows
+  async getArtShows(): Promise<ArtShow[]> {
+    return db.select().from(artShows).orderBy(desc(artShows.createdAt));
+  }
+
+  async getArtShow(id: string): Promise<ArtShow | undefined> {
+    const [show] = await db.select().from(artShows).where(eq(artShows.id, id));
+    return show;
+  }
+
+  async createArtShow(show: InsertArtShow): Promise<ArtShow> {
+    const [created] = await db.insert(artShows).values(show).returning();
+    return created;
+  }
+
+  async updateArtShow(id: string, show: Partial<InsertArtShow>): Promise<ArtShow | undefined> {
+    const [updated] = await db.update(artShows).set({ ...show, updatedAt: new Date() }).where(eq(artShows.id, id)).returning();
+    return updated;
+  }
+
+  async deleteArtShow(id: string): Promise<boolean> {
+    const result = await db.delete(artShows).where(eq(artShows.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Art Show QR Codes
+  async getArtShowQrCodes(showId: string): Promise<ArtShowQrCode[]> {
+    return db.select().from(artShowQrCodes).where(eq(artShowQrCodes.showId, showId)).orderBy(artShowQrCodes.createdAt);
+  }
+
+  async getArtShowQrCode(id: string): Promise<ArtShowQrCode | undefined> {
+    const [code] = await db.select().from(artShowQrCodes).where(eq(artShowQrCodes.id, id));
+    return code;
+  }
+
+  async createArtShowQrCode(code: InsertArtShowQrCode): Promise<ArtShowQrCode> {
+    const [created] = await db.insert(artShowQrCodes).values(code).returning();
+    return created;
+  }
+
+  async updateArtShowQrCode(id: string, code: Partial<InsertArtShowQrCode>): Promise<ArtShowQrCode | undefined> {
+    const [updated] = await db.update(artShowQrCodes).set(code).where(eq(artShowQrCodes.id, id)).returning();
+    return updated;
+  }
+
+  async deleteArtShowQrCode(id: string): Promise<boolean> {
+    const result = await db.delete(artShowQrCodes).where(eq(artShowQrCodes.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 }

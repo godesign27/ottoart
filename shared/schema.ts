@@ -478,6 +478,43 @@ export const insertBoardStarSchema = createInsertSchema(boardStars).omit({
   createdAt: true,
 });
 
+// Art Shows (POS system for art show checkouts via QR codes)
+export const artShows = pgTable("art_shows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  location: text("location"),
+  eventDate: text("event_date"),
+  status: text("status").default("active").notNull(), // active, archived
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const artShowQrCodes = pgTable("art_show_qr_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  showId: varchar("show_id").notNull().references(() => artShows.id, { onDelete: "cascade" }),
+  label: text("label").notNull(), // e.g. "$500 Artwork"
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertArtShowSchema = createInsertSchema(artShows).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertArtShowQrCodeSchema = createInsertSchema(artShowQrCodes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ArtShow = typeof artShows.$inferSelect;
+export type InsertArtShow = z.infer<typeof insertArtShowSchema>;
+export type ArtShowQrCode = typeof artShowQrCodes.$inferSelect;
+export type InsertArtShowQrCode = z.infer<typeof insertArtShowQrCodeSchema>;
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

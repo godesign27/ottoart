@@ -29,7 +29,8 @@ import {
   FileTextIcon,
   Mail,
   Layers,
-  ClipboardList
+  ClipboardList,
+  ScanLine
 } from "lucide-react";
 
 const navItems = [
@@ -86,6 +87,12 @@ const navItems = [
     icon: ClipboardList,
     href: "/admin/boards",
     view: "boards"
+  },
+  {
+    title: "POS Art Shows",
+    icon: ScanLine,
+    href: "/admin/art-shows",
+    view: "art-shows"
   },
   {
     title: "Categories & Tags",
