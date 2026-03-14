@@ -482,6 +482,7 @@ export const insertBoardStarSchema = createInsertSchema(boardStars).omit({
 export const artShows = pgTable("art_shows", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
+  artistName: text("artist_name"),
   description: text("description"),
   location: text("location"),
   eventDate: text("event_date"),

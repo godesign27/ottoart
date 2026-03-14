@@ -2439,6 +2439,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update QR code (admin)
+  app.patch('/api/art-shows/qr-codes/:codeId', async (req, res) => {
+    try {
+      const code = await storage.updateArtShowQrCode(req.params.codeId, req.body);
+      if (!code) return res.status(404).json({ message: "QR code not found" });
+      res.json(code);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update QR code" });
+    }
+  });
+
   // Delete QR code (admin)
   app.delete('/api/art-shows/qr-codes/:codeId', async (req, res) => {
     try {

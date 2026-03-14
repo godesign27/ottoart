@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,7 +18,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { ArtShow, ArtShowQrCode } from "@shared/schema";
-import { ArrowLeft, Plus, QrCode, Trash2, Download, ExternalLink, Copy } from "lucide-react";
+import { ArrowLeft, Plus, QrCode, Trash2, Download, ExternalLink, Copy, Pencil } from "lucide-react";
 
 const qrCodeFormSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -30,7 +30,30 @@ type QrCodeFormData = z.infer<typeof qrCodeFormSchema>;
 function QrCodeCard({ code, showId }: { code: ArtShowQrCode; showId: string }) {
   const { toast } = useToast();
   const svgRef = useRef<HTMLDivElement>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const checkoutUrl = `${window.location.origin}/pos/${code.id}`;
+
+  const editForm = useForm<QrCodeFormData>({
+    resolver: zodResolver(qrCodeFormSchema),
+    defaultValues: {
+      label: code.label,
+      price: code.price,
+      description: code.description ?? '',
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (data: QrCodeFormData) => {
+      const res = await apiRequest('PATCH', `/api/art-shows/qr-codes/${code.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/art-shows', showId, 'qr-codes'] });
+      toast({ title: "QR code updated" });
+      setEditOpen(false);
+    },
+    onError: () => toast({ title: "Failed to update QR code", variant: "destructive" }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -89,13 +112,62 @@ function QrCodeCard({ code, showId }: { code: ArtShowQrCode; showId: string }) {
   return (
     <Card>
       <CardContent className="pt-6 flex flex-col items-center gap-4">
-        <div className="flex items-center justify-between w-full">
-          <div>
-            <p className="font-semibold text-foreground">{code.label}</p>
+        <div className="flex items-start justify-between w-full gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground truncate">{code.label}</p>
             {code.description && <p className="text-sm text-muted-foreground">{code.description}</p>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             <span className="text-xl font-bold">${parseFloat(code.price).toFixed(2)}</span>
+            <Dialog open={editOpen} onOpenChange={(o) => {
+              setEditOpen(o);
+              if (o) editForm.reset({ label: code.label, price: code.price, description: code.description ?? '' });
+            }}>
+              <DialogTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Edit">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit QR Code</DialogTitle>
+                </DialogHeader>
+                <Form {...editForm}>
+                  <form onSubmit={editForm.handleSubmit((d) => editMutation.mutate(d))} className="space-y-4">
+                    <FormField control={editForm.control} name="label" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Label</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={editForm.control} name="price" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price (USD)</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                            <Input className="pl-7" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={editForm.control} name="description" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (optional)</FormLabel>
+                        <FormControl><Textarea rows={2} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+                      <Button type="submit" disabled={editMutation.isPending}>Save Changes</Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
             <Button
               size="icon"
               variant="ghost"
@@ -104,7 +176,7 @@ function QrCodeCard({ code, showId }: { code: ArtShowQrCode; showId: string }) {
                 if (confirm('Delete this QR code?')) deleteMutation.mutate();
               }}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
@@ -132,11 +204,21 @@ function QrCodeCard({ code, showId }: { code: ArtShowQrCode; showId: string }) {
   );
 }
 
+const showEditSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  artistName: z.string().optional(),
+  location: z.string().optional(),
+  eventDate: z.string().optional(),
+  description: z.string().optional(),
+});
+type ShowEditData = z.infer<typeof showEditSchema>;
+
 export default function AdminArtShowDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [editShowOpen, setEditShowOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('admin');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -153,11 +235,7 @@ export default function AdminArtShowDetailPage() {
   };
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isMobileMenuOpen]);
 
@@ -179,10 +257,34 @@ export default function AdminArtShowDetailPage() {
     queryFn: () => fetch(`/api/art-shows/${id}/qr-codes`).then(r => r.json()),
   });
 
-  const form = useForm<QrCodeFormData>({
+  const addForm = useForm<QrCodeFormData>({
     resolver: zodResolver(qrCodeFormSchema),
     defaultValues: { label: '', price: '', description: '' },
   });
+
+  const showEditForm = useForm<ShowEditData>({
+    resolver: zodResolver(showEditSchema),
+    defaultValues: {
+      name: show?.name ?? '',
+      artistName: show?.artistName ?? '',
+      location: show?.location ?? '',
+      eventDate: show?.eventDate ?? '',
+      description: show?.description ?? '',
+    },
+  });
+
+  // Sync show data into edit form when loaded
+  useEffect(() => {
+    if (show) {
+      showEditForm.reset({
+        name: show.name,
+        artistName: show.artistName ?? '',
+        location: show.location ?? '',
+        eventDate: show.eventDate ?? '',
+        description: show.description ?? '',
+      });
+    }
+  }, [show]);
 
   const addCodeMutation = useMutation({
     mutationFn: async (data: QrCodeFormData) => {
@@ -193,9 +295,23 @@ export default function AdminArtShowDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/art-shows', id, 'qr-codes'] });
       toast({ title: "QR code added" });
       setAddOpen(false);
-      form.reset();
+      addForm.reset();
     },
     onError: () => toast({ title: "Failed to add QR code", variant: "destructive" }),
+  });
+
+  const updateShowMutation = useMutation({
+    mutationFn: async (data: ShowEditData) => {
+      const res = await apiRequest('PATCH', `/api/art-shows/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/art-shows', id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/art-shows'] });
+      toast({ title: "Show details updated" });
+      setEditShowOpen(false);
+    },
+    onError: () => toast({ title: "Failed to update show", variant: "destructive" }),
   });
 
   const statusMutation = useMutation({
@@ -248,10 +364,78 @@ export default function AdminArtShowDetailPage() {
             <p className="text-muted-foreground">Art show not found.</p>
           ) : (
             <>
+              {/* Show Header */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">{show.name}</h2>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-foreground">{show.name}</h2>
+                    <Dialog open={editShowOpen} onOpenChange={(o) => {
+                      setEditShowOpen(o);
+                      if (o) showEditForm.reset({
+                        name: show.name,
+                        artistName: show.artistName ?? '',
+                        location: show.location ?? '',
+                        eventDate: show.eventDate ?? '',
+                        description: show.description ?? '',
+                      });
+                    }}>
+                      <DialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Edit Show Details</DialogTitle>
+                        </DialogHeader>
+                        <Form {...showEditForm}>
+                          <form onSubmit={showEditForm.handleSubmit((d) => updateShowMutation.mutate(d))} className="space-y-4">
+                            <FormField control={showEditForm.control} name="name" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Show Name</FormLabel>
+                                <FormControl><Input {...field} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                            <FormField control={showEditForm.control} name="artistName" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Artist Name</FormLabel>
+                                <FormControl><Input placeholder="e.g. Otto" {...field} value={field.value ?? ''} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                            <FormField control={showEditForm.control} name="location" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Location</FormLabel>
+                                <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                            <FormField control={showEditForm.control} name="eventDate" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Date</FormLabel>
+                                <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                            <FormField control={showEditForm.control} name="description" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description (optional)</FormLabel>
+                                <FormControl><Textarea rows={2} {...field} value={field.value ?? ''} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                            <div className="flex gap-2 justify-end">
+                              <Button type="button" variant="outline" onClick={() => setEditShowOpen(false)}>Cancel</Button>
+                              <Button type="submit" disabled={updateShowMutation.isPending}>Save Changes</Button>
+                            </div>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                   <div className="flex flex-wrap gap-3 mt-1 text-sm text-muted-foreground">
+                    {show.artistName && <span>🎨 {show.artistName}</span>}
                     {show.location && <span>📍 {show.location}</span>}
                     {show.eventDate && <span>📅 {show.eventDate}</span>}
                     {show.description && <span>{show.description}</span>}
@@ -273,10 +457,11 @@ export default function AdminArtShowDetailPage() {
                 </div>
               </div>
 
+              {/* QR Codes Section */}
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">QR Codes</h3>
-                  <p className="text-sm text-muted-foreground">Add one QR code per price tier</p>
+                  <p className="text-sm text-muted-foreground">One per price tier — print and place next to artwork at the show</p>
                 </div>
                 <Dialog open={addOpen} onOpenChange={setAddOpen}>
                   <DialogTrigger asChild>
@@ -292,16 +477,16 @@ export default function AdminArtShowDetailPage() {
                     <p className="text-sm text-muted-foreground -mt-2">
                       Print this QR code and place it next to artworks at this price.
                     </p>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit((d) => addCodeMutation.mutate(d))} className="space-y-4">
-                        <FormField control={form.control} name="label" render={({ field }) => (
+                    <Form {...addForm}>
+                      <form onSubmit={addForm.handleSubmit((d) => addCodeMutation.mutate(d))} className="space-y-4">
+                        <FormField control={addForm.control} name="label" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Label</FormLabel>
-                            <FormControl><Input placeholder="e.g. Original Artwork — $800" {...field} /></FormControl>
+                            <FormControl><Input placeholder='e.g. Original Artwork — 16" x 20"' {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={form.control} name="price" render={({ field }) => (
+                        <FormField control={addForm.control} name="price" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Price (USD)</FormLabel>
                             <FormControl>
@@ -313,7 +498,7 @@ export default function AdminArtShowDetailPage() {
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={form.control} name="description" render={({ field }) => (
+                        <FormField control={addForm.control} name="description" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Description (optional)</FormLabel>
                             <FormControl><Textarea rows={2} placeholder="e.g. Original oil paintings on canvas" {...field} /></FormControl>
@@ -353,7 +538,7 @@ export default function AdminArtShowDetailPage() {
                 <ol className="list-decimal ml-4 space-y-1">
                   <li>Add a QR code for each price tier (e.g. $300, $800, $1,200).</li>
                   <li>Download and print the QR code — use the download button on each card.</li>
-                  <li>Place the matching QR code label next to artworks of that price at the show.</li>
+                  <li>Place the matching QR code next to artworks of that price at the show.</li>
                   <li>Customers scan the QR code and complete their purchase on their phone.</li>
                 </ol>
               </div>

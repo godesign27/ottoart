@@ -59,7 +59,7 @@ export default function AdminArtShowsPage() {
 
   const form = useForm<InsertArtShow>({
     resolver: zodResolver(insertArtShowSchema),
-    defaultValues: { name: '', description: '', location: '', eventDate: '', status: 'active' },
+    defaultValues: { name: '', artistName: '', description: '', location: '', eventDate: '', status: 'active' },
   });
 
   const createMutation = useMutation({
@@ -139,6 +139,13 @@ export default function AdminArtShowsPage() {
                         <FormMessage />
                       </FormItem>
                     )} />
+                    <FormField control={form.control} name="artistName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Artist Name</FormLabel>
+                        <FormControl><Input placeholder="e.g. Otto" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <FormField control={form.control} name="location" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Location</FormLabel>
@@ -214,6 +221,11 @@ export default function AdminArtShowsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
+                    {show.artistName && (
+                      <div className="flex items-center gap-1.5">
+                        🎨 {show.artistName}
+                      </div>
+                    )}
                     {show.location && (
                       <div className="flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />

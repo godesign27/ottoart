@@ -161,6 +161,9 @@ export default function PosCheckoutPage() {
     <div className="min-h-screen bg-background flex items-center justify-center py-8 px-4">
       <div className="max-w-md w-full space-y-6">
         <div className="text-center">
+          {codeInfo.show.artistName && (
+            <p className="text-base font-medium text-foreground mb-0.5">{codeInfo.show.artistName}</p>
+          )}
           <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">{codeInfo.show.name}</p>
           <h1 className="text-3xl font-bold text-foreground">${price.toFixed(2)}</h1>
           <p className="text-muted-foreground mt-1">{codeInfo.label}</p>
