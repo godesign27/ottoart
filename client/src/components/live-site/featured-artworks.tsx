@@ -72,7 +72,7 @@ export function FeaturedArtworks() {
                         {(() => {
                           // Check if original is sold out (case-insensitive and safer fallback)
                           const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
-                          const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                          const originalSoldOut = (product as any).isSold || (originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false));
                           
                           // Check if prints are available (case-insensitive)
                           const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;

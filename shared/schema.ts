@@ -107,6 +107,7 @@ export const products = pgTable("products", {
   packaging: text("packaging"), // e.g., "Ships in a Box", "Tube Shipping"
   authenticity: text("authenticity"), // e.g., "Certificate is Included"
   showInGallery: boolean("show_in_gallery").default(false),
+  isSold: boolean("is_sold").default(false),
   tags: jsonb("tags").$type<string[]>().default([]),
   pricingTiers: jsonb("pricing_tiers").$type<Array<{
     id: string;

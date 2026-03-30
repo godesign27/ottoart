@@ -163,7 +163,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                       <div className="flex items-center gap-2">
                         {(() => {
                           const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
-                          const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                          const originalSoldOut = (product as any).isSold || (originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false));
                           const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
                           
                           return (
@@ -219,7 +219,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                 <div className="flex gap-2 justify-start">
                   {(() => {
                     const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
-                    const originalSoldOut = originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false);
+                    const originalSoldOut = (product as any).isSold || (originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false));
                     const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
                     
                     return (

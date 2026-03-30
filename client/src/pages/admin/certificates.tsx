@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Printer, ChevronsUpDown, Check, Award } from "lucide-react";
+import { Printer, ChevronsUpDown, Check, Award, Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import type { Product } from "@shared/schema";
 
@@ -213,9 +215,11 @@ function DetailRow({
 }
 
 export default function CertificatesPage() {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [buyerName, setBuyerName] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split("T")[0]);
   const [certNumber, setCertNumber] = useState(
     `OA-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
@@ -228,6 +232,27 @@ export default function CertificatesPage() {
   const artistSetting = siteSettings.find((s: SiteSetting) => s.key === "artist");
   const artistName: string =
     (artistSetting?.value as any)?.name || "Otto";
+
+  const sendMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/certificates/send", {
+        artistName,
+        artworkTitle,
+        medium,
+        dimensions,
+        year,
+        edition,
+        buyerName,
+        buyerEmail,
+        saleDate,
+        certNumber,
+      });
+      if (!res.ok) throw new Error("Failed to send");
+      return res.json();
+    },
+    onSuccess: () => toast({ title: `Certificate sent to ${buyerEmail}` }),
+    onError: () => toast({ title: "Failed to send certificate", variant: "destructive" }),
+  });
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
@@ -281,13 +306,24 @@ export default function CertificatesPage() {
         <div>
           <h1 className="text-2xl font-bold">Certificate of Authenticity</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Generate a printable certificate for any artwork.
+            Generate a printable or emailed certificate for any artwork.
           </p>
         </div>
-        <Button onClick={handlePrint} disabled={!selectedProduct} size="lg">
-          <Printer className="h-4 w-4 mr-2" />
-          Print Certificate
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => sendMutation.mutate()}
+            disabled={!selectedProduct || !buyerEmail || sendMutation.isPending}
+            size="lg"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            {sendMutation.isPending ? "Sending…" : "Email to Buyer"}
+          </Button>
+          <Button onClick={handlePrint} disabled={!selectedProduct} size="lg">
+            <Printer className="h-4 w-4 mr-2" />
+            Print
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8 items-start">
@@ -388,6 +424,17 @@ export default function CertificatesPage() {
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="buyerEmail">Buyer Email</Label>
+                <Input
+                  id="buyerEmail"
+                  type="email"
+                  placeholder="e.g. jane@example.com"
+                  value={buyerEmail}
+                  onChange={(e) => setBuyerEmail(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Required to email the certificate directly.</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="date">Sale Date</Label>

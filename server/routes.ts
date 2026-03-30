@@ -2117,6 +2117,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Certificate of Authenticity email endpoint
+  app.post('/api/certificates/send', async (req, res) => {
+    try {
+      const { artistName, artworkTitle, medium, dimensions, year, edition, buyerName, buyerEmail, saleDate, certNumber } = req.body;
+
+      if (!buyerEmail) {
+        return res.status(400).json({ message: "Buyer email is required" });
+      }
+
+      if (!resend) {
+        return res.status(503).json({ message: "Email service not configured" });
+      }
+
+      const formattedDate = saleDate
+        ? new Date(saleDate + "T12:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+        : "";
+
+      const artistLine = artistName ? `<p style="margin:4px 0 0;font-size:13px;color:#9ca3af;letter-spacing:0.05em;">by ${artistName}</p>` : '';
+
+      const detailRows = [
+        medium && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;width:120px;">Medium</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${medium}</td></tr>`,
+        dimensions && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Dimensions</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${dimensions}</td></tr>`,
+        year && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Year</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${year}</td></tr>`,
+        edition && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Edition</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${edition}</td></tr>`,
+        buyerName && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Acquired by</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${buyerName}</td></tr>`,
+        formattedDate && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Date</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${formattedDate}</td></tr>`,
+        certNumber && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Certificate No.</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${certNumber}</td></tr>`,
+      ].filter(Boolean).join('');
+
+      await resend.emails.send({
+        from: 'Otto Art <hello@ottoart.app>',
+        to: buyerEmail,
+        subject: `Certificate of Authenticity — ${artworkTitle || 'Your Artwork'}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head><meta charset="utf-8"></head>
+          <body style="margin:0;padding:0;background:#f5f4f1;font-family:Georgia,'Times New Roman',serif;">
+            <div style="max-width:600px;margin:40px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+
+              <!-- Decorative top bar -->
+              <div style="height:4px;background:linear-gradient(90deg,#c9b99a,#e9e3d8,#c9b99a);"></div>
+
+              <div style="padding:48px 56px;">
+                <!-- Header -->
+                <div style="text-align:center;margin-bottom:32px;">
+                  <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#9ca3af;font-family:sans-serif;">Otto Art</p>
+                  <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <div style="height:1px;width:50px;background:#d1c7b4;display:inline-block;vertical-align:middle;"></div>
+                    <span style="color:#c9b99a;font-size:16px;margin:0 12px;vertical-align:middle;">✦</span>
+                    <div style="height:1px;width:50px;background:#d1c7b4;display:inline-block;vertical-align:middle;"></div>
+                  </div>
+                  <h1 style="margin:0;font-size:26px;font-weight:normal;letter-spacing:0.06em;color:#1f2937;">Certificate of Authenticity</h1>
+                  <div style="height:1px;background:#d1c7b4;margin:20px auto 0;width:180px;"></div>
+                </div>
+
+                <!-- Statement -->
+                <p style="text-align:center;font-size:14px;color:#6b7280;line-height:1.8;margin:0 0 32px;font-family:sans-serif;">
+                  This document certifies that the work described below is an original creation${artistName ? ` by ${artistName}` : ''} and is genuine and authentic.
+                </p>
+
+                <!-- Artwork box -->
+                <div style="background:#faf9f7;border:1px solid #e9e3d8;border-radius:4px;padding:28px 32px;margin-bottom:28px;">
+                  <div style="text-align:center;margin-bottom:20px;border-bottom:1px solid #e9e3d8;padding-bottom:16px;">
+                    <p style="margin:0;font-size:22px;font-weight:bold;color:#111827;">${artworkTitle || 'Untitled'}</p>
+                    ${artistLine}
+                  </div>
+                  <table style="width:100%;border-collapse:collapse;">
+                    ${detailRows}
+                  </table>
+                </div>
+
+                <!-- Signature area -->
+                <div style="display:table;width:100%;margin-top:32px;">
+                  <div style="display:table-cell;width:50%;padding-right:16px;vertical-align:bottom;">
+                    <div style="border-top:1px solid #6b7280;padding-top:8px;">
+                      <p style="margin:0;font-size:11px;color:#9ca3af;letter-spacing:0.08em;text-transform:uppercase;font-family:sans-serif;">Artist Signature</p>
+                      ${artistName ? `<p style="margin:4px 0 0;font-size:13px;color:#4b5563;font-family:sans-serif;">${artistName}</p>` : ''}
+                    </div>
+                  </div>
+                  <div style="display:table-cell;width:50%;padding-left:16px;vertical-align:bottom;">
+                    <div style="border-top:1px solid #6b7280;padding-top:8px;">
+                      <p style="margin:0;font-size:11px;color:#9ca3af;letter-spacing:0.08em;text-transform:uppercase;font-family:sans-serif;">Date</p>
+                      <p style="margin:4px 0 0;font-size:13px;color:#4b5563;font-family:sans-serif;">${formattedDate || '&nbsp;'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="text-align:center;margin-top:40px;padding-top:24px;border-top:1px solid #e9e3d8;">
+                  <p style="margin:0;font-size:11px;color:#9ca3af;letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;">ottoart.app</p>
+                </div>
+              </div>
+
+              <!-- Bottom bar -->
+              <div style="height:4px;background:linear-gradient(90deg,#c9b99a,#e9e3d8,#c9b99a);"></div>
+            </div>
+          </body>
+          </html>
+        `,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Certificate email error:", error);
+      res.status(500).json({ message: "Failed to send certificate" });
+    }
+  });
+
   // AI Social Post Generator endpoint
   app.post('/api/posts/generate', async (req, res) => {
     try {

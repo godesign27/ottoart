@@ -199,6 +199,28 @@ function ContentTab({ form }: { form: any }) {
 
           <FormField
             control={form.control}
+            name="isSold"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <FormControl>
+                  <Checkbox 
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                    data-testid="checkbox-sold"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-destructive">Mark as Sold</FormLabel>
+                  <FormDescription>
+                    The product stays visible with a "Sold" badge. Buyers cannot add it to cart.
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="showInGallery"
             render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -418,6 +440,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
       status: editProduct.status || "active",
       stock: editProduct.stock || 0,
       isFeatured: editProduct.isFeatured || false,
+      isSold: (editProduct as any).isSold || false,
       showInGallery: editProduct.showInGallery || false,
       images: editProduct.images || [],
       tags: editProduct.tags || [],
@@ -485,6 +508,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
         status: editProduct.status || "active",
         stock: editProduct.stock || 0,
         isFeatured: editProduct.isFeatured || false,
+        isSold: (editProduct as any).isSold || false,
         showInGallery: editProduct.showInGallery || false,
         images: editProduct.images || [],
         tags: editProduct.tags || [],
