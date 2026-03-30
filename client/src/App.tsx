@@ -55,6 +55,7 @@ import AdminArtShowDetailPage from "@/pages/admin/art-show-detail";
 import PosCheckoutPage from "@/pages/live-site/pos-checkout";
 import CertificatesPage from "@/pages/admin/certificates";
 import PostsPage from "@/pages/admin/posts";
+import MailingListPage from "@/pages/admin/mailing-list";
 
 function Router() {
   return (
@@ -100,6 +101,7 @@ function Router() {
       <Route path="/admin/art-shows/:id" component={AdminArtShowDetailPage} />
       <Route path="/admin/certificates" component={CertificatesPage} />
       <Route path="/admin/posts" component={PostsPage} />
+      <Route path="/admin/mailing-list" component={MailingListPage} />
       <Route path="/pos/:id" component={PosCheckoutPage} />
       <Route path="/admin/commissions" component={AdminCommissions} />
       <Route path="/admin/cv" component={AdminCV} />

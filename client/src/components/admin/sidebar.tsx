@@ -32,7 +32,8 @@ import {
   ClipboardList,
   ScanLine,
   Award,
-  Send
+  Send,
+  BookUser
 } from "lucide-react";
 
 const navItems = [
@@ -107,6 +108,12 @@ const navItems = [
     icon: Send,
     href: "/admin/posts",
     view: "posts"
+  },
+  {
+    title: "Mailing List",
+    icon: BookUser,
+    href: "/admin/mailing-list",
+    view: "mailing-list"
   },
   {
     title: "Categories & Tags",

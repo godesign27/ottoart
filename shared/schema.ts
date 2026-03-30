@@ -517,6 +517,20 @@ export type InsertArtShow = z.infer<typeof insertArtShowSchema>;
 export type ArtShowQrCode = typeof artShowQrCodes.$inferSelect;
 export type InsertArtShowQrCode = z.infer<typeof insertArtShowQrCodeSchema>;
 
+// Mailing List (general contacts — manually added or auto-added from certificates, etc.)
+export const mailingListEntries = pgTable("mailing_list_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  name: text("name"),
+  source: text("source").notNull().default("manual"), // manual, certificate, contact, shop
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMailingListEntrySchema = createInsertSchema(mailingListEntries).omit({ id: true, createdAt: true });
+export type MailingListEntry = typeof mailingListEntries.$inferSelect;
+export type InsertMailingListEntry = z.infer<typeof insertMailingListEntrySchema>;
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

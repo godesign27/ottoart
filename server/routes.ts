@@ -2219,10 +2219,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `,
       });
 
+      // Auto-add buyer to general mailing list (skip if already there)
+      if (buyerEmail) {
+        try {
+          const existing = await storage.getMailingListEntryByEmail(buyerEmail);
+          if (!existing) {
+            await storage.addMailingListEntry({
+              email: buyerEmail,
+              name: buyerName || undefined,
+              source: "certificate",
+              notes: artworkTitle ? `Purchased: ${artworkTitle}` : undefined,
+            });
+          }
+        } catch (mlErr) {
+          console.warn("Could not add buyer to mailing list:", mlErr);
+        }
+      }
+
       res.json({ success: true });
     } catch (error) {
       console.error("Certificate email error:", error);
       res.status(500).json({ message: "Failed to send certificate" });
+    }
+  });
+
+  // Mailing List routes
+  app.get('/api/mailing-list', async (req, res) => {
+    try {
+      const entries = await storage.getMailingListEntries();
+      res.json(entries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch mailing list" });
+    }
+  });
+
+  app.post('/api/mailing-list', async (req, res) => {
+    try {
+      const { email, name, notes } = req.body;
+      if (!email) return res.status(400).json({ message: "Email is required" });
+      const entry = await storage.addMailingListEntry({ email, name: name || undefined, source: "manual", notes: notes || undefined });
+      res.json(entry);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add entry" });
+    }
+  });
+
+  app.delete('/api/mailing-list/:id', async (req, res) => {
+    try {
+      const ok = await storage.deleteMailingListEntry(req.params.id);
+      res.json({ success: ok });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete entry" });
     }
   });
 

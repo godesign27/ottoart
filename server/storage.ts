@@ -50,6 +50,8 @@ import {
   type InsertArtShow,
   type ArtShowQrCode,
   type InsertArtShowQrCode,
+  type MailingListEntry,
+  type InsertMailingListEntry,
   users,
   subscriptionPlans,
   userSubscriptions,
@@ -74,7 +76,8 @@ import {
   boardItems,
   boardStars,
   artShows,
-  artShowQrCodes
+  artShowQrCodes,
+  mailingListEntries
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -252,6 +255,12 @@ export interface IStorage {
   createArtShowQrCode(code: InsertArtShowQrCode): Promise<ArtShowQrCode>;
   updateArtShowQrCode(id: string, code: Partial<InsertArtShowQrCode>): Promise<ArtShowQrCode | undefined>;
   deleteArtShowQrCode(id: string): Promise<boolean>;
+
+  // Mailing List
+  getMailingListEntries(): Promise<MailingListEntry[]>;
+  getMailingListEntryByEmail(email: string): Promise<MailingListEntry | undefined>;
+  addMailingListEntry(entry: InsertMailingListEntry): Promise<MailingListEntry>;
+  deleteMailingListEntry(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1266,6 +1275,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteArtShowQrCode(id: string): Promise<boolean> {
     const result = await db.delete(artShowQrCodes).where(eq(artShowQrCodes.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getMailingListEntries(): Promise<MailingListEntry[]> {
+    return db.select().from(mailingListEntries).orderBy(desc(mailingListEntries.createdAt));
+  }
+
+  async getMailingListEntryByEmail(email: string): Promise<MailingListEntry | undefined> {
+    const [entry] = await db.select().from(mailingListEntries).where(eq(mailingListEntries.email, email));
+    return entry;
+  }
+
+  async addMailingListEntry(entry: InsertMailingListEntry): Promise<MailingListEntry> {
+    const [created] = await db.insert(mailingListEntries).values(entry).returning();
+    return created;
+  }
+
+  async deleteMailingListEntry(id: string): Promise<boolean> {
+    const result = await db.delete(mailingListEntries).where(eq(mailingListEntries.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 }
