@@ -38,13 +38,21 @@ export default function ProductDetailPage() {
       // Reset image index
       setSelectedImageIndex(0);
       
-      // Auto-select the first original tier, or fallback to first tier
+      // Auto-select tier: if sold, skip original and pick first print; otherwise pick first original
       if (product.pricingTiers && product.pricingTiers.length > 0) {
-        // Try to find first original tier
-        const firstOriginalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
-        // Use first original tier if available, otherwise use first tier
-        const tierToSelect = firstOriginalTier || product.pricingTiers[0];
-        setSelectedTierId(tierToSelect.id);
+        const isSold = (product as any).isSold;
+        if (isSold) {
+          // Skip original tiers, pick first non-original
+          const firstPrintTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() !== 'original');
+          const tierToSelect = firstPrintTier || product.pricingTiers[0];
+          setSelectedTierId(tierToSelect.id);
+        } else {
+          // Try to find first original tier
+          const firstOriginalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
+          // Use first original tier if available, otherwise use first tier
+          const tierToSelect = firstOriginalTier || product.pricingTiers[0];
+          setSelectedTierId(tierToSelect.id);
+        }
       } else {
         // No pricing tiers, so no tier selection needed
         setSelectedTierId(null);
@@ -239,7 +247,12 @@ export default function ProductDetailPage() {
               <div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+                      {(product as any).isSold && (
+                        <Badge variant="destructive" className="text-sm px-3 py-1">Sold</Badge>
+                      )}
+                    </div>
                     <p className="text-3xl font-bold text-primary mt-2">${selectedOption.price}</p>
                     <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
                   </div>
@@ -259,25 +272,38 @@ export default function ProductDetailPage() {
                   {/* Original Tiers */}
                   {product.pricingTiers.filter(tier => tier.type === 'Original').length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="text-base font-semibold text-foreground">Original</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-base font-semibold text-foreground">Original</h4>
+                        {(product as any).isSold && (
+                          <Badge variant="destructive" className="text-xs">Sold</Badge>
+                        )}
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {product.pricingTiers.filter(tier => tier.type === 'Original').map((tier) => (
-                          <div 
-                            key={tier.id} 
-                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                              selectedTierId === tier.id 
-                                ? 'border-2 border-primary bg-primary/5' 
-                                : 'border-border hover:border-primary/50'
-                            }`}
-                            onClick={() => setSelectedTierId(tier.id)}
-                            data-testid={`tier-option-${tier.id}`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <p className="text-base text-foreground">{tier.size}</p>
-                              <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                        {product.pricingTiers.filter(tier => tier.type === 'Original').map((tier) => {
+                          const isOriginalSold = (product as any).isSold;
+                          return (
+                            <div 
+                              key={tier.id} 
+                              className={`border rounded-lg p-4 transition-all ${
+                                isOriginalSold
+                                  ? 'border-border bg-muted/50 opacity-60 cursor-not-allowed'
+                                  : selectedTierId === tier.id 
+                                    ? 'border-2 border-primary bg-primary/5 cursor-pointer' 
+                                    : 'border-border hover:border-primary/50 cursor-pointer'
+                              }`}
+                              onClick={() => !isOriginalSold && setSelectedTierId(tier.id)}
+                              data-testid={`tier-option-${tier.id}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <p className="text-base text-foreground">{tier.size}</p>
+                                {isOriginalSold
+                                  ? <span className="text-sm font-semibold text-destructive">Sold</span>
+                                  : <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                                }
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -370,20 +396,30 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Add to Cart */}
-              <Button 
-                className="w-full py-3 text-lg font-semibold flex items-center justify-center gap-2"
-                disabled={selectedOption.stock === 0 || addToCartMutation.isPending}
-                onClick={handleAddToCart}
-                data-testid="add-to-cart-button"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                {addToCartMutation.isPending 
-                  ? 'Adding...' 
-                  : selectedOption.stock > 0 
-                    ? 'Add to cart' 
-                    : 'Out of Stock'
-                }
-              </Button>
+              {(() => {
+                const isSold = (product as any).isSold;
+                const selectedTier = product.pricingTiers?.find(t => t.id === selectedTierId);
+                const isSelectedOriginalSold = isSold && (!selectedTier || selectedTier.type === 'Original');
+                const isDisabled = selectedOption.stock === 0 || addToCartMutation.isPending || isSelectedOriginalSold;
+                return (
+                  <Button 
+                    className="w-full py-3 text-lg font-semibold flex items-center justify-center gap-2"
+                    disabled={isDisabled}
+                    onClick={handleAddToCart}
+                    data-testid="add-to-cart-button"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    {addToCartMutation.isPending 
+                      ? 'Adding...' 
+                      : isSelectedOriginalSold
+                        ? 'Original Sold'
+                        : selectedOption.stock > 0 
+                          ? 'Add to cart' 
+                          : 'Out of Stock'
+                    }
+                  </Button>
+                );
+              })()}
 
             </div>
           </div>

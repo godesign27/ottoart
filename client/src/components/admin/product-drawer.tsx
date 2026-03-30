@@ -158,7 +158,7 @@ function ContentTab({ form }: { form: any }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || "active"}>
                   <FormControl>
                     <SelectTrigger data-testid="select-status">
                       <SelectValue placeholder="Select status" />
