@@ -2120,7 +2120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Certificate of Authenticity email endpoint
   app.post('/api/certificates/send', async (req, res) => {
     try {
-      const { artistName, artworkTitle, medium, dimensions, year, edition, buyerName, buyerEmail, saleDate, certNumber } = req.body;
+      const { artistName, artworkTitle, medium, dimensions, year, edition, buyerName, buyerEmail, saleDate, certNumber, eventName } = req.body;
 
       if (!buyerEmail) {
         return res.status(400).json({ message: "Buyer email is required" });
@@ -2144,6 +2144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         buyerName && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Acquired by</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${buyerName}</td></tr>`,
         formattedDate && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Date</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${formattedDate}</td></tr>`,
         certNumber && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Certificate No.</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${certNumber}</td></tr>`,
+        eventName && `<tr><td style="padding:6px 0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Event</td><td style="padding:6px 0;font-size:13px;color:#1f2937;">${eventName}</td></tr>`,
       ].filter(Boolean).join('');
 
       await resend.emails.send({

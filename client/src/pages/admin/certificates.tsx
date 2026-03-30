@@ -19,11 +19,11 @@ type SiteSetting = { key: string; value: any };
 
 function CertificatePreview({
   artistName, artworkTitle, medium, dimensions, year, edition,
-  buyerName, saleDate, certNumber, printRef,
+  buyerName, saleDate, certNumber, eventName, printRef,
 }: {
   artistName: string; artworkTitle: string; medium: string; dimensions: string;
   year: string; edition: string; buyerName: string; saleDate: string;
-  certNumber: string; printRef: React.RefObject<HTMLDivElement>;
+  certNumber: string; eventName: string; printRef: React.RefObject<HTMLDivElement>;
 }) {
   const formattedDate = saleDate
     ? new Date(saleDate + "T12:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
@@ -76,12 +76,13 @@ function CertificatePreview({
         </div>
       </div>
 
-      {(buyerName || saleDate || certNumber) && (
+      {(buyerName || saleDate || certNumber || eventName) && (
         <div style={{ marginBottom: "40px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px 24px" }}>
             {buyerName && <DetailRow label="Acquired by" value={buyerName} />}
             {formattedDate && <DetailRow label="Date" value={formattedDate} />}
             {certNumber && <DetailRow label="Certificate No." value={certNumber} />}
+            {eventName && <DetailRow label="Event" value={eventName} />}
           </div>
         </div>
       )}
@@ -142,6 +143,7 @@ export default function CertificatesPage() {
   const [certNumber, setCertNumber] = useState(
     `OA-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
   );
+  const [eventName, setEventName] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -172,7 +174,7 @@ export default function CertificatesPage() {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/certificates/send", {
         artistName, artworkTitle, medium, dimensions, year, edition,
-        buyerName, buyerEmail, saleDate, certNumber,
+        buyerName, buyerEmail, saleDate, certNumber, eventName,
       });
       if (!res.ok) throw new Error("Failed to send");
       return res.json();
@@ -309,6 +311,10 @@ export default function CertificatesPage() {
                     <Label htmlFor="cert">Certificate Number</Label>
                     <Input id="cert" placeholder="e.g. OA-2025-0042" value={certNumber} onChange={(e) => setCertNumber(e.target.value)} />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="event">Event <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+                    <Input id="event" placeholder="e.g. Downtown Art Fair 2026" value={eventName} onChange={(e) => setEventName(e.target.value)} />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -334,6 +340,7 @@ export default function CertificatesPage() {
                   buyerName={buyerName}
                   saleDate={saleDate}
                   certNumber={certNumber}
+                  eventName={eventName}
                   printRef={printRef}
                 />
               </div>
