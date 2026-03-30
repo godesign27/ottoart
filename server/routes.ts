@@ -2117,6 +2117,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Social Post Generator endpoint
+  app.post('/api/posts/generate', async (req, res) => {
+    try {
+      const { product, platforms } = req.body;
+      if (!product || !platforms || !platforms.length) {
+        return res.status(400).json({ message: "Product and platforms are required" });
+      }
+
+      const productInfo = [
+        `Title: ${product.name}`,
+        product.medium ? `Medium: ${product.medium}` : null,
+        product.dimensions ? `Dimensions: ${product.dimensions}` : null,
+        product.year ? `Year: ${product.year}` : null,
+        product.rarity ? `Edition: ${product.rarity}` : null,
+        product.price ? `Price: $${product.price}` : null,
+        product.description ? `Description: ${product.description}` : null,
+      ].filter(Boolean).join("\n");
+
+      const platformSpecs: Record<string, string> = {
+        instagram: "Instagram (max 2,200 chars, visual storytelling tone, 20-30 hashtags grouped at the end, emojis welcome, warm and personal artist voice)",
+        twitter: "Twitter/X (max 260 chars including hashtags, punchy and concise, 3-5 hashtags inline, no fluff)",
+        facebook: "Facebook (max 500 chars, conversational and inviting, 3-5 hashtags, call to action like 'available now' or 'link in bio')",
+        tiktok: "TikTok (max 150 chars caption, energetic and trendy, 5-8 hashtags, hook the viewer fast)",
+        pinterest: "Pinterest (max 500 chars, descriptive and keyword-rich for search, 5-10 hashtags, focus on style/aesthetic/home decor context)",
+      };
+
+      const selectedSpecs = platforms
+        .filter((p: string) => platformSpecs[p])
+        .map((p: string) => `- ${platformSpecs[p]}`)
+        .join("\n");
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a creative social media manager for an independent artist named Otto. Your writing is authentic, evocative, and artistically minded. You write posts that feel personal and genuine — never corporate. You tailor each post precisely to the platform's format and culture."
+          },
+          {
+            role: "user",
+            content: `Generate social media posts for this artwork:\n\n${productInfo}\n\nCreate a unique post for each of these platforms:\n${selectedSpecs}\n\nRespond ONLY with valid JSON in this format (include only the requested platforms as keys):\n{\n  "instagram": "...",\n  "twitter": "...",\n  "facebook": "...",\n  "tiktok": "...",\n  "pinterest": "..."\n}`
+          }
+        ],
+        response_format: { type: "json_object" },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) throw new Error("No content generated");
+      res.json(JSON.parse(content));
+    } catch (error) {
+      console.error("Post generation error:", error);
+      res.status(500).json({ message: "Failed to generate posts" });
+    }
+  });
+
   // AI Artwork Analysis endpoint
   app.post('/api/ai/analyze-artwork', async (req, res) => {
     try {

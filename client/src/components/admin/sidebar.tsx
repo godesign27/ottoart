@@ -31,7 +31,8 @@ import {
   Layers,
   ClipboardList,
   ScanLine,
-  Award
+  Award,
+  Send
 } from "lucide-react";
 
 const navItems = [
@@ -100,6 +101,12 @@ const navItems = [
     icon: Award,
     href: "/admin/certificates",
     view: "certificates"
+  },
+  {
+    title: "Posts",
+    icon: Send,
+    href: "/admin/posts",
+    view: "posts"
   },
   {
     title: "Categories & Tags",
