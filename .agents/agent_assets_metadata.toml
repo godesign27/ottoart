@@ -14,3 +14,17 @@ mtime_ms = 1792606281853
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:1797f98a-331f-44f1-b938-5175216075f5/ebf817ff-95c3-444e-9cf5-c07145cfc32a/e3837374-658b-4478-9d0e-6df69f950cbf"
 storage_version_token = "1792606865938828"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "-rcYUauWT_1ekug0DPqGR"
+uri = "file://generated-artifacts/ottoart-production-schema.sql"
+type = "unspecified"
+title = "OttoArt Production Database Schema"
+description = "SQL structure of all 27 production public tables, with 241 columns, 50 constraints, and 4 additional indexes. No customer records or credentials."
+logical_id = "3c55d7fb-42df-499f-bf44-6a51f55bbdb3"
+content_hash = "sha256:ca16f18b4753cc59fb9e10671c5161c64252902cf6da8b7f6e37f8f3d0a08a2d"
+size = 16699
+mtime_ms = 1792606943635
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:1797f98a-331f-44f1-b938-5175216075f5/3c55d7fb-42df-499f-bf44-6a51f55bbdb3/95f02230-2e07-492a-9261-d65f25dce3ec"
+storage_version_token = "1792606944397320"
+content_type = "application/octet-stream"
