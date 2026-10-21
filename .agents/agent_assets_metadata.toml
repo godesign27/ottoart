@@ -28,3 +28,17 @@ mtime_ms = 1792606943635
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:1797f98a-331f-44f1-b938-5175216075f5/3c55d7fb-42df-499f-bf44-6a51f55bbdb3/95f02230-2e07-492a-9261-d65f25dce3ec"
 storage_version_token = "1792606944397320"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "g_GZ_QaziQrrTCdsDls69"
+uri = "file://generated-artifacts/ottoart-commerce-handoff.zip"
+type = "unspecified"
+title = "OttoArt Commerce OS Handoff"
+description = "Application schema.ts, four production product samples with tag lookup, and mapping answers. No customer data or credentials."
+logical_id = "fe1a7512-83e1-441d-9947-ccb71bad8519"
+content_hash = "sha256:4555ceb80032be09d93c2f18933424284d1db1e8fffeeffdbb30841109cc1cec"
+size = 8398
+mtime_ms = 1792613652568
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:1797f98a-331f-44f1-b938-5175216075f5/fe1a7512-83e1-441d-9947-ccb71bad8519/6cb09e4a-802e-46ff-9041-ad1dd1ded5f9"
+storage_version_token = "1792613653153190"
+content_type = "application/octet-stream"
