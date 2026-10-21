@@ -4,4 +4,6 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
-/generated-artifacts/
+/generated-artifacts/*
+!/generated-artifacts/ottoart-schema.sql
+!/generated-artifacts/ottoart-production-schema.sql
