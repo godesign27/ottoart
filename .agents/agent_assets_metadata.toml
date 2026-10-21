@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "F7xqL6itFdydkSOH4YNBJ"
+uri = "file://generated-artifacts/ottoart-schema.sql"
+type = "unspecified"
+title = "OttoArt Database Schema"
+description = "Development database schema for all 27 public tables, including columns, defaults, indexes, and constraints. No table records or connection credentials included."
+logical_id = "ebf817ff-95c3-444e-9cf5-c07145cfc32a"
+content_hash = "sha256:e5ec53e003a6c715d0be4f50c088f5f2dea93041c430456730822465f0a47156"
+size = 23986
+mtime_ms = 1792606281853
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:1797f98a-331f-44f1-b938-5175216075f5/ebf817ff-95c3-444e-9cf5-c07145cfc32a/01a6a065-34ce-4876-add2-e74688da9da2"
+storage_version_token = "1792606287973364"
+content_type = "application/octet-stream"
