@@ -9,7 +9,10 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
+// LOCAL_DEV=1 replaces Replit OIDC with a one-click fake login for local work.
+const isLocalDev = process.env.LOCAL_DEV === "1";
+
+if (!isLocalDev && !process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
@@ -39,7 +42,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: !isLocalDev,
       maxAge: sessionTtl,
     },
   });
@@ -72,6 +75,11 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+
+  if (isLocalDev) {
+    setupLocalDevAuth(app);
+    return;
+  }
 
   const config = await getOidcConfig();
 
@@ -155,4 +163,62 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
+};
+// Local-only stand-in for Replit login: /api/login signs in a fixed dev user
+// with a far-future expiry so isAuthenticated() passes without token refresh.
+function setupLocalDevAuth(app: Express) {
+  passport.serializeUser((user: Express.User, cb) => cb(null, user));
+  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+
+  const claims = {
+    sub: "local-dev-user",
+    email: "dev@localhost",
+    first_name: "Local",
+    last_name: "Developer",
+    profile_image_url: null,
+  };
+
+  app.get("/api/login", async (req, res, next) => {
+    try {
+      await upsertUser(claims);
+      // The local dev user is always an admin so the admin UI is reachable.
+      await storage.updateUser(claims.sub, { role: "admin" } as any);
+      const user = {
+        claims,
+        access_token: "local-dev",
+        refresh_token: undefined,
+        expires_at: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+      };
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.redirect("/");
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/api/callback", (_req, res) => res.redirect("/"));
+
+  app.get("/api/logout", (req, res) => {
+    req.logout(() => res.redirect("/"));
+  });
+}
+
+// Allows the request only for a signed-in user whose role is "admin".
+// Signed-out → 401, signed in without admin role → 403.
+export const isAdmin: RequestHandler = (req, res, next) => {
+  isAuthenticated(req, res, async (err?: any) => {
+    if (err) return next(err);
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      const user = userId ? await storage.getUser(userId) : undefined;
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
 };

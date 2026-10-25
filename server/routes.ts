@@ -11,7 +11,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema, insertBoardSchema, insertBoardStarSchema, insertArtShowSchema, insertArtShowQrCodeSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
@@ -167,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/subscription-plans", isAuthenticated, async (req, res) => {
+  app.post("/api/subscription-plans", isAdmin, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.parse(req.body);
       
@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/subscription-plans/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/subscription-plans/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.partial().parse(req.body);
       const plan = await storage.updateSubscriptionPlan(req.params.id, validatedData);
@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/subscription-plans/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/subscription-plans/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.partial().parse(req.body);
       const plan = await storage.updateSubscriptionPlan(req.params.id, validatedData);
@@ -255,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Utility endpoint to fix existing subscription plans with missing Stripe configuration
-  app.post("/api/subscription-plans/fix-stripe", isAuthenticated, async (req, res) => {
+  app.post("/api/subscription-plans/fix-stripe", isAdmin, async (req, res) => {
     try {
       if (!stripe) {
         return res.status(503).json({ message: "Stripe not configured" });
@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/subscription-plans/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/subscription-plans/:id", isAdmin, async (req, res) => {
     try {
       const success = await storage.deleteSubscriptionPlan(req.params.id);
       if (!success) {
@@ -389,16 +389,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", isAdmin, async (req, res) => {
     try {
       console.log("Received product data:", JSON.stringify(req.body, null, 2));
       const validatedData = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error) {
-      console.error("Product validation error:", error);
+      // Log message/issues as JSON: passing the ZodError object itself to
+      // console.error crashes Node 24's inspector and kills the server.
+      console.error("Product validation error:", error instanceof Error ? error.message : String(error));
       if (error instanceof Error && 'issues' in error) {
-        console.error("Validation issues:", (error as any).issues);
+        console.error("Validation issues:", JSON.stringify((error as any).issues));
       }
       res.status(400).json({ 
         message: "Invalid product data",
@@ -407,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/products/:id", async (req, res) => {
+  app.put("/api/products/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertProductSchema.partial().parse(req.body);
       const product = await storage.updateProduct(req.params.id, validatedData);
@@ -420,7 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", isAdmin, async (req, res) => {
     try {
       const success = await storage.deleteProduct(req.params.id);
       if (!success) {
@@ -432,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products/:id/duplicate", async (req, res) => {
+  app.post("/api/products/:id/duplicate", isAdmin, async (req, res) => {
     try {
       const original = await storage.getProduct(req.params.id);
       if (!original) {
@@ -466,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  app.post("/api/categories", isAdmin, async (req, res) => {
     try {
       const validatedData = insertCategorySchema.parse(req.body);
       const category = await storage.createCategory(validatedData);
@@ -476,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/categories/:id", async (req, res) => {
+  app.put("/api/categories/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertCategorySchema.partial().parse(req.body);
       const category = await storage.updateCategory(req.params.id, validatedData);
@@ -489,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories/reorder", async (req, res) => {
+  app.post("/api/categories/reorder", isAdmin, async (req, res) => {
     try {
       const { categoryIds } = req.body;
       if (!Array.isArray(categoryIds)) {
@@ -513,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tags", async (req, res) => {
+  app.post("/api/tags", isAdmin, async (req, res) => {
     try {
       const validatedData = insertTagSchema.parse(req.body);
       const tag = await storage.createTag(validatedData);
@@ -524,7 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders
-  app.get("/api/orders", async (req, res) => {
+  app.get("/api/orders", isAdmin, async (req, res) => {
     try {
       const orders = await storage.getOrders();
       res.json(orders);
@@ -589,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/orders/:id", async (req, res) => {
+  app.patch("/api/orders/:id", isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -615,7 +617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Messages
-  app.get("/api/messages", async (req, res) => {
+  app.get("/api/messages", isAdmin, async (req, res) => {
     try {
       const messages = await storage.getMessages();
       res.json(messages);
@@ -659,7 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/messages/:id/read", async (req, res) => {
+  app.patch("/api/messages/:id/read", isAdmin, async (req, res) => {
     try {
       const success = await storage.markMessageAsRead(req.params.id);
       if (!success) {
@@ -693,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/gallery", async (req, res) => {
+  app.post("/api/gallery", isAdmin, async (req, res) => {
     try {
       const validatedData = insertGalleryItemSchema.parse(req.body);
       const galleryItem = await storage.createGalleryItem(validatedData);
@@ -707,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/gallery/:id", async (req, res) => {
+  app.put("/api/gallery/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertGalleryItemSchema.partial().parse(req.body);
       const galleryItem = await storage.updateGalleryItem(req.params.id, validatedData);
@@ -720,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/gallery/:id", async (req, res) => {
+  app.delete("/api/gallery/:id", isAdmin, async (req, res) => {
     try {
       const success = await storage.deleteGalleryItem(req.params.id);
       if (!success) {
@@ -732,7 +734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/gallery/reorder", async (req, res) => {
+  app.post("/api/gallery/reorder", isAdmin, async (req, res) => {
     try {
       const { itemIds } = req.body;
       if (!Array.isArray(itemIds)) {
@@ -747,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Events
-  app.get("/api/events", async (req, res) => {
+  app.get("/api/events", isAdmin, async (req, res) => {
     try {
       const events = await storage.getEvents();
       res.json(events);
@@ -786,7 +788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/events", async (req, res) => {
+  app.post("/api/events", isAdmin, async (req, res) => {
     try {
       const { insertEventSchema } = await import("@shared/schema");
       const validatedData = insertEventSchema.parse(req.body);
@@ -798,7 +800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/events/:id", async (req, res) => {
+  app.put("/api/events/:id", isAdmin, async (req, res) => {
     try {
       const { insertEventSchema } = await import("@shared/schema");
       const validatedData = insertEventSchema.partial().parse(req.body);
@@ -813,7 +815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/events/:id", async (req, res) => {
+  app.delete("/api/events/:id", isAdmin, async (req, res) => {
     try {
       const success = await storage.deleteEvent(req.params.id);
       if (!success) {
@@ -826,7 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Commission Requests
-  app.get("/api/commissions", async (req, res) => {
+  app.get("/api/commissions", isAdmin, async (req, res) => {
     try {
       const commissions = await storage.getCommissionRequests();
       res.json(commissions);
@@ -835,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/commissions/:id", async (req, res) => {
+  app.get("/api/commissions/:id", isAdmin, async (req, res) => {
     try {
       const commission = await storage.getCommissionRequest(req.params.id);
       if (!commission) {
@@ -925,7 +927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commissions/:id", async (req, res) => {
+  app.put("/api/commissions/:id", isAdmin, async (req, res) => {
     try {
       const { insertCommissionRequestSchema } = await import("@shared/schema");
       const validatedData = insertCommissionRequestSchema.partial().parse(req.body);
@@ -940,7 +942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commissions/:id/read", async (req, res) => {
+  app.put("/api/commissions/:id/read", isAdmin, async (req, res) => {
     try {
       const success = await storage.markCommissionAsRead(req.params.id);
       if (!success) {
@@ -952,7 +954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commissions/:id", async (req, res) => {
+  app.delete("/api/commissions/:id", isAdmin, async (req, res) => {
     try {
       const success = await storage.deleteCommissionRequest(req.params.id);
       if (!success) {
@@ -986,7 +988,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/page-settings/:page", async (req, res) => {
+  app.put("/api/page-settings/:page", isAdmin, async (req, res) => {
     try {
       const validatedData = insertPageSettingsSchema.parse({
         page: req.params.page,
@@ -1023,7 +1025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/bio-settings", async (req, res) => {
+  app.put("/api/bio-settings", isAdmin, async (req, res) => {
     try {
       const validatedData = insertBioSettingsSchema.parse(req.body);
       const bioSettings = await storage.setBioSettings(validatedData);
@@ -1062,7 +1064,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/contact-settings", async (req, res) => {
+  app.put("/api/contact-settings", isAdmin, async (req, res) => {
     try {
       const validatedData = insertContactSettingsSchema.parse(req.body);
       const contactSettings = await storage.setContactSettings(validatedData);
@@ -1099,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/social-settings", async (req, res) => {
+  app.put("/api/social-settings", isAdmin, async (req, res) => {
     try {
       const validatedData = insertSocialSettingsSchema.parse(req.body);
       const socialSettings = await storage.setSocialSettings(validatedData);
@@ -1132,7 +1134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/site-settings/:key", async (req, res) => {
+  app.post("/api/site-settings/:key", isAdmin, async (req, res) => {
     try {
       const validatedData = insertSiteSettingsSchema.parse({
         key: req.params.key,
@@ -1146,7 +1148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard stats
-  app.get("/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", isAdmin, async (req, res) => {
     try {
       const products = await storage.getProducts();
       const orders = await storage.getOrders();
@@ -1365,7 +1367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get Brevo contact lists (development/admin endpoint)
-  app.get("/api/admin/brevo-lists", async (req, res) => {
+  app.get("/api/admin/brevo-lists", isAdmin, async (req, res) => {
     // Restrict to development environment for security
     if (process.env.NODE_ENV === 'production') {
       return res.status(404).json({ message: "Not found" });
@@ -1531,19 +1533,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get upload URL for new image - secured endpoint
-  app.post("/api/objects/upload", async (req, res) => {
-    // Basic security check - require admin API key for uploads
-    const adminApiKey = process.env.ADMIN_API_KEY || "dev-admin-key-2024"; // Development fallback
-    if (!adminApiKey) {
-      console.error("ADMIN_API_KEY not configured - upload endpoint disabled for security");
-      return res.status(503).json({ error: "Upload service unavailable - not configured" });
-    }
-
-    const providedKey = req.headers['x-admin-key'] || req.headers['authorization']?.replace('Bearer ', '');
-    if (!providedKey || providedKey !== adminApiKey) {
-      console.warn(`Unauthorized upload attempt from ${req.ip}`);
-      return res.status(401).json({ error: "Unauthorized - Admin API key required" });
-    }
+  app.post("/api/objects/upload", isAdmin, async (req, res) => {
+    // Access is enforced by the isAdmin middleware on this route.
 
     // Rate limiting - simple in-memory protection
     const clientIp = req.ip;
@@ -1578,19 +1569,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Set ACL policy for uploaded image - secured endpoint
-  app.put("/api/objects/finalize", async (req, res) => {
-    // Basic security check - require admin API key for finalize
-    const adminApiKey = process.env.ADMIN_API_KEY || "dev-admin-key-2024"; // Development fallback
-    if (!adminApiKey) {
-      console.error("ADMIN_API_KEY not configured - finalize endpoint disabled for security");
-      return res.status(503).json({ error: "Finalize service unavailable - not configured" });
-    }
-
-    const providedKey = req.headers['x-admin-key'] || req.headers['authorization']?.replace('Bearer ', '');
-    if (!providedKey || providedKey !== adminApiKey) {
-      console.warn(`Unauthorized finalize attempt from ${req.ip}`);
-      return res.status(401).json({ error: "Unauthorized - Admin API key required" });
-    }
+  app.put("/api/objects/finalize", isAdmin, async (req, res) => {
+    // Access is enforced by the isAdmin middleware on this route.
 
     // Enhanced input validation
     if (!req.body || typeof req.body !== 'object') {
@@ -1684,7 +1664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/room-backgrounds", async (req, res) => {
+  app.post("/api/room-backgrounds", isAdmin, async (req, res) => {
     try {
       const validatedData = insertRoomBackgroundSchema.parse(req.body);
       const background = await storage.createRoomBackground(validatedData);
@@ -1694,7 +1674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/room-backgrounds/:id", async (req, res) => {
+  app.put("/api/room-backgrounds/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertRoomBackgroundSchema.parse(req.body);
       const background = await storage.updateRoomBackground(req.params.id, validatedData);
@@ -1707,7 +1687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/room-backgrounds/:id", async (req, res) => {
+  app.delete("/api/room-backgrounds/:id", isAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteRoomBackground(req.params.id);
       if (!deleted) {
@@ -1741,7 +1721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/art-wall-simulations", async (req, res) => {
+  app.post("/api/art-wall-simulations", isAdmin, async (req, res) => {
     try {
       const validatedData = insertArtWallSimulationSchema.parse(req.body);
       const simulation = await storage.createArtWallSimulation(validatedData);
@@ -1752,7 +1732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/art-wall-simulations/:id", async (req, res) => {
+  app.put("/api/art-wall-simulations/:id", isAdmin, async (req, res) => {
     try {
       const validatedData = insertArtWallSimulationSchema.parse(req.body);
       const simulation = await storage.updateArtWallSimulation(req.params.id, validatedData);
@@ -1766,7 +1746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/art-wall-simulations/:id", async (req, res) => {
+  app.delete("/api/art-wall-simulations/:id", isAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteArtWallSimulation(req.params.id);
       if (!deleted) {
@@ -2118,7 +2098,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Certificate of Authenticity email endpoint
-  app.post('/api/certificates/send', async (req, res) => {
+  app.post('/api/certificates/send', isAdmin, async (req, res) => {
     try {
       const { artistName, artworkTitle, medium, dimensions, year, edition, buyerName, buyerEmail, saleDate, certNumber, eventName } = req.body;
 
@@ -2245,7 +2225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mailing List routes
-  app.get('/api/mailing-list', async (req, res) => {
+  app.get('/api/mailing-list', isAdmin, async (req, res) => {
     try {
       const entries = await storage.getMailingListEntries();
       res.json(entries);
@@ -2254,7 +2234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/mailing-list', async (req, res) => {
+  app.post('/api/mailing-list', isAdmin, async (req, res) => {
     try {
       const { email, name, notes } = req.body;
       if (!email) return res.status(400).json({ message: "Email is required" });
@@ -2265,7 +2245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/mailing-list/:id', async (req, res) => {
+  app.delete('/api/mailing-list/:id', isAdmin, async (req, res) => {
     try {
       const ok = await storage.deleteMailingListEntry(req.params.id);
       res.json({ success: ok });
@@ -2275,7 +2255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Social Post Generator endpoint
-  app.post('/api/posts/generate', async (req, res) => {
+  app.post('/api/posts/generate', isAdmin, async (req, res) => {
     try {
       const { product, platforms } = req.body;
       if (!product || !platforms || !platforms.length) {
@@ -2330,7 +2310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Artwork Analysis endpoint
-  app.post('/api/ai/analyze-artwork', async (req, res) => {
+  app.post('/api/ai/analyze-artwork', isAdmin, async (req, res) => {
     try {
       const { imageUrl } = req.body;
       
@@ -2387,7 +2367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== BOARDS ====================
 
   // Get all boards (admin)
-  app.get('/api/boards', async (req, res) => {
+  app.get('/api/boards', isAdmin, async (req, res) => {
     try {
       const allBoards = await storage.getBoards();
       const boardsWithCounts = await Promise.all(allBoards.map(async (board) => {
@@ -2403,7 +2383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create board
-  app.post('/api/boards', async (req, res) => {
+  app.post('/api/boards', isAdmin, async (req, res) => {
     try {
       const parsed = insertBoardSchema.parse(req.body);
       const board = await storage.createBoard(parsed);
@@ -2472,7 +2452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single board (admin)
-  app.get('/api/boards/:id', async (req, res) => {
+  app.get('/api/boards/:id', isAdmin, async (req, res) => {
     try {
       const board = await storage.getBoard(req.params.id);
       if (!board) return res.status(404).json({ message: "Board not found" });
@@ -2484,7 +2464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update board
-  app.patch('/api/boards/:id', async (req, res) => {
+  app.patch('/api/boards/:id', isAdmin, async (req, res) => {
     try {
       const board = await storage.updateBoard(req.params.id, req.body);
       if (!board) return res.status(404).json({ message: "Board not found" });
@@ -2496,7 +2476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete board
-  app.delete('/api/boards/:id', async (req, res) => {
+  app.delete('/api/boards/:id', isAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteBoard(req.params.id);
       if (!deleted) return res.status(404).json({ message: "Board not found" });
@@ -2508,7 +2488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get board items
-  app.get('/api/boards/:id/items', async (req, res) => {
+  app.get('/api/boards/:id/items', isAdmin, async (req, res) => {
     try {
       const items = await storage.getBoardItems(req.params.id);
       res.json(items);
@@ -2519,7 +2499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add item to board
-  app.post('/api/boards/:id/items', async (req, res) => {
+  app.post('/api/boards/:id/items', isAdmin, async (req, res) => {
     try {
       const item = await storage.addBoardItem({
         boardId: req.params.id,
@@ -2534,7 +2514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reorder board items
-  app.put('/api/boards/:id/items/reorder', async (req, res) => {
+  app.put('/api/boards/:id/items/reorder', isAdmin, async (req, res) => {
     try {
       const { itemIds } = req.body;
       if (!Array.isArray(itemIds) || itemIds.length === 0) {
@@ -2552,7 +2532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Remove item from board
-  app.delete('/api/boards/:id/items/:itemId', async (req, res) => {
+  app.delete('/api/boards/:id/items/:itemId', isAdmin, async (req, res) => {
     try {
       const deleted = await storage.removeBoardItem(req.params.itemId);
       if (!deleted) return res.status(404).json({ message: "Board item not found" });
@@ -2564,7 +2544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get board stars (admin)
-  app.get('/api/boards/:id/stars', async (req, res) => {
+  app.get('/api/boards/:id/stars', isAdmin, async (req, res) => {
     try {
       const stars = await storage.getBoardStars(req.params.id);
       res.json(stars);
@@ -2577,7 +2557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================== ART SHOWS (POS) =====================
 
   // Get all art shows (admin)
-  app.get('/api/art-shows', async (req, res) => {
+  app.get('/api/art-shows', isAdmin, async (req, res) => {
     try {
       const shows = await storage.getArtShows();
       res.json(shows);
@@ -2587,7 +2567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create art show (admin)
-  app.post('/api/art-shows', async (req, res) => {
+  app.post('/api/art-shows', isAdmin, async (req, res) => {
     try {
       const data = insertArtShowSchema.parse(req.body);
       const show = await storage.createArtShow(data);
@@ -2598,7 +2578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single art show (admin)
-  app.get('/api/art-shows/:id', async (req, res) => {
+  app.get('/api/art-shows/:id', isAdmin, async (req, res) => {
     try {
       const show = await storage.getArtShow(req.params.id);
       if (!show) return res.status(404).json({ message: "Art show not found" });
@@ -2609,7 +2589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update art show (admin)
-  app.patch('/api/art-shows/:id', async (req, res) => {
+  app.patch('/api/art-shows/:id', isAdmin, async (req, res) => {
     try {
       const show = await storage.updateArtShow(req.params.id, req.body);
       if (!show) return res.status(404).json({ message: "Art show not found" });
@@ -2620,7 +2600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete art show (admin)
-  app.delete('/api/art-shows/:id', async (req, res) => {
+  app.delete('/api/art-shows/:id', isAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteArtShow(req.params.id);
       if (!deleted) return res.status(404).json({ message: "Art show not found" });
@@ -2631,7 +2611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get QR codes for a show (admin)
-  app.get('/api/art-shows/:id/qr-codes', async (req, res) => {
+  app.get('/api/art-shows/:id/qr-codes', isAdmin, async (req, res) => {
     try {
       const codes = await storage.getArtShowQrCodes(req.params.id);
       res.json(codes);
@@ -2641,7 +2621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create QR code for a show (admin)
-  app.post('/api/art-shows/:id/qr-codes', async (req, res) => {
+  app.post('/api/art-shows/:id/qr-codes', isAdmin, async (req, res) => {
     try {
       const data = insertArtShowQrCodeSchema.parse({ ...req.body, showId: req.params.id });
       const code = await storage.createArtShowQrCode(data);
@@ -2652,7 +2632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update QR code (admin)
-  app.patch('/api/art-shows/qr-codes/:codeId', async (req, res) => {
+  app.patch('/api/art-shows/qr-codes/:codeId', isAdmin, async (req, res) => {
     try {
       const code = await storage.updateArtShowQrCode(req.params.codeId, req.body);
       if (!code) return res.status(404).json({ message: "QR code not found" });
@@ -2663,7 +2643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete QR code (admin)
-  app.delete('/api/art-shows/qr-codes/:codeId', async (req, res) => {
+  app.delete('/api/art-shows/qr-codes/:codeId', isAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteArtShowQrCode(req.params.codeId);
       if (!deleted) return res.status(404).json({ message: "QR code not found" });

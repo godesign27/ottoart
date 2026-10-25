@@ -8,11 +8,18 @@ import {
   getObjectAclPolicy,
   setObjectAclPolicy,
 } from "./objectAcl";
+import {
+  LOCAL_STORAGE_URL_PREFIX,
+  localObjectStorageClient,
+  localSignedObjectURL,
+} from "./localObjectStorage";
+
+const isLocalDev = process.env.LOCAL_DEV === "1";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
 // The object storage client is used to interact with the object storage service.
-export const objectStorageClient = new Storage({
+const gcsObjectStorageClient = new Storage({
   credentials: {
     audience: "replit",
     subject_token_type: "access_token",
@@ -29,6 +36,11 @@ export const objectStorageClient = new Storage({
   },
   projectId: "",
 });
+
+// LOCAL_DEV=1 swaps GCS for a folder on disk (see localObjectStorage.ts).
+export const objectStorageClient: Storage = isLocalDev
+  ? (localObjectStorageClient as unknown as Storage)
+  : gcsObjectStorageClient;
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -184,13 +196,15 @@ export class ObjectStorageService {
   normalizeObjectEntityPath(
     rawPath: string,
   ): string {
-    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
+    let rawObjectPath: string;
+    if (isLocalDev && rawPath.startsWith(`${LOCAL_STORAGE_URL_PREFIX}/`)) {
+      rawObjectPath = rawPath.slice(LOCAL_STORAGE_URL_PREFIX.length);
+    } else if (rawPath.startsWith("https://storage.googleapis.com/")) {
+      // Extract the path from the URL by removing query parameters and domain
+      rawObjectPath = new URL(rawPath).pathname;
+    } else {
       return rawPath;
     }
-  
-    // Extract the path from the URL by removing query parameters and domain
-    const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
   
     let objectEntityDir = this.getPrivateObjectDir();
     if (!objectEntityDir.endsWith("/")) {
@@ -271,6 +285,9 @@ async function signObjectURL({
   method: "GET" | "PUT" | "DELETE" | "HEAD";
   ttlSec: number;
 }): Promise<string> {
+  if (isLocalDev) {
+    return localSignedObjectURL(bucketName, objectName);
+  }
   const request = {
     bucket_name: bucketName,
     object_name: objectName,

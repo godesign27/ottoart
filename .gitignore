@@ -7,3 +7,6 @@ vite.config.ts.*
 /generated-artifacts/*
 !/generated-artifacts/ottoart-schema.sql
 !/generated-artifacts/ottoart-production-schema.sql
+# Local development
+.env.local
+.local-storage

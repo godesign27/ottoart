@@ -16,7 +16,6 @@ async function uploadSingleFile(file: File): Promise<string> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-admin-key": "dev-admin-key-2024",
     },
   });
 
@@ -42,7 +41,6 @@ async function uploadSingleFile(file: File): Promise<string> {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "x-admin-key": "dev-admin-key-2024",
     },
     body: JSON.stringify({
       imageURL: uploadURL,

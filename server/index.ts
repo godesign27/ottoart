@@ -1,6 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { registerLocalStorageRoutes } from "./localObjectStorage";
+
+const isLocalDev = process.env.LOCAL_DEV === "1";
 
 // Validate required environment variables for object storage
 function validateObjectStorageEnvironment() {
@@ -52,6 +55,11 @@ function validateObjectStorageEnvironment() {
 }
 
 const app = express();
+
+// Must run before express.json so the raw upload body reaches it intact.
+if (isLocalDev) {
+  registerLocalStorageRoutes(app);
+}
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -91,7 +99,7 @@ app.use((req, res, next) => {
 (async () => {
   // Validate object storage environment before starting server
   try {
-    validateObjectStorageEnvironment();
+    if (!isLocalDev) validateObjectStorageEnvironment();
   } catch (error) {
     console.error("Environment validation failed:", error instanceof Error ? error.message : String(error));
     process.exit(1);
@@ -123,8 +131,8 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host: isLocalDev ? "127.0.0.1" : "0.0.0.0",
+    reusePort: !isLocalDev,
   }, () => {
     log(`serving on port ${port}`);
   });

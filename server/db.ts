@@ -1,9 +1,9 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
+import pg from "pg";
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -11,5 +11,20 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// LOCAL_DEV=1 talks to a plain local Postgres over TCP; otherwise use Neon's
+// websocket driver as on Replit.
+const isLocalDev = process.env.LOCAL_DEV === "1";
+
+let pool: any;
+let db: any;
+
+if (isLocalDev) {
+  pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  db = drizzlePg(pool, { schema });
+} else {
+  neonConfig.webSocketConstructor = ws;
+  pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
+  db = drizzleNeon({ client: pool, schema });
+}
+
+export { pool, db };

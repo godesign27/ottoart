@@ -1,4 +1,4 @@
-import { User as UserIcon, Heart, ShoppingBag, Settings, LogOut, LogIn, UserPlus, Moon, Sun } from "lucide-react";
+import { User as UserIcon, Heart, ShoppingBag, Settings, LogOut, LogIn, UserPlus, Moon, Sun, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -130,6 +130,18 @@ export function ProfileMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
+        {userData?.role === 'admin' && (
+          <>
+            <DropdownMenuItem asChild data-testid="menu-admin">
+              <Link href="/admin">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Admin Dashboard
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         
         <DropdownMenuItem asChild data-testid="menu-profile">
           <Link href="/profile">
