@@ -234,6 +234,49 @@ export default function TechStackPage() {
                 </p>
               </div>
 
+              <Card data-testid="database-connection-reference">
+                <CardHeader>
+                  <CardTitle>Database connection reference</CardTitle>
+                  <CardDescription>
+                    Saved connection details to help you find the OttoArt database.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <dl className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Neon project</dt>
+                      <dd className="font-mono text-sm break-all">neon-cyan-tree</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Connected Vercel project</dt>
+                      <dd className="font-mono text-sm break-all">v0-otto-art-e-commerce</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Replit production database name</dt>
+                      <dd className="font-mono text-sm">neondb</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Replit development database name</dt>
+                      <dd className="font-mono text-sm">heliumdb</dd>
+                    </div>
+                  </dl>
+                  <p className="text-sm text-muted-foreground">
+                    The Neon-to-Vercel connection is recorded from your screenshot.
+                    It has not been verified that the Replit production site uses this
+                    same Neon project. A Neon project name and a database name are
+                    different identifiers.
+                  </p>
+                  <a
+                    href="https://console.neon.tech"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Open Neon dashboard <ExternalLink className="h-3 w-3" />
+                  </a>
+                </CardContent>
+              </Card>
+
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {techStack.map((tech) => (
                   <Card key={tech.name} className="hover:shadow-md transition-shadow">
