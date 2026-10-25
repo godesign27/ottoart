@@ -19,7 +19,10 @@ let pool: any;
 let db: any;
 
 if (isLocalDev) {
-  pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  // DATABASE_SSL=no-verify: encrypted connection without CA verification
+  // (Supabase test setup). Production should verify with Supabase's CA cert.
+  const ssl = process.env.DATABASE_SSL === "no-verify" ? { rejectUnauthorized: false } : undefined;
+  pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl });
   db = drizzlePg(pool, { schema });
 } else {
   neonConfig.webSocketConstructor = ws;

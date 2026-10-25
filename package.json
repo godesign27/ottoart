@@ -8,6 +8,8 @@
     "dev:local": "node --env-file=.env.local --import tsx server/index.ts",
     "db:push:local": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs push --force",
     "import:live": "node --env-file=.env.local --import tsx scripts/import-from-live.ts",
+    "dev:supabase": "node --env-file=.env.supabase --import tsx server/index.ts",
+    "import:live:supabase": "node --env-file=.env.supabase --import tsx scripts/import-from-live.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",

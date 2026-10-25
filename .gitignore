@@ -10,3 +10,4 @@ vite.config.ts.*
 # Local development
 .env.local
 .local-storage
+.env.supabase
