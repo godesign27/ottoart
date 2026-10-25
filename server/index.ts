@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { registerLocalStorageRoutes } from "./localObjectStorage";
+import { getStorageBackend } from "./storageBackend";
 
 const isLocalDev = process.env.LOCAL_DEV === "1";
 
@@ -57,7 +58,7 @@ function validateObjectStorageEnvironment() {
 const app = express();
 
 // Must run before express.json so the raw upload body reaches it intact.
-if (isLocalDev) {
+if (getStorageBackend() === "local") {
   registerLocalStorageRoutes(app);
 }
 app.use(express.json());

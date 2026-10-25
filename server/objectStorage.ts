@@ -13,8 +13,14 @@ import {
   localObjectStorageClient,
   localSignedObjectURL,
 } from "./localObjectStorage";
+import {
+  supabaseObjectStorageClient,
+  supabaseSignedUploadURL,
+  supabaseUploadUrlToPath,
+} from "./supabaseObjectStorage";
+import { getStorageBackend } from "./storageBackend";
 
-const isLocalDev = process.env.LOCAL_DEV === "1";
+const backend = getStorageBackend();
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -37,9 +43,11 @@ const gcsObjectStorageClient = new Storage({
   projectId: "",
 });
 
-// LOCAL_DEV=1 swaps GCS for a folder on disk (see localObjectStorage.ts).
-export const objectStorageClient: Storage = isLocalDev
-  ? (localObjectStorageClient as unknown as Storage)
+// STORAGE_BACKEND picks Supabase Storage, a local folder, or Replit's GCS
+// (see storageBackend.ts). All three expose the same bucket().file() calls.
+export const objectStorageClient: Storage =
+  backend === "supabase" ? (supabaseObjectStorageClient as unknown as Storage)
+  : backend === "local" ? (localObjectStorageClient as unknown as Storage)
   : gcsObjectStorageClient;
 
 export class ObjectNotFoundError extends Error {
@@ -197,7 +205,10 @@ export class ObjectStorageService {
     rawPath: string,
   ): string {
     let rawObjectPath: string;
-    if (isLocalDev && rawPath.startsWith(`${LOCAL_STORAGE_URL_PREFIX}/`)) {
+    const supabasePath = backend === "supabase" ? supabaseUploadUrlToPath(rawPath) : null;
+    if (supabasePath) {
+      rawObjectPath = supabasePath;
+    } else if (backend === "local" && rawPath.startsWith(`${LOCAL_STORAGE_URL_PREFIX}/`)) {
       rawObjectPath = rawPath.slice(LOCAL_STORAGE_URL_PREFIX.length);
     } else if (rawPath.startsWith("https://storage.googleapis.com/")) {
       // Extract the path from the URL by removing query parameters and domain
@@ -285,7 +296,11 @@ async function signObjectURL({
   method: "GET" | "PUT" | "DELETE" | "HEAD";
   ttlSec: number;
 }): Promise<string> {
-  if (isLocalDev) {
+  if (backend === "supabase") {
+    if (method !== "PUT") throw new Error("Only signed upload URLs are supported on Supabase");
+    return supabaseSignedUploadURL(bucketName, objectName);
+  }
+  if (backend === "local") {
     return localSignedObjectURL(bucketName, objectName);
   }
   const request = {

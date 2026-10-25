@@ -1,6 +1,16 @@
 # Supabase migration plan
 
 Branch: `supabase-migration`
+
+## Status (tested against the OttoArt Supabase project)
+
+| Phase | State | How to run it locally |
+|---|---|---|
+| 1. Database | Done and tested: schema, Data API lock-down, live catalogue loaded; shop, admin rules and product edits work | `npm run import:live:supabase`, then `npm run dev:supabase` |
+| 2. Image storage | Done and tested: private `artwork` bucket holds all 85 images, uploads go straight to Supabase, public/private visibility enforced | `npm run images:to-supabase` |
+| 3. Sign-in | Not started (the local one-click dev login is still in use) | — |
+
+Follow-up from phase 2: images are streamed through the app server. A 1.5 MB image took about 1.7 s locally. Before launch, consider serving public images from a public bucket or CDN to make them faster.
 Goal: move Otto Art off Replit-only services (database, image storage and sign-in) onto Supabase. The site keeps working the same way for shoppers and for the admin.
 
 ## Why
