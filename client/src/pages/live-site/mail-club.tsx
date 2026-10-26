@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@clerk/react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Check, Star, Mail, Gift, Heart, Crown } from "lucide-react";
 import type { SubscriptionPlan } from "@shared/schema";
@@ -89,7 +89,7 @@ export default function MailClubPage() {
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const { toast } = useToast();
-  const { isAuthenticated, user } = useAuth();
+  const { isSignedIn: isAuthenticated } = useUser();
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
     setViewMode(mode);

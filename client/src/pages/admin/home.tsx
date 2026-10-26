@@ -30,13 +30,13 @@ export default function AdminHomePage() {
   // Fetch page settings for home page
   const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['/api/page-settings'],
-    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+    queryFn: () => apiRequest("GET", '/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
   });
 
   // Fetch site settings to get the saved hero image URL
   const { data: siteSettings, isLoading: isLoadingSiteSettings } = useQuery<any[]>({
     queryKey: ['/api/site-settings'],
-    queryFn: () => fetch('/api/site-settings').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/site-settings').then(res => res.json())
   });
 
   const homePageSettings = pageSettings?.find(p => p.page === 'home');

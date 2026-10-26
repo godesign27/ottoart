@@ -10,11 +10,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser, useClerk } from "@clerk/react";
+import { useQuery } from "@tanstack/react-query";
+import type { User } from "@shared/schema";
 import { useTheme } from "@/hooks/use-theme";
 
 export function ProfileMenu() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isSignedIn: isAuthenticated, isLoaded } = useUser();
+  const isLoading = !isLoaded;
+  const { signOut } = useClerk();
+  const { data: localUser } = useQuery<User>({ queryKey: ["/api/me"], enabled: isAuthenticated });
   const { theme, toggleTheme } = useTheme();
 
   if (isLoading) {
@@ -44,14 +49,14 @@ export function ProfileMenu() {
           <DropdownMenuSeparator />
           
           <div className="p-2 space-y-2">
-            <a href="/api/login" className="block" data-testid="menu-login">
+            <a href="/sign-in" className="block" data-testid="menu-login">
               <Button className="w-full justify-start gap-2" variant="default">
                 <LogIn className="h-4 w-4" />
                 Sign In
               </Button>
             </a>
             
-            <a href="/api/login" className="block" data-testid="menu-register">
+            <a href="/sign-up" className="block" data-testid="menu-register">
               <Button className="w-full justify-start gap-2" variant="outline">
                 <UserPlus className="h-4 w-4" />
                 Create Account
@@ -81,7 +86,11 @@ export function ProfileMenu() {
   }
 
   // Authenticated state - properly typed user data
-  const userData = user as any;
+  const userData = {
+    firstName: user?.firstName, lastName: user?.lastName,
+    email: user?.primaryEmailAddress?.emailAddress, profileImageUrl: user?.imageUrl,
+    role: localUser?.role,
+  };
   const fullName = userData?.firstName && userData?.lastName 
     ? `${userData.firstName} ${userData.lastName}` 
     : userData?.firstName || userData?.email?.split('@')[0] || 'User';
@@ -171,11 +180,9 @@ export function ProfileMenu() {
 
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem asChild data-testid="menu-logout">
-          <a href="/api/logout">
+        <DropdownMenuItem data-testid="menu-logout" onSelect={() => void signOut({ redirectUrl: "/" })}>
             <LogOut className="mr-2 h-4 w-4" />
             Log Out
-          </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

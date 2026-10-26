@@ -1,6 +1,7 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { Switch, Route, Redirect, Router as WouterRouter } from "wouter";
+import { Show } from "@clerk/react";
+import { ClerkProviderWithRoutes, SignInPage, SignUpPage, basePath } from "@/components/auth/clerk-provider";
+import { AccessBoundary } from "@/components/auth/access-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/theme-provider";
@@ -57,10 +58,16 @@ import CertificatesPage from "@/pages/admin/certificates";
 import PostsPage from "@/pages/admin/posts";
 import MailingListPage from "@/pages/admin/mailing-list";
 
+function HomeRedirect() {
+  return <><Show when="signed-in"><Redirect to="/account" /></Show><Show when="signed-out"><LiveSiteHome /></Show></>;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={LiveSiteHome} />
+      <Route path="/" component={HomeRedirect} />
+      <Route path="/sign-in/*?" component={SignInPage} />
+      <Route path="/sign-up/*?" component={SignUpPage} />
       <Route path="/shop-all" component={ShopAllPage} />
       <Route path="/originals" component={OriginalsPage} />
       <Route path="/prints" component={PrintsPage} />
@@ -119,14 +126,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <WouterRouter base={basePath}>
+    <ClerkProviderWithRoutes>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <AccessBoundary><Router /></AccessBoundary>
         </TooltipProvider>
       </ThemeProvider>
-    </QueryClientProvider>
+    </ClerkProviderWithRoutes>
+    </WouterRouter>
   );
 }
 

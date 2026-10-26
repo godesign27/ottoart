@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +75,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
         params.append('category', categorySlug);
       }
       const url = `/api/products${params.toString() ? '?' + params.toString() : ''}`;
-      const response = await fetch(url);
+      const response = await apiRequest("GET", url);
       return response.json();
     },
     select: (data) => {

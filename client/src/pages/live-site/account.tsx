@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@clerk/react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { User, Mail, Crown, Star, Gift, Heart, ShoppingBag, Calendar, DollarSign, X } from "lucide-react";
 import type { UserSubscription, SubscriptionPlan } from "@shared/schema";
@@ -22,7 +22,8 @@ interface SubscriptionWithPlan extends UserSubscription {
 export default function AccountPage() {
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const { user, isSignedIn: isAuthenticated, isLoaded } = useUser();
+  const authLoading = !isLoaded;
   const { toast } = useToast();
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
@@ -117,7 +118,7 @@ export default function AccountPage() {
             <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-foreground mb-2">My Account</h1>
             <p className="text-muted-foreground mb-8">Please log in to view your account details</p>
-            <Button onClick={() => setLocation('/api/auth/login')} data-testid="login-button">
+            <Button onClick={() => setLocation('/sign-in')} data-testid="login-button">
               Log In
             </Button>
           </div>
@@ -165,7 +166,7 @@ export default function AccountPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground" data-testid="account-title">My Account</h1>
           <p className="text-muted-foreground mt-2">
-            Welcome back, {(user as any)?.firstName || (user as any)?.email || 'there'}!
+            Welcome back, {user?.firstName || user?.primaryEmailAddress?.emailAddress || 'there'}!
           </p>
         </div>
 

@@ -1,11 +1,11 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@clerk/react";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@shared/schema";
 
 export function useFavorites() {
-  const { isAuthenticated } = useAuth();
+  const { isSignedIn: isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   const { data: favorites = [], isLoading } = useQuery<Product[]>({

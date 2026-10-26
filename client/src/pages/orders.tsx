@@ -16,14 +16,14 @@ import {
   DollarSign
 } from "lucide-react";
 import type { Order } from "@shared/schema";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@clerk/react";
 import { Link } from "wouter";
 
 export default function UserOrders() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isSignedIn: isAuthenticated } = useUser();
 
   // Fetch user's orders
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  const { data: orders = [], isLoading, error } = useQuery<Order[]>({
     queryKey: ["/api/user/orders"],
     enabled: isAuthenticated,
   });
@@ -74,7 +74,7 @@ export default function UserOrders() {
                 Please sign in to access your order history and track your purchases.
               </p>
               <Button asChild data-testid="button-sign-in">
-                <a href="/api/login">Sign In</a>
+                <a href="/sign-in">Sign In</a>
               </Button>
             </CardContent>
           </Card>
@@ -105,8 +105,9 @@ export default function UserOrders() {
             </div>
           )}
 
+          {error && <p role="alert">Unable to load orders: {error.message}</p>}
           {/* Empty state */}
-          {!isLoading && orders.length === 0 && (
+          {!error && !isLoading && orders.length === 0 && (
             <Card>
               <CardContent className="text-center py-12">
                 <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />

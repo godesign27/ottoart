@@ -27,7 +27,7 @@ The backend uses **Express.js** with **TypeScript** following a RESTful API desi
 
 - **Database ORM**: Drizzle ORM for type-safe database operations with PostgreSQL
 - **Schema Validation**: Zod schemas shared between frontend and backend for consistent data validation
-- **Session Management**: Express sessions with PostgreSQL storage
+- **Authentication**: Clerk browser sessions, validated by Express middleware with a same-origin production proxy
 - **API Structure**: RESTful endpoints organized by resource type (products, categories, orders, messages)
 - **Error Handling**: Centralized error handling middleware
 - **Development Tools**: Hot reloading with Vite integration for seamless development experience
@@ -52,7 +52,9 @@ The database schema supports features like product variants, image galleries, in
 - **Art Show QR Codes**: Price-tier QR codes that link to a Stripe checkout flow for in-person art show purchases
 
 ### Authentication and Authorization
-- Session-based authentication using Express sessions
+- Clerk authentication with branded sign-in/sign-up pages and cookie-based API requests
+- Local users retain roles and application relationships; migrated accounts resolve through the preserved legacy identity claim, and new accounts are provisioned on first authenticated request
+- Managed session identity claims are preferred. If absent, a trusted Clerk lookup by the verified native ID resolves the legacy external ID and primary email; missing primary email blocks email-dependent actions rather than sending blank billing information.
 - Role-based access control (admin vs. public users)
 - Secure password handling and user management
 - Protected admin routes and API endpoints

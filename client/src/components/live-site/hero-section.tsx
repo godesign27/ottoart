@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
@@ -5,7 +6,7 @@ export function HeroSection() {
   // Fetch site settings to get the saved profile image and artist name
   const { data: siteSettings } = useQuery<any[]>({
     queryKey: ['/api/site-settings'],
-    queryFn: () => fetch('/api/site-settings').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/site-settings').then(res => res.json())
   });
 
   // Extract artist data from site settings

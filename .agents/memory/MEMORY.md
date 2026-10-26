@@ -1,0 +1,1 @@
+- [Clerk cookie tests](clerk-cookie-testing.md) — valid development session tokens still need consistent browser metadata in cookie-based API tests.

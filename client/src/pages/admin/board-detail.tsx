@@ -42,7 +42,7 @@ export default function AdminBoardDetailPage() {
   const { data: board, isLoading: boardLoading } = useQuery<Board>({
     queryKey: ['/api/boards', boardId],
     queryFn: async () => {
-      const res = await fetch(`/api/boards/${boardId}`);
+      const res = await apiRequest("GET", `/api/boards/${boardId}`);
       if (!res.ok) throw new Error('Board not found');
       return res.json();
     },
@@ -52,7 +52,7 @@ export default function AdminBoardDetailPage() {
   const { data: boardItems = [] } = useQuery<BoardItemWithProduct[]>({
     queryKey: ['/api/boards', boardId, 'items'],
     queryFn: async () => {
-      const res = await fetch(`/api/boards/${boardId}/items`);
+      const res = await apiRequest("GET", `/api/boards/${boardId}/items`);
       return res.json();
     },
     enabled: !!boardId,
@@ -61,7 +61,7 @@ export default function AdminBoardDetailPage() {
   const { data: boardStars = [] } = useQuery<BoardStarWithProduct[]>({
     queryKey: ['/api/boards', boardId, 'stars'],
     queryFn: async () => {
-      const res = await fetch(`/api/boards/${boardId}/stars`);
+      const res = await apiRequest("GET", `/api/boards/${boardId}/stars`);
       return res.json();
     },
     enabled: !!boardId,
