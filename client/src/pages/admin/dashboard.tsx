@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -74,17 +75,17 @@ export default function AdminDashboard() {
   // Fetch dynamic content for Live Site Activity and Recent Activity
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['/api/products'],
-    queryFn: () => fetch('/api/products').then(res => res.json()) as Promise<Product[]>
+    queryFn: () => apiRequest("GET", '/api/products').then(res => res.json()) as Promise<Product[]>
   });
 
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery({
     queryKey: ['/api/orders'],
-    queryFn: () => fetch('/api/orders').then(res => res.json()) as Promise<Order[]>
+    queryFn: () => apiRequest("GET", '/api/orders').then(res => res.json()) as Promise<Order[]>
   });
 
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
     queryKey: ['/api/messages'],
-    queryFn: () => fetch('/api/messages').then(res => res.json()) as Promise<Message[]>
+    queryFn: () => apiRequest("GET", '/api/messages').then(res => res.json()) as Promise<Message[]>
   });
 
   // Calculate dynamic stats
@@ -102,7 +103,9 @@ export default function AdminDashboard() {
         onClose={handleMobileMenuClose}
       />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
+        isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
+      }`}>
         <AdminHeader 
           viewMode={viewMode} 
           onViewModeChange={handleViewModeChange}
@@ -112,7 +115,7 @@ export default function AdminDashboard() {
           isSidebarCollapsed={isSidebarCollapsed}
         />
         
-        <main className="flex-1 overflow-auto p-6 bg-background">
+        <main className="min-h-0 flex-1 overflow-auto p-4 sm:p-6 bg-background">
           <div className="max-w-7xl mx-auto space-y-6 fade-in">
             {/* Dashboard Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">

@@ -1,7 +1,7 @@
+import { getClerkEmails } from "./clerkIdentity";
 import { 
   type User, 
   type InsertUser,
-  type UpsertUser,
   type Favorite,
   type InsertFavorite,
   type SubscriptionPlan,
@@ -83,9 +83,8 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
-  // Users (updated for Replit Auth)
+  // Local users retain application roles and relationships.
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>; // Required for Replit Auth
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
@@ -373,22 +372,6 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  // Replit Auth upsert method - creates or updates user
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
-  }
-
   async updateUser(id: string, updateData: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await db.update(users)
       .set({
@@ -538,13 +521,12 @@ export class DatabaseStorage implements IStorage {
       currentPeriodStart: userSubscriptions.currentPeriodStart,
       currentPeriodEnd: userSubscriptions.currentPeriodEnd,
       cancelAtPeriodEnd: userSubscriptions.cancelAtPeriodEnd,
-      userEmail: users.email
     })
     .from(userSubscriptions)
-    .leftJoin(users, eq(userSubscriptions.userId, users.id))
     .orderBy(desc(userSubscriptions.createdAt));
     
-    return result as (UserSubscription & { userEmail: string })[];
+    const emails = await getClerkEmails(result.map(row => row.userId));
+    return result.map(row => ({ ...row, userEmail: emails.get(row.userId) ?? "" }));
   }
 
   async createUserSubscription(insertSubscription: InsertUserSubscription): Promise<UserSubscription> {

@@ -103,7 +103,7 @@ export default function PosCheckoutPage() {
 
   const { data: codeInfo, isLoading, error } = useQuery<QrCodeWithShow>({
     queryKey: ['/api/pos', id],
-    queryFn: () => fetch(`/api/pos/${id}`).then(async (r) => {
+    queryFn: () => apiRequest("GET", `/api/pos/${id}`).then(async (r) => {
       if (!r.ok) throw new Error("Not found");
       return r.json();
     }),

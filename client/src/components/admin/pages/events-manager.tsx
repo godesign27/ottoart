@@ -79,11 +79,8 @@ export function EventsManager() {
     setImagePreview(previewUrl);
 
     try {
-      const uploadResponse = await fetch("/api/objects/upload", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const uploadResponse = await apiRequest("POST", "/api/objects/upload", undefined, {
+        "x-admin-key": "dev-admin-key-2024",
       });
 
       if (!uploadResponse.ok) throw new Error("Failed to get upload URL");
@@ -98,13 +95,8 @@ export function EventsManager() {
 
       if (!uploadFileResponse.ok) throw new Error("Failed to upload file");
 
-      const finalizeResponse = await fetch("/api/objects/finalize", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageURL: uploadURL }),
-      });
+      const finalizeResponse = await apiRequest("PUT", "/api/objects/finalize",
+        { imageURL: uploadURL }, { "x-admin-key": "dev-admin-key-2024" });
 
       if (!finalizeResponse.ok) throw new Error("Failed to finalize upload");
 
@@ -163,7 +155,7 @@ export function EventsManager() {
   // Fetch page settings
   const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['/api/page-settings', 'events'],
-    queryFn: () => fetch('/api/page-settings/events').then(res => res.json()) as Promise<PageSettings>
+    queryFn: () => apiRequest("GET", '/api/page-settings/events').then(res => res.json()) as Promise<PageSettings>
   });
 
   // Mutation for updating page settings

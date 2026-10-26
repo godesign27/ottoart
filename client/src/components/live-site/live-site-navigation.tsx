@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,8 @@ import {
 import { User, ShoppingCart, Menu, X, Settings, Eye, ChevronDown } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 import { ProfileMenu } from "./profile-menu";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@clerk/react";
+import type { User as AppUser } from "@shared/schema";
 
 interface LiveSiteNavigationProps {
   viewMode?: 'admin' | 'live';
@@ -25,15 +27,18 @@ export function LiveSiteNavigation({
 }: LiveSiteNavigationProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { isSignedIn } = useUser();
+  const { data: localUser } = useQuery<AppUser>({
+    queryKey: ["/api/me"], enabled: isSignedIn,
+  });
 
   // Check if user is admin
-  const isAdmin = user && (user as any).role === 'admin';
+  const isAdmin = localUser?.role === 'admin';
 
   // Fetch page settings
   const { data: pageSettings = [] } = useQuery({
     queryKey: ['/api/page-settings'],
-    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+    queryFn: () => apiRequest("GET", '/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
   });
 
   // Fetch cart items for badge count

@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -22,12 +23,12 @@ export default function GalleryPage() {
 
   const { data: galleryItems = [], isLoading: isLoadingGallery } = useQuery<GalleryItem[]>({
     queryKey: ['/api/gallery'],
-    queryFn: () => fetch('/api/gallery').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/gallery').then(res => res.json())
   });
 
   const { data: galleryProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/gallery'],
-    queryFn: () => fetch('/api/products/gallery').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/products/gallery').then(res => res.json())
   });
 
   const isLoading = isLoadingGallery || isLoadingProducts;

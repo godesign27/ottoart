@@ -1,4 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
+import { publishableKeyFromHost } from "@clerk/shared/keys";
+import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { registerLocalStorageRoutes } from "./localObjectStorage";
@@ -56,6 +60,9 @@ function validateObjectStorageEnvironment() {
 }
 
 const app = express();
+app.set("trust proxy", 1);
+app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+app.use(cors({ credentials: true, origin: true }));
 
 // Must run before express.json so the raw upload body reaches it intact.
 if (getStorageBackend() === "local") {
@@ -63,6 +70,14 @@ if (getStorageBackend() === "local") {
 }
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(
+  clerkMiddleware((req) => ({
+    publishableKey: publishableKeyFromHost(
+      getClerkProxyHost(req) ?? "",
+      process.env.CLERK_PUBLISHABLE_KEY,
+    ),
+  })),
+);
 
 // Serve static files from attached_assets directory
 app.use('/attached_assets', express.static('attached_assets'));

@@ -32,7 +32,7 @@ export default function BoardViewPage() {
   const { data, isLoading, error } = useQuery<{ board: Board; items: BoardItemWithProduct[] }>({
     queryKey: ['/api/boards/public', slug],
     queryFn: async () => {
-      const res = await fetch(`/api/boards/public/${slug}`);
+      const res = await apiRequest("GET", `/api/boards/public/${slug}`);
       if (!res.ok) throw new Error('Board not found');
       return res.json();
     },
@@ -42,7 +42,7 @@ export default function BoardViewPage() {
   const { data: stars = [] } = useQuery<BoardStarWithProduct[]>({
     queryKey: ['/api/boards/public', slug, 'stars'],
     queryFn: async () => {
-      const res = await fetch(`/api/boards/public/${slug}/stars`);
+      const res = await apiRequest("GET", `/api/boards/public/${slug}/stars`);
       if (!res.ok) return [];
       return res.json();
     },
