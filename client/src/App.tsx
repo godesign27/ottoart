@@ -1,5 +1,4 @@
-import { Switch, Route, Redirect, Router as WouterRouter } from "wouter";
-import { Show } from "@clerk/react";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { ClerkProviderWithRoutes, SignInPage, SignUpPage, basePath } from "@/components/auth/clerk-provider";
 import { AccessBoundary } from "@/components/auth/access-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -58,14 +57,10 @@ import CertificatesPage from "@/pages/admin/certificates";
 import PostsPage from "@/pages/admin/posts";
 import MailingListPage from "@/pages/admin/mailing-list";
 
-function HomeRedirect() {
-  return <><Show when="signed-in"><Redirect to="/account" /></Show><Show when="signed-out"><LiveSiteHome /></Show></>;
-}
-
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomeRedirect} />
+      <Route path="/" component={LiveSiteHome} />
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
       <Route path="/shop-all" component={ShopAllPage} />
