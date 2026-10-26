@@ -12,7 +12,6 @@ import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrder
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { requireAuth } from "./middlewares/requireAuth";
-import { getAuth } from "@clerk/express";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
@@ -549,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User orders (protected route)
   app.get("/api/user/orders", requireAuth, async (req: any, res) => {
     try {
-      const userEmail = getAuth(req).sessionClaims?.email;
+      const userEmail = req.authEmail;
       if (typeof userEmail !== "string" || !userEmail) {
         return res.status(403).json({ message: "An email address is required to view orders" });
       }
@@ -1789,9 +1788,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let stripeCustomerId = existingSubscription?.stripeCustomerId;
       
       if (!stripeCustomerId) {
-        const email = getAuth(req).sessionClaims?.email;
+        const email = req.authEmail;
+        if (!email) {
+          return res.status(403).json({ message: "An email address is required to subscribe" });
+        }
         const customer = await stripe.customers.create({
-          email: typeof email === 'string' ? email : '',
+          email,
           metadata: {
             userId: userId,
           },
@@ -1926,7 +1928,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user info for customer creation
-      const email = getAuth(req).sessionClaims?.email;
+      const email = req.authEmail;
+      if (!email) {
+        return res.status(403).json({ message: "An email address is required to subscribe" });
+      }
       
       // Build base URL more reliably
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -1947,7 +1952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }],
         success_url: `${baseUrl}/mail-club/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/mail-club`,
-        customer_email: typeof email === 'string' ? email : '',
+        customer_email: email,
         metadata: {
           userId: userId,
           planId: planId,

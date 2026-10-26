@@ -1,5 +1,35 @@
 import { clerkClient } from "@clerk/express";
 
+type IdentityUser = {
+  id: string;
+  externalId: string | null;
+  primaryEmailAddressId: string | null;
+  emailAddresses: Array<{ id: string; emailAddress: string }>;
+};
+
+async function lookupIdentity(clerkUserId: string): Promise<IdentityUser | undefined> {
+  const result = await clerkClient.users.getUserList({ userId: [clerkUserId], limit: 1 });
+  return result.data.find(user => user.id === clerkUserId);
+}
+
+export async function resolveSessionIdentity(
+  clerkUserId: string,
+  claims: { userId?: unknown; email?: unknown } | null | undefined,
+  lookup: (id: string) => Promise<IdentityUser | undefined> = lookupIdentity,
+): Promise<{ userId: string; email: string | null }> {
+  const claimedId = typeof claims?.userId === "string" && claims.userId ? claims.userId : null;
+  const claimedEmail = typeof claims?.email === "string" && claims.email ? claims.email : null;
+  if (claimedId && claimedEmail) return { userId: claimedId, email: claimedEmail };
+
+  // Managed instances normally include these claims. If either is absent,
+  // resolve only by Clerk's cryptographically verified native ID, never by
+  // client input or an email match. A migrated externalId must win over id.
+  const user = await lookup(clerkUserId);
+  if (!user || user.id !== clerkUserId) throw new Error("Authenticated Clerk account could not be resolved");
+  const email = user.emailAddresses.find(address => address.id === user.primaryEmailAddressId)?.emailAddress;
+  return { userId: user.externalId || user.id, email: email || null };
+}
+
 // Admin lists need other users' identities. Resolve in batches rather than
 // reading stale local identity columns or making per-request getUser calls.
 export async function getClerkEmails(ids: string[]): Promise<Map<string, string>> {

@@ -54,6 +54,7 @@ The database schema supports features like product variants, image galleries, in
 ### Authentication and Authorization
 - Clerk authentication with branded sign-in/sign-up pages and cookie-based API requests
 - Local users retain roles and application relationships; migrated accounts resolve through the preserved legacy identity claim, and new accounts are provisioned on first authenticated request
+- Managed session identity claims are preferred. If absent, a trusted Clerk lookup by the verified native ID resolves the legacy external ID and primary email; missing primary email blocks email-dependent actions rather than sending blank billing information.
 - Role-based access control (admin vs. public users)
 - Secure password handling and user management
 - Protected admin routes and API endpoints

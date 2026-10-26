@@ -3,11 +3,13 @@ import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { users, type User } from "@shared/schema";
+import { resolveSessionIdentity } from "../clerkIdentity";
 
 declare global {
   namespace Express {
     interface Request {
       dbUser: User;
+      authEmail: string | null;
     }
   }
 }
@@ -18,13 +20,11 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
-  // The managed session claim preserves the original subject for migrated users.
-  const userId = auth.sessionClaims?.userId;
-  if (typeof userId !== "string" || !userId) {
-    res.status(403).json({ message: "Account identity is unavailable. Please sign in again." });
-    return;
-  }
   try {
+    const { userId, email } = await resolveSessionIdentity(auth.userId, {
+      userId: auth.sessionClaims?.userId,
+      email: auth.sessionClaims?.email,
+    });
     let [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!dbUser) {
       const [inserted] = await db.insert(users).values({ id: userId })
@@ -37,6 +37,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
       return;
     }
     req.dbUser = dbUser;
+    req.authEmail = email;
     next();
   } catch (error) {
     next(error);
