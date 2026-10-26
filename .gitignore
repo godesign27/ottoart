@@ -16,3 +16,4 @@ vite.config.ts.*
 .agents/
 .claude/skills/
 skills-lock.json
+.env.replit-prod

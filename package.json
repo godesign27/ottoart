@@ -11,6 +11,7 @@
     "dev:supabase": "node --env-file=.env.supabase --import tsx server/index.ts",
     "import:live:supabase": "node --env-file=.env.supabase --import tsx scripts/import-from-live.ts",
     "images:to-supabase": "node --env-file=.env.supabase --import tsx scripts/copy-images-to-supabase.ts",
+    "copy:replit-to-supabase": "node --env-file=.env.supabase --env-file=.env.replit-prod --import tsx scripts/copy-replit-to-supabase.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",

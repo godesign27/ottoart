@@ -8,7 +8,10 @@ Branch: `supabase-migration`
 |---|---|---|
 | 1. Database | Done and tested: schema, Data API lock-down, live catalogue loaded; shop, admin rules and product edits work | `npm run import:live:supabase`, then `npm run dev:supabase` |
 | 2. Image storage | Done and tested: private `artwork` bucket holds all 85 images, uploads go straight to Supabase, public/private visibility enforced | `npm run images:to-supabase` |
+| Full data copy | Done and tested: all 26 tables copied from the Replit production database (sessions excluded). Row counts match, no broken links between records, all 85 referenced images present. Orders, messages, commissions, art shows with QR codes, boards, mailing list and dashboard all work. | `npm run copy:replit-to-supabase` (dry run), then `-- --apply` |
 | 3. Sign-in | Not started (the local one-click dev login is still in use) | — |
+
+Known data note: one delivered order (Oct 2025) lists a product that was later deleted. It's the same on Replit, so it isn't a copy problem.
 
 Follow-up from phase 2: images are streamed through the app server. A 1.5 MB image took about 1.7 s locally. Before launch, consider serving public images from a public bucket or CDN to make them faster.
 Goal: move Otto Art off Replit-only services (database, image storage and sign-in) onto Supabase. The site keeps working the same way for shoppers and for the admin.
