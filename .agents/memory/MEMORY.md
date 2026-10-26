@@ -1,1 +1,2 @@
 - [Clerk cookie tests](clerk-cookie-testing.md) — valid development session tokens still need consistent browser metadata in cookie-based API tests.
+- [Dependency compatibility](dependency-compatibility.md) — keep package recovery within the current runtime and API major versions.

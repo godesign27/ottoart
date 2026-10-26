@@ -15,7 +15,7 @@
     "@clerk/react": "^6.18.1",
     "@clerk/shared": "^4.41.1",
     "@clerk/themes": "^2.4.57",
-    "@google-cloud/storage": "^7.17.1",
+    "@google-cloud/storage": "^7.22.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
@@ -57,7 +57,7 @@
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "framer-motion": "^11.13.1",
     "http-proxy-middleware": "^3.0.10",
     "input-otp": "^1.4.2",
@@ -104,6 +104,10 @@
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
     "vite": "^5.4.19"
+  },
+  "overrides": {
+    "proxy-addr": "^2.0.8",
+    "fast-xml-parser": "^4.5.7"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
