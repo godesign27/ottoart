@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -74,17 +75,17 @@ export default function AdminDashboard() {
   // Fetch dynamic content for Live Site Activity and Recent Activity
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['/api/products'],
-    queryFn: () => fetch('/api/products').then(res => res.json()) as Promise<Product[]>
+    queryFn: () => apiRequest("GET", '/api/products').then(res => res.json()) as Promise<Product[]>
   });
 
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery({
     queryKey: ['/api/orders'],
-    queryFn: () => fetch('/api/orders').then(res => res.json()) as Promise<Order[]>
+    queryFn: () => apiRequest("GET", '/api/orders').then(res => res.json()) as Promise<Order[]>
   });
 
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
     queryKey: ['/api/messages'],
-    queryFn: () => fetch('/api/messages').then(res => res.json()) as Promise<Message[]>
+    queryFn: () => apiRequest("GET", '/api/messages').then(res => res.json()) as Promise<Message[]>
   });
 
   // Calculate dynamic stats

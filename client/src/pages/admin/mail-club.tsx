@@ -1,3 +1,4 @@
+import { useUser } from "@clerk/react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -89,19 +90,13 @@ export default function AdminMailClub() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isMobileMenuOpen]);
 
-  // Check authentication status
-  const { data: authUser, isLoading: isAuthLoading } = useQuery({
-    queryKey: ['/api/auth/user'],
-    queryFn: () => fetch('/api/auth/user').then(res => {
-      if (!res.ok) throw new Error('Not authenticated');
-      return res.json();
-    }),
-    retry: false
-  });
+  // Clerk supplies identity without a mount-time identity request.
+  const { user: authUser, isLoaded } = useUser();
+  const isAuthLoading = !isLoaded;
 
   const { data: subscriptionPlans = [], isLoading } = useQuery({
     queryKey: ['/api/subscription-plans'],
-    queryFn: () => fetch('/api/subscription-plans').then(res => res.json()) as Promise<SubscriptionPlan[]>
+    queryFn: () => apiRequest("GET", '/api/subscription-plans').then(res => res.json()) as Promise<SubscriptionPlan[]>
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -168,7 +163,7 @@ export default function AdminMailClub() {
         variant: "destructive",
         action: isAuthError ? (
           <button 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/sign-in'}
             className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
           >
             Log In
@@ -201,7 +196,7 @@ export default function AdminMailClub() {
         variant: "destructive",
         action: isAuthError ? (
           <button 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/sign-in'}
             className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
           >
             Log In
@@ -232,7 +227,7 @@ export default function AdminMailClub() {
         variant: "destructive",
         action: isAuthError ? (
           <button 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/sign-in'}
             className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
           >
             Log In
@@ -263,7 +258,7 @@ export default function AdminMailClub() {
         variant: "destructive",
         action: isAuthError ? (
           <button 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/sign-in'}
             className="px-3 py-1 bg-white text-red-600 rounded text-sm font-medium hover:bg-gray-100"
           >
             Log In
@@ -338,7 +333,7 @@ export default function AdminMailClub() {
                     <p className="text-sm text-red-600 dark:text-red-400">You need to log in to manage subscription plans.</p>
                   </div>
                   <Button 
-                    onClick={() => window.location.href = '/api/login'}
+                    onClick={() => window.location.href = '/sign-in'}
                     size="sm"
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
@@ -350,7 +345,7 @@ export default function AdminMailClub() {
             {!isAuthLoading && authUser && (
               <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  ✓ Authenticated as {authUser.email || 'admin user'}
+                  ✓ Authenticated as {authUser.primaryEmailAddress?.emailAddress || 'admin user'}
                 </p>
               </div>
             )}

@@ -3,7 +3,7 @@ import { pgTable, text, varchar, integer, boolean, timestamp, decimal, jsonb, in
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table for Replit Auth
+// Retained legacy session table; Clerk manages active sessions.
 export const sessions = pgTable(
   "sessions",
   {
@@ -14,7 +14,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table updated for Replit Auth (keeping existing varchar ID type)
+// Local application users; identity and active sessions are managed by Clerk.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").unique(),
@@ -534,7 +534,7 @@ export type InsertMailingListEntry = z.infer<typeof insertMailingListEntrySchema
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UpsertUser = typeof users.$inferInsert; // For Replit Auth
+export type UpsertUser = typeof users.$inferInsert;
 
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;

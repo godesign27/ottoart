@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ImageUploaderProps {
   onImageUploaded: (imageUrl: string) => void;
@@ -12,12 +13,8 @@ interface ImageUploaderProps {
 }
 
 async function uploadSingleFile(file: File): Promise<string> {
-  const uploadResponse = await fetch("/api/objects/upload", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin-key": "dev-admin-key-2024",
-    },
+  const uploadResponse = await apiRequest("POST", "/api/objects/upload", undefined, {
+    "x-admin-key": "dev-admin-key-2024",
   });
 
   if (!uploadResponse.ok) {
@@ -38,16 +35,8 @@ async function uploadSingleFile(file: File): Promise<string> {
     throw new Error("Failed to upload file");
   }
 
-  const finalizeResponse = await fetch("/api/objects/finalize", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin-key": "dev-admin-key-2024",
-    },
-    body: JSON.stringify({
-      imageURL: uploadURL,
-    }),
-  });
+  const finalizeResponse = await apiRequest("PUT", "/api/objects/finalize",
+    { imageURL: uploadURL }, { "x-admin-key": "dev-admin-key-2024" });
 
   if (!finalizeResponse.ok) {
     throw new Error("Failed to finalize upload");

@@ -5,14 +5,15 @@ import { Footer } from "@/components/live-site/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@clerk/react";
 import { Heart, ShoppingBag } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 export default function FavoritesPage() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isSignedIn: isAuthenticated, isLoaded } = useUser();
+  const authLoading = !isLoaded;
 
-  const { data: favorites, isLoading: favoritesLoading } = useQuery<Product[]>({
+  const { data: favorites, isLoading: favoritesLoading, error } = useQuery<Product[]>({
     queryKey: ['/api/favorites'],
     enabled: isAuthenticated,
   });
@@ -29,7 +30,7 @@ export default function FavoritesPage() {
             <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-foreground mb-2">My Favorites</h1>
             <p className="text-muted-foreground mb-8">Please log in to view your favorite products</p>
-            <Link href="/api/login">
+            <Link href="/sign-in">
               <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors">
                 Log In
               </button>
@@ -71,6 +72,10 @@ export default function FavoritesPage() {
         <Footer />
       </div>
     );
+  }
+
+  if (error) {
+    return <main className="p-8" role="alert"><h1>Unable to load favorites</h1><p>{error.message}</p></main>;
   }
 
   if (!favorites?.length) {

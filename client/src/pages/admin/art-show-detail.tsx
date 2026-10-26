@@ -249,12 +249,12 @@ export default function AdminArtShowDetailPage() {
 
   const { data: show, isLoading: showLoading } = useQuery<ArtShow>({
     queryKey: ['/api/art-shows', id],
-    queryFn: () => fetch(`/api/art-shows/${id}`).then(r => r.json()),
+    queryFn: () => apiRequest("GET", `/api/art-shows/${id}`).then(r => r.json()),
   });
 
   const { data: qrCodes = [], isLoading: codesLoading } = useQuery<ArtShowQrCode[]>({
     queryKey: ['/api/art-shows', id, 'qr-codes'],
-    queryFn: () => fetch(`/api/art-shows/${id}/qr-codes`).then(r => r.json()),
+    queryFn: () => apiRequest("GET", `/api/art-shows/${id}/qr-codes`).then(r => r.json()),
   });
 
   const addForm = useForm<QrCodeFormData>({

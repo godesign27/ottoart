@@ -77,7 +77,7 @@ export default function MessagesPage() {
   // Fetch messages
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
-    queryFn: () => fetch('/api/messages').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/messages').then(res => res.json())
   });
 
   // Mark message as read mutation

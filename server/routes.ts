@@ -11,7 +11,8 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema, insertBoardSchema, insertBoardStarSchema, insertArtShowSchema, insertArtShowQrCodeSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requireAuth } from "./middlewares/requireAuth";
+import { getAuth } from "@clerk/express";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
@@ -36,48 +37,16 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication middleware - from blueprint:javascript_log_in_with_replit
-  await setupAuth(app);
-
-  // Authentication routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
-
-  // Update user profile
-  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { firstName, lastName } = req.body;
-      
-      // Only allow updating firstName and lastName (email and profileImageUrl come from auth provider)
-      const updateData: Partial<InsertUser> = {};
-      if (firstName !== undefined) updateData.firstName = firstName;
-      if (lastName !== undefined) updateData.lastName = lastName;
-      
-      const user = await storage.updateUser(userId, updateData);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json(user);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ message: "Failed to update user" });
-    }
+  // App-specific account state; identity is read from Clerk in the browser.
+  app.get('/api/me', requireAuth, (req, res) => {
+    res.json({ id: req.dbUser.id, role: req.dbUser.role,
+      createdAt: req.dbUser.createdAt, updatedAt: req.dbUser.updatedAt });
   });
 
   // Favorites routes (protected)
-  app.get('/api/favorites', isAuthenticated, async (req: any, res) => {
+  app.get('/api/favorites', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -86,9 +55,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/favorites', isAuthenticated, async (req: any, res) => {
+  app.post('/api/favorites', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const { productId } = req.body;
       const validatedData = insertFavoriteSchema.parse({
         userId,
@@ -102,9 +71,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/favorites/:productId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/favorites/:productId', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const { productId } = req.params;
       const success = await storage.removeFavorite(userId, productId);
       if (success) {
@@ -118,9 +87,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/favorites/:productId/check', isAuthenticated, async (req: any, res) => {
+  app.get('/api/favorites/:productId/check', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const { productId } = req.params;
       const isFavorite = await storage.isFavorite(userId, productId);
       res.json({ isFavorite });
@@ -167,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/subscription-plans", isAuthenticated, async (req, res) => {
+  app.post("/api/subscription-plans", requireAuth, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.parse(req.body);
       
@@ -226,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/subscription-plans/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/subscription-plans/:id", requireAuth, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.partial().parse(req.body);
       const plan = await storage.updateSubscriptionPlan(req.params.id, validatedData);
@@ -240,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/subscription-plans/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/subscription-plans/:id", requireAuth, async (req, res) => {
     try {
       const validatedData = insertSubscriptionPlanSchema.partial().parse(req.body);
       const plan = await storage.updateSubscriptionPlan(req.params.id, validatedData);
@@ -255,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Utility endpoint to fix existing subscription plans with missing Stripe configuration
-  app.post("/api/subscription-plans/fix-stripe", isAuthenticated, async (req, res) => {
+  app.post("/api/subscription-plans/fix-stripe", requireAuth, async (req, res) => {
     try {
       if (!stripe) {
         return res.status(503).json({ message: "Stripe not configured" });
@@ -331,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/subscription-plans/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/subscription-plans/:id", requireAuth, async (req, res) => {
     try {
       const success = await storage.deleteSubscriptionPlan(req.params.id);
       if (!success) {
@@ -578,9 +547,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User orders (protected route)
-  app.get("/api/user/orders", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user/orders", requireAuth, async (req: any, res) => {
     try {
-      const userEmail = req.user.claims.email;
+      const userEmail = getAuth(req).sessionClaims?.email;
+      if (typeof userEmail !== "string" || !userEmail) {
+        return res.status(403).json({ message: "An email address is required to view orders" });
+      }
       const orders = await storage.getOrdersByEmail(userEmail);
       res.json(orders);
     } catch (error) {
@@ -1781,9 +1753,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe subscription endpoints - from blueprint:javascript_stripe
   
   // Create subscription for a plan
-  app.post("/api/create-subscription", isAuthenticated, async (req: any, res) => {
+  app.post("/api/create-subscription", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const { planId } = req.body;
       
       if (!stripe) {
@@ -1817,9 +1789,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let stripeCustomerId = existingSubscription?.stripeCustomerId;
       
       if (!stripeCustomerId) {
-        const user = await storage.getUser(userId);
+        const email = getAuth(req).sessionClaims?.email;
         const customer = await stripe.customers.create({
-          email: user?.email || '',
+          email: typeof email === 'string' ? email : '',
           metadata: {
             userId: userId,
           },
@@ -1860,9 +1832,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user subscriptions
-  app.get("/api/user-subscriptions", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user-subscriptions", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const subscriptions = await storage.getUserSubscriptions(userId);
       res.json(subscriptions);
     } catch (error: any) {
@@ -1872,7 +1844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all user subscriptions for admin
-  app.get("/api/user-subscriptions/all", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user-subscriptions/all", requireAuth, async (req: any, res) => {
     try {
       const subscriptions = await storage.getAllUserSubscriptions();
       res.json(subscriptions);
@@ -1883,9 +1855,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cancel subscription
-  app.post("/api/cancel-subscription/:userSubscriptionId", isAuthenticated, async (req: any, res) => {
+  app.post("/api/cancel-subscription/:userSubscriptionId", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const { userSubscriptionId } = req.params;
       
       if (!stripe) {
@@ -1921,9 +1893,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create Stripe Checkout Session for subscription
-  app.post("/api/checkout/subscription", isAuthenticated, async (req: any, res) => {
+  app.post("/api/checkout/subscription", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.dbUser.id;
       const { planId } = req.body;
       
       if (!stripe) {
@@ -1954,7 +1926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user info for customer creation
-      const user = await storage.getUser(userId);
+      const email = getAuth(req).sessionClaims?.email;
       
       // Build base URL more reliably
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -1975,7 +1947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }],
         success_url: `${baseUrl}/mail-club/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/mail-club`,
-        customer_email: user?.email || '',
+        customer_email: typeof email === 'string' ? email : '',
         metadata: {
           userId: userId,
           planId: planId,

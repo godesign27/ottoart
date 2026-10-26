@@ -25,7 +25,7 @@ export default function ProductDetailPage() {
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ['/api/products', params.id],
     queryFn: async () => {
-      const response = await fetch(`/api/products/${params.id}`);
+      const response = await apiRequest("GET", `/api/products/${params.id}`);
       if (!response.ok) throw new Error('Product not found');
       return response.json();
     },

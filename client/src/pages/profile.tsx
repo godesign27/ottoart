@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Shield, Save, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@clerk/react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -25,7 +25,8 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isSignedIn: isAuthenticated, isLoaded } = useUser();
+  const authLoading = !isLoaded;
   const { toast } = useToast();
 
   const form = useForm<ProfileFormValues>({
@@ -38,28 +39,27 @@ export default function ProfilePage() {
 
   // Fetch current user data
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/api/me"],
     enabled: isAuthenticated,
   });
 
   // Update form when user data loads
   React.useEffect(() => {
-    if (currentUser) {
-      const userData = currentUser as any;
+    if (user) {
       form.reset({
-        firstName: userData?.firstName || "",
-        lastName: userData?.lastName || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
       });
     }
-  }, [currentUser]);
+  }, [user?.firstName, user?.lastName]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
-      const response = await apiRequest("PATCH", "/api/auth/user", data);
-      return response.json();
+      if (!user) throw new Error("Sign in to update your profile");
+      return user.update(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      form.reset({ firstName: user?.firstName || "", lastName: user?.lastName || "" });
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
@@ -78,7 +78,11 @@ export default function ProfilePage() {
     updateProfileMutation.mutate(data);
   };
 
-  const userData = currentUser as any || user as any;
+  const userData = {
+    ...(currentUser as any),
+    firstName: user?.firstName, lastName: user?.lastName,
+    email: user?.primaryEmailAddress?.emailAddress, profileImageUrl: user?.imageUrl,
+  };
   const fullName = userData?.firstName && userData?.lastName 
     ? `${userData.firstName} ${userData.lastName}` 
     : userData?.firstName || userData?.email?.split('@')[0] || 'User';
@@ -116,7 +120,7 @@ export default function ProfilePage() {
                 Please sign in to access your profile settings.
               </p>
               <Button asChild data-testid="button-sign-in">
-                <a href="/api/login">Sign In</a>
+                <a href="/sign-in">Sign In</a>
               </Button>
             </CardContent>
           </Card>

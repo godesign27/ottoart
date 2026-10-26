@@ -23,7 +23,7 @@ export function GalleryManager() {
   // Fetch page settings
   const { data: pageSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['/api/page-settings', 'gallery'],
-    queryFn: () => fetch('/api/page-settings/gallery').then(res => res.json()) as Promise<PageSettings>
+    queryFn: () => apiRequest("GET", '/api/page-settings/gallery').then(res => res.json()) as Promise<PageSettings>
   });
 
   // Mutation for updating page settings
@@ -38,7 +38,7 @@ export function GalleryManager() {
 
   const { data: galleryItems = [], isLoading } = useQuery<GalleryItem[]>({
     queryKey: ['/api/gallery'],
-    queryFn: () => fetch('/api/gallery').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/gallery').then(res => res.json())
   });
 
   // Create gallery item mutation

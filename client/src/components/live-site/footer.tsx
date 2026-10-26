@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Instagram, Twitter, Facebook, Linkedin, Youtube } from "lucide-react";
@@ -12,13 +13,13 @@ export function Footer() {
   // Fetch page settings to determine which pages are enabled
   const { data: pageSettings = [] } = useQuery({
     queryKey: ['/api/page-settings'],
-    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+    queryFn: () => apiRequest("GET", '/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
   });
 
   // Fetch social settings for social media links
   const { data: socialSettings } = useQuery<SocialSettings>({
     queryKey: ['/api/social-settings'],
-    queryFn: () => fetch('/api/social-settings').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/social-settings').then(res => res.json())
   });
 
   const getPageEnabled = (page: string) => {

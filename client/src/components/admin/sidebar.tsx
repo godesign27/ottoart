@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -178,7 +179,7 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
   // Fetch site settings to get the saved profile image
   const { data: siteSettings } = useQuery<any[]>({
     queryKey: ['/api/site-settings'],
-    queryFn: () => fetch('/api/site-settings').then(res => res.json())
+    queryFn: () => apiRequest("GET", '/api/site-settings').then(res => res.json())
   });
 
   // Update profile image and name from site settings
@@ -213,7 +214,7 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
   // Fetch page settings
   const { data: pageSettings = [] } = useQuery({
     queryKey: ['/api/page-settings'],
-    queryFn: () => fetch('/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
+    queryFn: () => apiRequest("GET", '/api/page-settings').then(res => res.json()) as Promise<PageSettings[]>
   });
 
   const getPageEnabled = (page: string) => {
