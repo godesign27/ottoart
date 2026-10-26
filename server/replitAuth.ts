@@ -156,3 +156,21 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+// Allows the request only for a signed-in user whose role is "admin".
+// Signed-out → 401, signed in without admin role → 403.
+export const isAdmin: RequestHandler = (req, res, next) => {
+  isAuthenticated(req, res, async (err?: any) => {
+    if (err) return next(err);
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      const user = userId ? await storage.getUser(userId) : undefined;
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
+};

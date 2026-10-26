@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
+import { AdminGate } from "@/components/admin/admin-gate";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
 import AdminCustomers from "@/pages/admin/customers";
@@ -59,6 +60,7 @@ import MailingListPage from "@/pages/admin/mailing-list";
 
 function Router() {
   return (
+    <AdminGate>
     <Switch>
       <Route path="/" component={LiveSiteHome} />
       <Route path="/shop-all" component={ShopAllPage} />
@@ -114,6 +116,7 @@ function Router() {
       <Route path="/admin/settings/tech-stack" component={TechStackPage} />
       <Route component={NotFound} />
     </Switch>
+    </AdminGate>
   );
 }
 

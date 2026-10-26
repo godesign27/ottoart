@@ -83,7 +83,6 @@ export function EventsManager() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-key": "dev-admin-key-2024",
         },
       });
 
@@ -103,7 +102,6 @@ export function EventsManager() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-key": "dev-admin-key-2024",
         },
         body: JSON.stringify({ imageURL: uploadURL }),
       });
