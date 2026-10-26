@@ -9,7 +9,7 @@ export function StatsGrid() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-6">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="stats-card">
             <CardContent className="p-6">
@@ -61,7 +61,7 @@ export function StatsGrid() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-6">
       {statItems.map((stat) => {
         const Icon = stat.icon;
         return (

@@ -103,7 +103,9 @@ export default function AdminDashboard() {
         onClose={handleMobileMenuClose}
       />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
+        isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
+      }`}>
         <AdminHeader 
           viewMode={viewMode} 
           onViewModeChange={handleViewModeChange}
@@ -113,7 +115,7 @@ export default function AdminDashboard() {
           isSidebarCollapsed={isSidebarCollapsed}
         />
         
-        <main className="flex-1 overflow-auto p-6 bg-background">
+        <main className="min-h-0 flex-1 overflow-auto p-4 sm:p-6 bg-background">
           <div className="max-w-7xl mx-auto space-y-6 fade-in">
             {/* Dashboard Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
