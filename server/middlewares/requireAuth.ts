@@ -43,3 +43,23 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+// The role check on its own, after requireAuth has loaded the account.
+export const adminOnly: RequestHandler = (req, res, next) => {
+  if (req.dbUser?.role !== "admin") {
+    res.status(403).json({ message: "Forbidden" });
+    return;
+  }
+  next();
+};
+
+// Signed out gets 401; signed in without the admin role gets 403.
+export const requireAdmin: RequestHandler = (req, res, next) => {
+  requireAuth(req, res, (error?: unknown) => {
+    if (error) {
+      next(error);
+      return;
+    }
+    adminOnly(req, res, next);
+  });
+};
