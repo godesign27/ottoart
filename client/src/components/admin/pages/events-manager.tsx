@@ -79,9 +79,7 @@ export function EventsManager() {
     setImagePreview(previewUrl);
 
     try {
-      const uploadResponse = await apiRequest("POST", "/api/objects/upload", undefined, {
-        "x-admin-key": "dev-admin-key-2024",
-      });
+      const uploadResponse = await apiRequest("POST", "/api/objects/upload");
 
       if (!uploadResponse.ok) throw new Error("Failed to get upload URL");
 
@@ -96,7 +94,7 @@ export function EventsManager() {
       if (!uploadFileResponse.ok) throw new Error("Failed to upload file");
 
       const finalizeResponse = await apiRequest("PUT", "/api/objects/finalize",
-        { imageURL: uploadURL }, { "x-admin-key": "dev-admin-key-2024" });
+        { imageURL: uploadURL });
 
       if (!finalizeResponse.ok) throw new Error("Failed to finalize upload");
 
