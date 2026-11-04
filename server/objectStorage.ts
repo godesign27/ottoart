@@ -8,11 +8,24 @@ import {
   getObjectAclPolicy,
   setObjectAclPolicy,
 } from "./objectAcl";
+import {
+  LOCAL_STORAGE_URL_PREFIX,
+  localObjectStorageClient,
+  localSignedObjectURL,
+} from "./localObjectStorage";
+import {
+  supabaseObjectStorageClient,
+  supabaseSignedUploadURL,
+  supabaseUploadUrlToPath,
+} from "./supabaseObjectStorage";
+import { getStorageBackend } from "./storageBackend";
+
+const backend = getStorageBackend();
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
 // The object storage client is used to interact with the object storage service.
-export const objectStorageClient = new Storage({
+const gcsObjectStorageClient = new Storage({
   credentials: {
     audience: "replit",
     subject_token_type: "access_token",
@@ -29,6 +42,13 @@ export const objectStorageClient = new Storage({
   },
   projectId: "",
 });
+
+// STORAGE_BACKEND picks Supabase Storage, a local folder, or Replit's GCS
+// (see storageBackend.ts). All three expose the same bucket().file() calls.
+export const objectStorageClient: Storage =
+  backend === "supabase" ? (supabaseObjectStorageClient as unknown as Storage)
+  : backend === "local" ? (localObjectStorageClient as unknown as Storage)
+  : gcsObjectStorageClient;
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -184,13 +204,18 @@ export class ObjectStorageService {
   normalizeObjectEntityPath(
     rawPath: string,
   ): string {
-    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
+    let rawObjectPath: string;
+    const supabasePath = backend === "supabase" ? supabaseUploadUrlToPath(rawPath) : null;
+    if (supabasePath) {
+      rawObjectPath = supabasePath;
+    } else if (backend === "local" && rawPath.startsWith(`${LOCAL_STORAGE_URL_PREFIX}/`)) {
+      rawObjectPath = rawPath.slice(LOCAL_STORAGE_URL_PREFIX.length);
+    } else if (rawPath.startsWith("https://storage.googleapis.com/")) {
+      // Extract the path from the URL by removing query parameters and domain
+      rawObjectPath = new URL(rawPath).pathname;
+    } else {
       return rawPath;
     }
-  
-    // Extract the path from the URL by removing query parameters and domain
-    const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
   
     let objectEntityDir = this.getPrivateObjectDir();
     if (!objectEntityDir.endsWith("/")) {
@@ -271,6 +296,13 @@ async function signObjectURL({
   method: "GET" | "PUT" | "DELETE" | "HEAD";
   ttlSec: number;
 }): Promise<string> {
+  if (backend === "supabase") {
+    if (method !== "PUT") throw new Error("Only signed upload URLs are supported on Supabase");
+    return supabaseSignedUploadURL(bucketName, objectName);
+  }
+  if (backend === "local") {
+    return localSignedObjectURL(bucketName, objectName);
+  }
   const request = {
     bucket_name: bucketName,
     object_name: objectName,

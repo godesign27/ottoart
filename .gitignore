@@ -7,3 +7,13 @@ vite.config.ts.*
 /generated-artifacts/*
 !/generated-artifacts/ottoart-schema.sql
 !/generated-artifacts/ottoart-production-schema.sql
+# Local development
+.env.local
+.local-storage
+.env.supabase
+
+# AI coding-tool skills (kept locally, not part of the site)
+.agents/
+.claude/skills/
+skills-lock.json
+.env.replit-prod

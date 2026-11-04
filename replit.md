@@ -87,3 +87,9 @@ The database schema supports features like product variants, image galleries, in
 - **clsx**: Conditional className utility
 
 The platform is designed to be deployment-ready with support for both development and production environments, including proper build processes and static asset serving.
+
+## Replit development setup
+
+The Supabase development configuration is stored in Replit Secrets. Because `DATABASE_URL` is managed by Replit, the preview workflow maps `SUPABASE_DATABASE_URL` to `DATABASE_URL` at process startup. Keep the workflow mapping in place when changing the run command.
+
+The app also expects `DATABASE_SSL`, `STORAGE_BACKEND`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `PRIVATE_OBJECT_DIR`, and `PUBLIC_OBJECT_SEARCH_PATHS`. Its AI client requires `AI_INTEGRATIONS_OPENAI_API_KEY` and `AI_INTEGRATIONS_OPENAI_BASE_URL`; the preview workflow maps the securely stored `OPENAI_API_KEY` to the name expected by the app. Start the development preview with the Replit Run button. Do not use development settings as production configuration.
