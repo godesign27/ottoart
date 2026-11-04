@@ -33,6 +33,7 @@ export async function resolveSessionIdentity(
 // Admin lists need other users' identities. Resolve in batches rather than
 // reading stale local identity columns or making per-request getUser calls.
 export async function getClerkEmails(ids: string[]): Promise<Map<string, string>> {
+  if (process.env.LOCAL_DEV === "1") return new Map(); // no Clerk locally
   const unique = Array.from(new Set(ids));
   const emails = new Map<string, string>();
   for (let offset = 0; offset < unique.length; offset += 100) {

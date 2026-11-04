@@ -61,7 +61,7 @@ function validateObjectStorageEnvironment() {
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+if (!isLocalDev) app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 app.use(cors({ credentials: true, origin: true }));
 
 // Must run before express.json so the raw upload body reaches it intact.
@@ -70,14 +70,17 @@ if (getStorageBackend() === "local") {
 }
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
+// LOCAL_DEV=1 runs without Clerk; requireAuth signs everyone in as the local admin.
+if (!isLocalDev) {
+  app.use(
+    clerkMiddleware((req) => ({
+      publishableKey: publishableKeyFromHost(
+        getClerkProxyHost(req) ?? "",
+        process.env.CLERK_PUBLISHABLE_KEY,
+      ),
+    })),
+  );
+}
 
 // Serve static files from attached_assets directory
 app.use('/attached_assets', express.static('attached_assets'));
