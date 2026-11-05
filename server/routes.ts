@@ -11,7 +11,8 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrderSchema, insertMessageSchema, insertPageSettingsSchema, insertBioSettingsSchema, insertContactSettingsSchema, insertSocialSettingsSchema, insertRoomBackgroundSchema, insertArtWallSimulationSchema, insertSiteSettingsSchema, insertCartItemSchema, insertGalleryItemSchema, insertFavoriteSchema, insertSubscriptionPlanSchema, insertBoardSchema, insertBoardStarSchema, insertArtShowSchema, insertArtShowQrCodeSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { requireAdmin, requireAuth } from "./middlewares/requireAuth";
+import { isAdminRequest, requireAdmin, requireAuth } from "./middlewares/requireAuth";
+import { isDraft, withoutDrafts } from "./productVisibility";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
@@ -329,7 +330,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         products = await storage.getFeaturedProducts();
       }
       
-      res.json(products);
+      // Admins and everyone else get different answers at this address, so it's never cached.
+      res.set("Cache-Control", "private, no-store");
+      res.json((await isAdminRequest(req)) ? products : withoutDrafts(products));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products" });
     }
@@ -348,7 +351,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/:id", async (req, res) => {
     try {
       const product = await storage.getProduct(req.params.id);
-      if (!product) {
+      res.set("Cache-Control", "private, no-store");
+      if (!product || (isDraft(product) && !(await isAdminRequest(req)))) {
         return res.status(404).json({ message: "Product not found" });
       }
       res.json(product);

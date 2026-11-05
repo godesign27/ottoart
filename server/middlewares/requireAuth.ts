@@ -1,4 +1,4 @@
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
@@ -63,3 +63,20 @@ export const requireAdmin: RequestHandler = (req, res, next) => {
     adminOnly(req, res, next);
   });
 };
+
+// Whether a signed-in admin sent this request. For public routes that show admins more; it never responds, and
+// anything unexpected counts as not an admin.
+export async function isAdminRequest(req: Request): Promise<boolean> {
+  try {
+    const auth = getAuth(req);
+    if (!auth.userId) return false;
+    const { userId } = await resolveSessionIdentity(auth.userId, {
+      userId: auth.sessionClaims?.userId,
+      email: auth.sessionClaims?.email,
+    });
+    const [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    return dbUser?.role === "admin";
+  } catch {
+    return false;
+  }
+}
