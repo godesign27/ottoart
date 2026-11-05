@@ -51,8 +51,26 @@ const techStack: TechItem[] = [
     url: "https://expressjs.com"
   },
   {
+    name: "Clerk",
+    description: "User login, signup, and session management",
+    category: "Authentication",
+    url: "https://clerk.com"
+  },
+  {
+    name: "Supabase Database",
+    description: "Hosted PostgreSQL database for products, orders, and application data",
+    category: "Database",
+    url: "https://supabase.com/dashboard"
+  },
+  {
+    name: "Supabase Storage",
+    description: "Artwork images and uploads, served through the app with access controls",
+    category: "Storage",
+    url: "https://supabase.com/dashboard"
+  },
+  {
     name: "PostgreSQL",
-    description: "Relational database for storing all app data",
+    description: "Relational database engine hosted by Supabase",
     category: "Database",
     url: "https://www.postgresql.org"
   },
@@ -128,6 +146,8 @@ const categoryColors: Record<string, string> = {
   "Frontend": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   "Backend": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   "Database": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+  "Authentication": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300",
+  "Storage": "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
   "Language": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   "Build Tool": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
   "Styling": "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
@@ -212,7 +232,7 @@ export default function TechStackPage() {
         onClose={handleMobileMenuClose}
       />
       
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
+      <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
         isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
       }`}>
         <AdminHeader 
@@ -236,13 +256,54 @@ export default function TechStackPage() {
 
               <Card data-testid="database-connection-reference">
                 <CardHeader>
-                  <CardTitle>Database connection reference</CardTitle>
+                  <CardTitle>Current services and connection reference</CardTitle>
                   <CardDescription>
-                    Saved connection details to help you find the OttoArt database.
+                    Clerk handles accounts; Supabase stores application data and artwork images.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <dl className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Login and signup</dt>
+                      <dd className="font-medium">Clerk</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Application database</dt>
+                      <dd className="font-medium">Supabase PostgreSQL</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Image storage</dt>
+                      <dd className="font-medium">Supabase Storage — artwork bucket</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">Website hosting</dt>
+                      <dd className="font-medium">Replit</dd>
+                    </div>
+                  </dl>
+                  <p className="text-sm text-muted-foreground">
+                    The Supabase database and image delivery have been verified in the
+                    development preview. Publishing and production configuration are
+                    separate; this reference does not confirm the live site's connections.
+                    Credentials are kept in Replit Secrets, not on this page.
+                  </p>
+                  <a
+                    href="https://supabase.com/dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Open Supabase dashboard <ExternalLink className="h-3 w-3" />
+                  </a>
+                  <details className="border-t pt-4">
+                    <summary className="cursor-pointer text-sm font-medium">
+                      Historical Neon and Vercel reference
+                    </summary>
+                    <p className="text-sm text-muted-foreground mt-3">
+                      Previous connection notes, not the current Supabase setup.
+                      The Neon-to-Vercel link came from your screenshot and was not
+                      verified as the database used by this Replit site.
+                    </p>
+                    <dl className="grid gap-4 sm:grid-cols-2 mt-4">
                     <div>
                       <dt className="text-sm text-muted-foreground">Neon project</dt>
                       <dd className="font-mono text-sm break-all">neon-cyan-tree</dd>
@@ -252,20 +313,14 @@ export default function TechStackPage() {
                       <dd className="font-mono text-sm break-all">v0-otto-art-e-commerce</dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Replit production database name</dt>
+                      <dt className="text-sm text-muted-foreground">Previously recorded Replit production database</dt>
                       <dd className="font-mono text-sm">neondb</dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Replit development database name</dt>
+                      <dt className="text-sm text-muted-foreground">Previously recorded Replit development database</dt>
                       <dd className="font-mono text-sm">heliumdb</dd>
                     </div>
                   </dl>
-                  <p className="text-sm text-muted-foreground">
-                    The Neon-to-Vercel connection is recorded from your screenshot.
-                    It has not been verified that the Replit production site uses this
-                    same Neon project. A Neon project name and a database name are
-                    different identifiers.
-                  </p>
                   <a
                     href="https://console.neon.tech"
                     target="_blank"
@@ -274,6 +329,7 @@ export default function TechStackPage() {
                   >
                     Open Neon dashboard <ExternalLink className="h-3 w-3" />
                   </a>
+                  </details>
                 </CardContent>
               </Card>
 
