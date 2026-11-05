@@ -184,18 +184,18 @@ export default function AdminSubscriptions() {
     <div className="flex h-screen bg-background">
       <AdminSidebar
         isCollapsed={isSidebarCollapsed}
-        onToggle={handleSidebarToggle}
         onNavigate={handleNavigate}
         isMobileMenuOpen={isMobileMenuOpen}
         onClose={handleMobileMenuClose}
       />
       
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+      <div className={`min-w-0 flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
+        isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
       }`}>
         <AdminHeader 
-          title="Mail Club Subscriptions"
-          onMobileMenuToggle={handleMobileMenuToggle}
+          onMenuToggle={handleMobileMenuToggle}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onSidebarToggle={handleSidebarToggle}
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
           isSidebarCollapsed={isSidebarCollapsed}

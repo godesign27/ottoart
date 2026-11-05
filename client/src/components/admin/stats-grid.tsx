@@ -3,7 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, ShoppingBag, Package, Eye } from "lucide-react";
 
 export function StatsGrid() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<{
+    totalRevenue: number;
+    totalOrders: number;
+    activeProducts: number;
+  }>({
     queryKey: ['/api/dashboard/stats'],
   });
 

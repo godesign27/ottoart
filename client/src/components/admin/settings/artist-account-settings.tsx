@@ -282,7 +282,7 @@ export function ArtistAccountSettings() {
             <ImageUploader
               onImageUploaded={handleImageUpload}
               accept="image/*"
-              maxFiles={1}
+              multiple={false}
             />
             <div className="flex justify-end gap-2 mt-4">
               <Button 

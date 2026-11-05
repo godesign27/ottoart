@@ -12,12 +12,14 @@ import { insertProductSchema, insertCategorySchema, insertTagSchema, insertOrder
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { requireAdmin, requireAuth } from "./middlewares/requireAuth";
+import { cartUnitPrice, orderNotification, subscriptionPeriod } from "./payment-utils";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2024-06-20",
+    // Keep the deployed API contract; the SDK only types its latest version.
+    apiVersion: "2024-06-20" as Stripe.LatestApiVersion,
   });
 } else {
   console.warn('STRIPE_SECRET_KEY not configured - payment features will be disabled');
@@ -511,28 +513,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (resend) {
         try {
-          const items = validatedData.items as Array<{ name: string; quantity: number; price: number }>;
-          const itemsList = items.map((item: { name: string; quantity: number; price: number }) => 
-            `<li>${item.name} x ${item.quantity} - $${(item.price * item.quantity / 100).toFixed(2)}</li>`
-          ).join('');
+          const productNames = new Map<string, string>();
+          for (const item of order.items) {
+            const product = await storage.getProduct(item.productId);
+            if (product) productNames.set(item.productId, product.name);
+          }
+          const notification = orderNotification(order, productNames);
           
           await resend.emails.send({
             from: 'Otto Art <hello@ottoart.app>',
             to: notifyEmail,
-            subject: `New Order: $${(validatedData.total / 100).toFixed(2)}`,
-            html: `
-              <h2>New Order Received!</h2>
-              <p><strong>Customer:</strong> ${validatedData.customerName}</p>
-              <p><strong>Email:</strong> ${validatedData.customerEmail}</p>
-              <h3>Items:</h3>
-              <ul>${itemsList}</ul>
-              <p><strong>Total:</strong> $${(validatedData.total / 100).toFixed(2)}</p>
-              <hr>
-              <h3>Shipping Address:</h3>
-              <p>${validatedData.shippingAddress}</p>
-              <hr>
-              <p><em>View this order in your admin panel.</em></p>
-            `
+            ...notification,
           });
         } catch (emailError) {
           console.error('Failed to send order notification email:', emailError);
@@ -1390,7 +1381,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { customerInfo } = req.body;
       
       // SECURITY: Get cart items from server storage, not client
-      const cartItems = await storage.getCartItems();
+      const sessionId = req.get("x-cart-session");
+      if (!sessionId) {
+        return res.status(400).json({ message: "Cart session required" });
+      }
+      const cartItems = await storage.getCartItems(sessionId);
       
       if (!cartItems || cartItems.length === 0) {
         return res.status(400).json({ message: "Cart is empty" });
@@ -1405,12 +1400,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!product) {
           return res.status(400).json({ message: `Product ${cartItem.productId} not found` });
         }
-        if (product.status !== 'active') {
-          return res.status(400).json({ message: `Product ${product.name} is not available` });
+        // Validate the selected option and use its server-side price.
+        let actualPrice: number;
+        try {
+          actualPrice = cartUnitPrice(product, cartItem);
+        } catch (error) {
+          return res.status(400).json({ message: (error as Error).message });
         }
-        
-        // Use actual product price, not client-supplied price
-        const actualPrice = parseFloat(product.price);
         serverCalculatedTotal += actualPrice * cartItem.quantity;
         
         validatedItems.push({
@@ -1792,8 +1788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stripeSubscriptionId: subscription.id,
         stripeCustomerId,
         status: 'pending',
-        currentPeriodStart: subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : null,
-        currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
+        ...subscriptionPeriod(subscription),
       });
 
       res.json({
@@ -1855,12 +1850,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user subscription
       await storage.updateUserSubscription(userSubscriptionId, {
         cancelAtPeriodEnd: true,
-        updatedAt: new Date(),
       });
 
       res.json({ 
         message: "Subscription will be cancelled at period end",
-        cancelAt: new Date(stripeSubscription.current_period_end * 1000),
+        cancelAt: subscriptionPeriod(stripeSubscription).currentPeriodEnd,
       });
     } catch (error: any) {
       console.error("Error cancelling subscription:", error);
@@ -1981,7 +1975,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (userSubscription) {
               await storage.updateUserSubscription(userSubscription.id, {
                 status: 'active',
-                updatedAt: new Date(),
               });
             }
           }
@@ -1995,22 +1988,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (userSubscription) {
               await storage.updateUserSubscription(userSubscription.id, {
                 status: 'past_due',
-                updatedAt: new Date(),
               });
             }
           }
           break;
           
         case 'customer.subscription.updated':
-          const subscription = event.data.object as any;
+          const subscription = event.data.object as Stripe.Subscription;
           const userSubscription = await storage.getUserSubscriptionByStripeId(subscription.id);
           if (userSubscription) {
             await storage.updateUserSubscription(userSubscription.id, {
               status: subscription.status,
-              currentPeriodStart: new Date(subscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              ...subscriptionPeriod(subscription),
               cancelAtPeriodEnd: subscription.cancel_at_period_end,
-              updatedAt: new Date(),
             });
           }
           break;
@@ -2021,7 +2011,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (deletedUserSubscription) {
             await storage.updateUserSubscription(deletedUserSubscription.id, {
               status: 'cancelled',
-              updatedAt: new Date(),
             });
           }
           break;
@@ -2044,12 +2033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 stripeSubscriptionId: session.subscription,
                 stripeCustomerId: session.customer,
                 status: stripeSubscription.status,
-                currentPeriodStart: stripeSubscription.current_period_start 
-                  ? new Date(stripeSubscription.current_period_start * 1000) 
-                  : null,
-                currentPeriodEnd: stripeSubscription.current_period_end 
-                  ? new Date(stripeSubscription.current_period_end * 1000) 
-                  : null,
+                ...subscriptionPeriod(stripeSubscription),
               });
               
               console.log(`Created subscription for user ${userId} on plan ${planId}`);

@@ -68,6 +68,8 @@ app.use(cors({ credentials: true, origin: true }));
 if (getStorageBackend() === "local") {
   registerLocalStorageRoutes(app);
 }
+// Preserve the exact signed payload before the global JSON parser consumes it.
+app.use("/api/stripe-webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
