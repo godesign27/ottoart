@@ -8,7 +8,7 @@ channel = "stable-25_05"
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["bash", "-c", "DATABASE_URL=\"$SUPABASE_DATABASE_URL\" AI_INTEGRATIONS_OPENAI_API_KEY=\"$OPENAI_API_KEY\" npm run start"]
+run = ["bash", "-c", "DATABASE_URL=\"$SUPABASE_DATABASE_URL\" npm run start"]
 
 [[ports]]
 localPort = 5000
@@ -38,7 +38,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "DATABASE_URL=\"$SUPABASE_DATABASE_URL\" AI_INTEGRATIONS_OPENAI_API_KEY=\"$OPENAI_API_KEY\" npm run dev"
+args = "DATABASE_URL=\"$SUPABASE_DATABASE_URL\" npm run dev"
 waitForPort = 5000
 
 [agent]
@@ -50,5 +50,7 @@ timeoutMs = 180000
 
 [userenv]
 
-[userenv.shared]
-AI_INTEGRATIONS_OPENAI_BASE_URL = "https://api.openai.com/v1"
+[userenv.development]
+STORAGE_BACKEND = "supabase"
+
+
