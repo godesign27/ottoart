@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
+import { AdminGate } from "@/components/admin/admin-gate";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
 import AdminCustomers from "@/pages/admin/customers";
@@ -126,7 +127,7 @@ function App() {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <TooltipProvider>
           <Toaster />
-          <AccessBoundary><Router /></AccessBoundary>
+          <AccessBoundary><AdminGate><Router /></AdminGate></AccessBoundary>
         </TooltipProvider>
       </ThemeProvider>
     </ClerkProviderWithRoutes>
