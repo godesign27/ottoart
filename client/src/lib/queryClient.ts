@@ -18,7 +18,7 @@ export async function apiRequest(
   if (data) {
     headers["Content-Type"] = "application/json";
   }
-  if (url.includes('/api/cart')) {
+  if (url.includes('/api/cart') || url.split("?")[0] === "/api/create-payment-intent") {
     headers["x-cart-session"] = getCartSessionId();
   }
   
