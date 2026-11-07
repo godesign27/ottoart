@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { ActionButton, ActionLink } from "@/components/marketing/primitives";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Send, Mail, Phone, MapPin } from "lucide-react";
 import type { InsertMessage, ContactSettings } from "@shared/schema";
 
 export function ContactSection() {
@@ -86,194 +85,92 @@ export function ContactSection() {
     }));
   };
 
+  const email = settings.contactInfo?.email || "hello@ottoart.com";
+  const phone = settings.contactInfo?.phone || "";
+  const address = settings.contactInfo?.address || "";
+  const field = "h-12 border-input bg-background";
+
   return (
-    <section className="min-h-screen bg-slate-800 text-white" data-testid="contact-section">
-      <div className="max-w-7xl mx-auto p-6 lg:p-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Left Column - Contact Information */}
-          <div className="space-y-8">
-            {/* Page Title */}
-            <div>
-              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-2">Contact</h1>
-            </div>
-            
-            {/* Get In Touch Section */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4">Get In Touch</h2>
-              <p className="text-white/80 leading-relaxed">
-                {settings.getInTouchText}
-              </p>
-            </div>
+    <section aria-labelledby="contact-title" className="bg-background" data-testid="contact-section">
+      <div className="mx-auto grid w-full max-w-[90rem] gap-14 px-4 pb-24 pt-12 sm:px-6 lg:grid-cols-12 lg:gap-16 lg:px-10 lg:pt-20">
+        {/* Who to reach and how */}
+        <div className="lg:col-span-5">
+          <h1 id="contact-title" className="font-display text-[3rem] leading-[0.98] tracking-[-0.03em] md:text-[4.5rem]">Contact</h1>
+          <p className="mt-6 max-w-[46ch] text-xl leading-relaxed">{settings.getInTouchText}</p>
 
-            {/* Contact Information */}
+          <dl className="mt-12 flex flex-col gap-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-4">Contact Information</h2>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-white mt-0.5" />
-                  <div>
-                    <span className="text-white font-medium">Email: </span>
-                    <span className="text-white/80">{settings.contactInfo?.email || 'hello@ottoart.com'}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-white mt-0.5" />
-                  <div>
-                    <span className="text-white font-medium">Phone: </span>
-                    <span className="text-white/80">{settings.contactInfo?.phone || '(555) 123-4567'}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-white mt-0.5" />
-                  <div>
-                    <span className="text-white font-medium">Studio: </span>
-                    <span className="text-white/80">{settings.contactInfo?.address || '123 Artist Lane, Chicago, IL 60601'}</span>
-                  </div>
-                </div>
-              </div>
+              <dt className="text-sm text-muted-foreground">Email</dt>
+              <dd className="mt-1 text-lg"><a href={`mailto:${email}`} className="underline-offset-4 hover:underline">{email}</a></dd>
             </div>
+            {phone && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Phone</dt>
+                <dd className="mt-1 text-lg"><a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="underline-offset-4 hover:underline">{phone}</a></dd>
+              </div>
+            )}
+            {address && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Studio</dt>
+                <dd className="mt-1 text-lg">{address}</dd>
+              </div>
+            )}
+          </dl>
 
-
-            {/* Commissions & Inquiries */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4">Commissions & Inquiries</h2>
-              <div className="space-y-3">
-                <p className="text-white/80 leading-relaxed whitespace-pre-line">
-                  {settings.commissionsText}
-                </p>
-              </div>
-            </div>
-
-            {/* Contact Icons at Bottom */}
-            <div className="flex items-center space-x-4 pt-4">
-              <div className="flex items-center gap-2 text-white/80">
-                <Mail className="h-5 w-5" />
-                <span className="text-sm">{settings.contactInfo?.email || 'hello@ottoart.com'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <Phone className="h-5 w-5" />
-                <span className="text-sm">{settings.contactInfo?.phone || '(555) 123-4567'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <MapPin className="h-5 w-5" />
-                <span className="text-sm">{settings.contactInfo?.address || '123 Artist Lane, Chicago, IL 60601'}</span>
-              </div>
+          <div className="mt-14 bg-secondary p-6 md:p-8">
+            <h2 className="text-xl font-semibold">Commissions &amp; inquiries</h2>
+            <p className="mt-3 whitespace-pre-line leading-relaxed">{settings.commissionsText}</p>
+            <div className="mt-6">
+              <ActionLink href="/commission" variant="solid">Start a commission request</ActionLink>
             </div>
           </div>
+        </div>
 
-          {/* Right Column - Contact Form */}
-          <div className="lg:pl-8">
-            <div className="bg-slate-700/50 rounded-lg p-6 lg:p-8 border border-slate-600">
-              {!messageSent ? (
-                <>
-                  <h2 className="text-2xl font-bold text-white mb-6">Send a Message</h2>
-                  
-                  <form className="space-y-4" onSubmit={handleSubmit}>
-                <div>
-                  <Label htmlFor="name" className="text-white text-sm font-medium mb-2 block">
-                    Name <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="bg-white text-black border-0 h-12"
-                    data-testid="contact-name"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="email" className="text-white text-sm font-medium mb-2 block">
-                    Email <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="bg-white text-black border-0 h-12"
-                    data-testid="contact-email"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="phone" className="text-white text-sm font-medium mb-2 block">
-                    Phone
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="bg-white text-black border-0 h-12"
-                    data-testid="contact-phone"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="subject" className="text-white text-sm font-medium mb-2 block">
-                    Subject
-                  </Label>
-                  <Input
-                    id="subject"
-                    type="text"
-                    name="subject"
-                    placeholder="Commission inquiry, purchase question, etc."
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    className="bg-white text-black border-0 h-12 placeholder:text-gray-500"
-                    data-testid="contact-subject"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="message" className="text-white text-sm font-medium mb-2 block">
-                    Message <span className="text-red-400">*</span>
-                  </Label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    rows={6}
-                    placeholder="Tell me about your project, questions, or how I can help you..."
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    className="bg-white text-black border-0 placeholder:text-gray-500 resize-none"
-                    data-testid="contact-message"
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 flex items-center justify-center gap-2"
-                  disabled={submitMessage.isPending}
-                  data-testid="contact-submit"
-                >
-                  <Send className="h-4 w-4" />
-                    {submitMessage.isPending ? "Sending..." : "Send Message"}
-                  </Button>
+        {/* The form */}
+        <div className="lg:col-span-6 lg:col-start-7">
+          <div className="bg-card p-6 sm:p-8 md:p-10">
+            {!messageSent ? (
+              <>
+                <h2 className="font-display text-[2rem] leading-[1.05] tracking-[-0.02em] md:text-[2.5rem]">Send a message</h2>
+                <form className="mt-8 grid gap-6 sm:grid-cols-2" onSubmit={handleSubmit} noValidate>
+                  <div>
+                    <Label htmlFor="name" className="mb-2 block text-sm font-semibold">Name <span className="font-normal text-muted-foreground">(required)</span></Label>
+                    <Input id="name" type="text" name="name" autoComplete="name" value={formData.name} onChange={handleInputChange} className={field} required data-testid="contact-name" />
+                  </div>
+                  <div>
+                    <Label htmlFor="email" className="mb-2 block text-sm font-semibold">Email <span className="font-normal text-muted-foreground">(required)</span></Label>
+                    <Input id="email" type="email" name="email" autoComplete="email" value={formData.email} onChange={handleInputChange} className={field} required data-testid="contact-email" />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone" className="mb-2 block text-sm font-semibold">Phone <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                    <Input id="phone" type="tel" name="phone" autoComplete="tel" value={formData.phone} onChange={handleInputChange} className={field} data-testid="contact-phone" />
+                  </div>
+                  <div>
+                    <Label htmlFor="subject" className="mb-2 block text-sm font-semibold">Subject <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                    <Input id="subject" type="text" name="subject" placeholder="Commission, purchase question…" value={formData.subject} onChange={handleInputChange} className={field} data-testid="contact-subject" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="message" className="mb-2 block text-sm font-semibold">Message <span className="font-normal text-muted-foreground">(required)</span></Label>
+                    <Textarea id="message" name="message" rows={7} placeholder="Tell me about your project, questions, or how I can help…" value={formData.message} onChange={handleInputChange} className="resize-y border-input bg-background" required data-testid="contact-message" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <ActionButton type="submit" className="w-full sm:w-auto" disabled={submitMessage.isPending} data-testid="contact-submit">
+                      {submitMessage.isPending ? "Sending…" : "Send message"}
+                    </ActionButton>
+                  </div>
                 </form>
-                </>
-              ) : (
-                <div className="text-center space-y-6">
-                  <div className="text-6xl mb-4">✉️</div>
-                  <h2 className="text-3xl font-bold text-white mb-4">Thank You!</h2>
-                  <p className="text-white/80 text-lg leading-relaxed">
-                    Your message has been sent successfully. I appreciate you reaching out and will get back to you within 24-48 hours.
-                  </p>
-                  <Button 
-                    onClick={() => setMessageSent(false)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 px-8"
-                    data-testid="contact-send-another"
-                  >
-                    Send Another Message
-                  </Button>
-                </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div role="status" data-testid="contact-success">
+                <h2 className="font-display text-[2rem] leading-[1.05] tracking-[-0.02em] md:text-[2.5rem]">Thank you</h2>
+                <p className="mt-4 text-lg leading-relaxed">
+                  Your message has been sent successfully. I appreciate you reaching out and will get back to you within 24-48 hours.
+                </p>
+                <ActionButton variant="quiet" className="mt-8" onClick={() => setMessageSent(false)} data-testid="contact-send-another">
+                  Send another message
+                </ActionButton>
+              </div>
+            )}
           </div>
         </div>
       </div>

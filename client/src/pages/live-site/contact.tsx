@@ -3,10 +3,13 @@ import { useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { ContactSection } from "@/components/live-site/contact-section";
+import { useDocumentMeta } from "@/hooks/use-document-meta";
 
 export default function LiveSiteContact() {
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<'admin' | 'live'>('live');
+
+  useDocumentMeta({ title: "Contact | Otto Art", description: "Get in touch with Otto about commissions, purchases and collaborations." });
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
     setViewMode(mode);
