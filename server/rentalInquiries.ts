@@ -5,6 +5,25 @@ import { db } from "./db";
 import { rentalInquiries } from "@shared/schema";
 import { inquiryFieldErrors, rentalInquirySchema, RENTAL_INQUIRY_MESSAGES } from "@shared/rentalInquiry";
 import { quoteUniform, RENTAL_PRICING_VERSION } from "@shared/rentalPricing";
+import { Resend } from "resend";
+import { rentalInquiryNotification } from "./rentalInquiryEmail";
+
+// Same Resend account, sender and recipient as the order and contact emails.
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "ottoart27@gmail.com";
+const SITE = (process.env.SITE_URL || "https://ottoart.app").replace(/\/$/, "");
+
+// Runs after the inquiry is saved; a failed email never fails the visitor's submission (it's still in the admin).
+async function notifyOtto(row: Parameters<typeof rentalInquiryNotification>[0]) {
+  if (!resend) return;
+  try {
+    const mail = rentalInquiryNotification(row, `${SITE}/admin/art-rental-leasing`);
+    const { error } = await resend.emails.send({ from: "Otto Art <hello@ottoart.app>", to: NOTIFY_EMAIL, ...mail });
+    if (error) console.error("Rental inquiry email not sent:", error.message);
+  } catch (err) {
+    console.error("Rental inquiry email not sent:", (err as Error).message);
+  }
+}
 
 // A few submissions per visitor in a short window; enough for honest retries, not for a flood.
 const WINDOW_MS = 10 * 60 * 1000;
@@ -78,9 +97,12 @@ export async function createRentalInquiry(req: Request, res: Response) {
       details: input.details,
       estimate,
       sourceRoute: "/art-rental-leasing",
-    }).onConflictDoNothing({ target: rentalInquiries.idempotencyKey }).returning({ reference: rentalInquiries.reference });
+    }).onConflictDoNothing({ target: rentalInquiries.idempotencyKey }).returning();
 
-    if (row) return res.status(201).json({ reference: row.reference });
+    if (row) {
+      void notifyOtto(row as Parameters<typeof rentalInquiryNotification>[0]);
+      return res.status(201).json({ reference: row.reference });
+    }
     // Same form sent twice (double click, retry after a lost response): return the first one's reference.
     const [existing] = await db.select({ reference: rentalInquiries.reference }).from(rentalInquiries)
       .where(eq(rentalInquiries.idempotencyKey, input.idempotencyKey)).limit(1);
