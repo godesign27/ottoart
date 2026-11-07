@@ -15,6 +15,20 @@ declare global {
 }
 
 export const requireAuth: RequestHandler = async (req, res, next) => {
+  // LOCAL_DEV=1 (server bound to 127.0.0.1): no Clerk, always the local admin.
+  if (process.env.LOCAL_DEV === "1") {
+    try {
+      const values = { id: "local-dev-user", email: "dev@localhost", firstName: "Local", lastName: "Developer", role: "admin" };
+      const [dbUser] = await db.insert(users).values(values)
+        .onConflictDoUpdate({ target: users.id, set: { role: "admin" } }).returning();
+      req.dbUser = dbUser;
+      req.authEmail = values.email;
+      next();
+    } catch (error) {
+      next(error);
+    }
+    return;
+  }
   const auth = getAuth(req);
   if (!auth.userId) {
     res.status(401).json({ message: "Unauthorized" });
@@ -67,6 +81,7 @@ export const requireAdmin: RequestHandler = (req, res, next) => {
 // Whether a signed-in admin sent this request. For public routes that show admins more; it never responds, and
 // anything unexpected counts as not an admin.
 export async function isAdminRequest(req: Request): Promise<boolean> {
+  if (process.env.LOCAL_DEV === "1") return true; // the local admin (see requireAuth)
   try {
     const auth = getAuth(req);
     if (!auth.userId) return false;

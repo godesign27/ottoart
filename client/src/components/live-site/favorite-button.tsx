@@ -30,26 +30,27 @@ export function FavoriteButton({
 
   return (
     <Button
-      variant={favorite ? "default" : "ghost"}
+      variant="ghost"
       size={buttonSize}
       onClick={handleClick}
       disabled={isToggling}
       className={cn(
-        "transition-all duration-200 hover:scale-105",
-        favorite 
-          ? "bg-red-500 hover:bg-red-600 text-white border-red-500" 
-          : "text-muted-foreground hover:text-red-500 border-transparent hover:border-red-200",
+        "transition-colors duration-200 text-foreground",
+        // The colour lives on the heart, not the button, so it reads on any background a card puts behind it.
+        // red-600 on white is 4.8:1 and red-500 on the dark ground is above 4.5:1 (WCAG non-text needs 3:1).
+        favorite ? "hover:text-red-700" : "text-muted-foreground hover:text-red-600",
         className
       )}
       data-testid={`favorite-button-${productId}`}
       aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+      aria-pressed={favorite}
     >
-      <Heart 
+      <Heart
         className={cn(
           iconSize,
-          "transition-all duration-200",
-          favorite ? "fill-current" : ""
-        )} 
+          "transition-colors duration-200",
+          favorite ? "fill-red-600 text-red-600 dark:fill-red-500 dark:text-red-500" : ""
+        )}
       />
       {!iconOnly && (
         <span className="ml-2">

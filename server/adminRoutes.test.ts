@@ -15,7 +15,7 @@ const PUBLIC = new Set([
   "post /api/newsletter-subscription", "post /api/create-payment-intent",
   "get /public-objects/:filePath(*)", "get /objects/:objectPath(*)",
   "get /api/room-backgrounds", "get /api/room-backgrounds/:id", "get /api/art-wall-simulations", "get /api/art-wall-simulations/:id",
-  "post /api/stripe-webhook", "get /api/boards/public/:slug", "post /api/boards/public/:slug/star",
+  "post /api/stripe-webhook", "post /api/rental-inquiries", "get /api/boards/public/:slug", "post /api/boards/public/:slug/star",
   "get /api/boards/public/:slug/stars", "get /api/pos/:codeId", "post /api/pos/send-receipt", "post /api/pos/:codeId/payment-intent",
 ]);
 
@@ -36,7 +36,7 @@ test("nothing on the public list has lost its reason to be public", () => {
 
 test("changing the catalog or reading customers needs an admin", () => {
   for (const id of ["post /api/products", "put /api/products/:id", "delete /api/products/:id", "post /api/products/:id/duplicate",
-    "get /api/orders", "patch /api/orders/:id", "get /api/messages", "get /api/mailing-list", "get /api/commissions",
+    "get /api/orders", "patch /api/orders/:id", "get /api/messages", "get /api/mailing-list", "get /api/commissions", "get /api/rental-inquiries", "patch /api/rental-inquiries/:id",
     "post /api/objects/upload", "put /api/objects/finalize", "get /api/user-subscriptions/all", "post /api/subscription-plans"]) {
     assert.equal(routes.find((r) => r.id === id)?.guard, "requireAdmin", id);
   }

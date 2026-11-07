@@ -31,7 +31,7 @@ export default function FavoritesPage() {
             <h1 className="text-3xl font-bold text-foreground mb-2">My Favorites</h1>
             <p className="text-muted-foreground mb-8">Please log in to view your favorite products</p>
             <Link href="/sign-in">
-              <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+              <button className="bg-primary text-primary-foreground px-6 py-2 hover:bg-primary/90 transition-colors">
                 Log In
               </button>
             </Link>
@@ -94,7 +94,7 @@ export default function FavoritesPage() {
             <h2 className="text-xl font-medium text-foreground mb-2">No favorites yet</h2>
             <p className="text-muted-foreground mb-8">Start browsing products and click the heart icon to add favorites</p>
             <Link href="/shop">
-              <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors inline-flex items-center gap-2">
+              <button className="bg-primary text-primary-foreground px-6 py-2 hover:bg-primary/90 transition-colors inline-flex items-center gap-2">
                 <ShoppingBag className="h-4 w-4" />
                 Browse Products
               </button>

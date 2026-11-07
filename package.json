@@ -8,14 +8,12 @@
     "dev:local": "node --env-file=.env.local --import tsx server/index.ts",
     "db:push:local": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs push --force",
     "import:live": "node --env-file=.env.local --import tsx scripts/import-from-live.ts",
-    "dev:supabase": "node --env-file=.env.supabase --import tsx server/index.ts",
-    "import:live:supabase": "node --env-file=.env.supabase --import tsx scripts/import-from-live.ts",
-    "images:to-supabase": "node --env-file=.env.supabase --import tsx scripts/copy-images-to-supabase.ts",
-    "copy:replit-to-supabase": "node --env-file=.env.supabase --env-file=.env.replit-prod --import tsx scripts/copy-replit-to-supabase.ts",
+    "db:pull-live": "node --env-file=.env.local --import tsx scripts/pull-live-to-local.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "test": "node --import tsx --test server/*.test.ts shared/*.test.ts"
   },
   "dependencies": {
     "@clerk/express": "^2.1.83",
@@ -82,6 +80,7 @@
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
     "resend": "^6.8.0",
+    "sharp": "^0.34.4",
     "stripe": "^18.5.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PageSettings } from "@shared/schema";
 import { 
+  KeyRound,
   LayoutDashboard, 
   Package, 
   Users,
@@ -160,6 +161,18 @@ const pageItems = [
     href: "/admin/contact",
     page: "contact",
     icon: Mail
+  },
+  {
+    title: "Corporate Buyers",
+    href: "/admin/corporate-buyers",
+    page: "corporate-buyers",
+    icon: Building
+  },
+  {
+    title: "Art Rental",
+    href: "/admin/art-rental-leasing",
+    page: "art-rental-leasing",
+    icon: KeyRound
   }
 ];
 
@@ -371,7 +384,7 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
                               onNavigate(page.href);
                               if (isMobileMenuOpen && onClose) onClose();
                             }}
-                            data-testid={`page-${page.title.toLowerCase()}`}
+                            data-testid={`page-${page.page}`}
                           >
                             <page.icon className="h-4 w-4" />
                           </div>
@@ -389,7 +402,7 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
                         onNavigate(page.href);
                         if (isMobileMenuOpen && onClose) onClose();
                       }}
-                      data-testid={`page-${page.title.toLowerCase()}`}
+                      data-testid={`page-${page.page}`}
                     >
                       <span>{page.title}</span>
                       <Badge variant={isEnabled ? "default" : "secondary"} className="text-xs">

@@ -5,6 +5,9 @@ import Stripe from "stripe";
 import OpenAI from "openai";
 import { Resend } from "resend";
 import { storage } from "./storage";
+import { parseResizeWidth, sendResized } from "./imageResize";
+import { createRentalInquiry, listRentalInquiries, updateRentalInquiry } from "./rentalInquiries";
+import { registerSeoRoutes } from "./seo";
 
 // Initialize Resend for email notifications
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -816,6 +819,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  registerSeoRoutes(app); // robots.txt and sitemap.xml
+
+  // Art rental inquiries (/art-rental-leasing). Public submit; reading and updating is admin only.
+  app.post("/api/rental-inquiries", createRentalInquiry);
+  app.get("/api/rental-inquiries", requireAdmin, listRentalInquiries);
+  app.patch("/api/rental-inquiries/:id", requireAdmin, updateRentalInquiry);
+
   app.post("/api/commissions", async (req, res) => {
     try {
       const { insertCommissionRequestSchema } = await import("@shared/schema");
@@ -1492,6 +1502,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!hasAccess) {
         console.warn(`Access denied to object: ${req.path}`);
         return res.status(403).json({ error: "Access denied" });
+      }
+
+      // ?w=<width> returns a resized WebP (public objects only; access was checked above).
+      const width = parseResizeWidth(req.query.w);
+      if (width) {
+        await sendResized(req.path, width, () => objectFile.createReadStream(), res);
+        return;
       }
 
       objectStorageService.downloadObject(objectFile, res);

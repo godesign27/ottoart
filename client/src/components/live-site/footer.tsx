@@ -35,7 +35,8 @@ export function Footer() {
     { href: "/prints", label: "Prints" },
     { href: "/accessories", label: "Accessories" },
     { href: "/mail-club", label: "Mail Club" },
-    { href: "/corporate-buyers", label: "Corporate Buyers" }
+    ...(getPageEnabled("corporate-buyers") ? [{ href: "/corporate-buyers", label: "Corporate Buyers" }] : []),
+    ...(getPageEnabled("art-rental-leasing") ? [{ href: "/art-rental-leasing", label: "Art Rental & Leasing" }] : [])
   ];
 
   // Page-based navigation items (filtered by page settings)
@@ -113,18 +114,18 @@ export function Footer() {
   );
 
   return (
-    <footer className="bg-background border-t border-border">
+    <footer className="bg-background">
       {/* Service Trust Cards Section */}
       <ServiceTrustCards />
       
       {/* Email Subscription Section */}
-      <div className="bg-muted/30 border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="bg-background">
+        <div className="mx-auto w-full max-w-[90rem] px-4 py-20 sm:px-6 lg:px-10 lg:py-24">
           <EmailSubscriptionForm />
         </div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="mx-auto w-full max-w-[90rem] px-4 py-12 sm:px-6 lg:px-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Logo and Description */}
           <div className="space-y-4">
@@ -189,20 +190,24 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-8 pt-8 border-t border-border">
+        <div className="mt-12 pt-2">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Otto Art. All rights reserved.
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
-              <Link 
-                href="/corporate-buyers" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="footer-corporate-buyers"
-              >
-                Corporate Buyers
-              </Link>
-              <span className="text-muted-foreground">•</span>
+              {getPageEnabled("corporate-buyers") && (
+                <>
+                  <Link 
+                    href="/corporate-buyers" 
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    data-testid="footer-corporate-buyers"
+                  >
+                    Corporate Buyers
+                  </Link>
+                  <span className="text-muted-foreground">•</span>
+                </>
+              )}
               <Link 
                 href="/checkout" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

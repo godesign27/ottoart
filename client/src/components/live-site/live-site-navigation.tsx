@@ -13,6 +13,7 @@ import {
 import { User, ShoppingCart, Menu, X, Settings, Eye, ChevronDown } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 import { ProfileMenu } from "./profile-menu";
+import { ThemeToggle } from "./theme-toggle";
 import { useUser } from "@clerk/react";
 import type { User as AppUser } from "@shared/schema";
 
@@ -68,7 +69,9 @@ export function LiveSiteNavigation({
     { href: "/bio", label: "Bio", page: "bio" },
     { href: "/gallery", label: "Gallery", page: "gallery" },
     { href: "/events", label: "Events", page: "events" },
-    { href: "/cv", label: "CV", page: "cv" }
+    { href: "/cv", label: "CV", page: "cv" },
+    { href: "/corporate-buyers", label: "Corporate Buyers", page: "corporate-buyers" },
+    { href: "/art-rental-leasing", label: "Art Rental & Leasing", page: "art-rental-leasing" }
   ].filter(item => getPageEnabled(item.page));
 
   // Contact is always last
@@ -115,7 +118,7 @@ export function LiveSiteNavigation({
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
           onClick={handleMobileMenuClose}
           data-testid="mobile-menu-overlay"
         />
@@ -123,7 +126,7 @@ export function LiveSiteNavigation({
 
       {/* Mobile Sidebar */}
       <div 
-        className={`fixed left-0 top-0 bottom-0 w-64 bg-background border-r border-border z-50 transform transition-transform duration-200 md:hidden ${
+        className={`fixed left-0 top-0 bottom-0 w-64 bg-background z-50 transform transition-transform duration-200 lg:hidden ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         id="mobile-navigation"
@@ -132,7 +135,7 @@ export function LiveSiteNavigation({
         aria-label={isMobileMenuOpen ? "Mobile navigation menu" : undefined}
       >
         {/* Mobile Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
+        <div className="flex items-center justify-between p-6 bg-secondary">
           <Link href="/" className="text-xl font-bold text-foreground" onClick={handleMobileMenuClose}>
             Otto Art
           </Link>
@@ -153,7 +156,7 @@ export function LiveSiteNavigation({
             <Link 
               key={item.href}
               href={item.href}
-              className={`block py-3 px-2 rounded-md transition-colors ${
+              className={`block py-3 px-2 transition-colors ${
                 location === item.href 
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-foreground hover:bg-muted hover:text-primary'
@@ -175,7 +178,7 @@ export function LiveSiteNavigation({
                 <Link 
                   key={item.href}
                   href={item.href}
-                  className={`block py-3 px-4 ml-2 rounded-md transition-colors ${
+                  className={`block py-3 px-4 ml-2 transition-colors ${
                     location === item.href 
                       ? 'bg-primary/10 text-primary font-medium' 
                       : 'text-foreground hover:bg-muted hover:text-primary'
@@ -191,7 +194,7 @@ export function LiveSiteNavigation({
         </div>
 
         {/* Mobile Actions */}
-        <div className="px-6 py-4 border-t border-border mt-auto">
+        <div className="px-6 py-4 bg-secondary mt-auto">
           <div className="space-y-3">
             <Link href="/checkout" onClick={handleMobileMenuClose}>
               <Button variant="outline" className="w-full justify-start" data-testid="mobile-cart-button">
@@ -231,13 +234,13 @@ export function LiveSiteNavigation({
       </div>
 
       {/* Main Navigation Bar */}
-      <nav className="h-16 border-b border-border bg-background px-6 flex items-center justify-between shadow-sm">
+      <nav className="h-16 bg-background px-4 sm:px-6 lg:px-10 flex items-center justify-between">
         <div className="flex items-center space-x-8">
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             onClick={handleMobileMenuToggle}
             data-testid="mobile-menu-toggle"
             aria-expanded={isMobileMenuOpen}
@@ -247,11 +250,11 @@ export function LiveSiteNavigation({
             <Menu className="h-5 w-5" />
           </Button>
 
-          <Link href="/" className="text-xl font-bold text-foreground" data-testid="logo">
+          <Link href="/" className="whitespace-nowrap text-xl font-bold text-foreground" data-testid="logo">
             Otto Art
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden lg:flex items-center space-x-6">
             {navItems.map((item) => (
               <Link 
                 key={item.href}
@@ -306,9 +309,9 @@ export function LiveSiteNavigation({
           </div>
         </div>
 
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden lg:flex items-center space-x-4">
           {onViewModeChange && isAdmin ? (
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className="flex bg-muted p-1">
               <Button
                 size="sm"
                 variant={viewMode === 'admin' ? 'default' : 'ghost'}
@@ -330,6 +333,8 @@ export function LiveSiteNavigation({
             </div>
           ) : null}
 
+          <ThemeToggle />
+
           <Link href="/checkout">
             <Button 
               variant="ghost" 
@@ -350,10 +355,11 @@ export function LiveSiteNavigation({
         </div>
 
         {/* Mobile-only Icons */}
-        <div className="flex md:hidden items-center space-x-2">
+        <div className="flex lg:hidden items-center space-x-2">
+          <ThemeToggle />
           {/* Mobile View Switcher */}
           {onViewModeChange && isAdmin ? (
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className="flex bg-muted p-1">
               <Button
                 size="sm"
                 variant={viewMode === 'admin' ? 'default' : 'ghost'}

@@ -5,9 +5,14 @@ import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation"
 import { Footer } from "@/components/live-site/footer";
 import { ProductImageModal } from "@/components/live-site/product-image-modal";
 import { ProductDetails } from "@/components/live-site/product-details";
+import { artSrc, artSrcSet } from "@/components/marketing/art";
+
+const formatUsd = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DraftBadge } from "@/components/live-site/draft-badge";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Star, ShoppingBag, ZoomIn } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -136,16 +141,16 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-        <main className="container mx-auto px-4 py-8">
+        <main className="mx-auto w-full max-w-[90rem] px-4 pb-24 pt-8 sm:px-6 lg:px-10">
           <div className="animate-pulse">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="aspect-square bg-muted rounded-lg"></div>
+              <div className="aspect-square bg-muted"></div>
               <div className="space-y-4">
-                <div className="h-8 bg-muted rounded w-3/4"></div>
-                <div className="h-6 bg-muted rounded w-1/2"></div>
-                <div className="h-4 bg-muted rounded w-full"></div>
-                <div className="h-4 bg-muted rounded w-full"></div>
-                <div className="h-10 bg-muted rounded w-full"></div>
+                <div className="h-8 bg-muted w-3/4"></div>
+                <div className="h-6 bg-muted w-1/2"></div>
+                <div className="h-4 bg-muted w-full"></div>
+                <div className="h-4 bg-muted w-full"></div>
+                <div className="h-10 bg-muted w-full"></div>
               </div>
             </div>
           </div>
@@ -158,7 +163,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-        <main className="container mx-auto px-4 py-8">
+        <main className="mx-auto w-full max-w-[90rem] px-4 pb-24 pt-8 sm:px-6 lg:px-10">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-foreground">Product not found</h1>
             <Button onClick={handleBack} className="mt-4">
@@ -174,7 +179,7 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-background">
       <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="mx-auto w-full max-w-[90rem] px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         <div className="space-y-6">
           <Button
             variant="ghost"
@@ -185,15 +190,17 @@ export default function ProductDetailPage() {
             Back to Shop
           </Button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
             {/* Product Images */}
-            <div className="space-y-4">
+            <div className="space-y-3 lg:col-span-7">
               {/* Main Image */}
-              <div className={`relative rounded-lg overflow-hidden shadow-lg group bg-neutral-100 dark:bg-neutral-800 ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
+              <div className={`relative overflow-hidden group bg-secondary ${product.images && product.images.length > 0 ? 'cursor-pointer' : ''}`}>
                 <img 
-                  src={product.images?.[selectedImageIndex] || "/placeholder.svg"} 
+                  src={artSrc(product.images?.[selectedImageIndex] || "/placeholder.svg", 1280)}
+                  srcSet={artSrcSet(product.images?.[selectedImageIndex] || "/placeholder.svg", [640, 960, 1280, 1600])}
+                  sizes="(min-width: 1024px) 55vw, 100vw"
                   alt={product.name} 
-                  className="w-full h-auto block transition-transform group-hover:scale-105" 
+                  className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.02]" 
                   onClick={() => product.images && product.images.length > 0 && setIsImageModalOpen(true)}
                   data-testid="product-main-image"
                 />
@@ -203,7 +210,7 @@ export default function ProductDetailPage() {
                     className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center"
                     onClick={() => setIsImageModalOpen(true)}
                   >
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-3">
                       <ZoomIn className="h-6 w-6 text-gray-800" />
                     </div>
                   </div>
@@ -223,16 +230,16 @@ export default function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all hover:border-primary/70 ${
+                      className={`flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-colors ${
                         index === selectedImageIndex 
-                          ? 'border-primary' 
-                          : 'border-border'
+                          ? 'border-foreground' 
+                          : 'border-transparent hover:border-muted-foreground'
                       }`}
                       data-testid={`thumbnail-${index}`}
                       aria-label={`View image ${index + 1} of ${product.images?.length || 0}`}
                     >
                       <img
-                        src={image}
+                        src={artSrc(image, 160)}
                         alt={`${product.name} thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -243,17 +250,18 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Product Details */}
-            <div className="space-y-6">
+            <div className="space-y-8 lg:col-span-5">
               <div>
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+                      <h1 className="font-display text-[2.5rem] leading-[1.02] tracking-[-0.02em] md:text-[3.25rem]">{product.name}</h1>
+                      <DraftBadge product={product} className="text-sm px-3 py-1" />
                       {(product as any).isSold && (
                         <Badge variant="destructive" className="text-sm px-3 py-1">Sold</Badge>
                       )}
                     </div>
-                    <p className="text-3xl font-bold text-primary mt-2">${selectedOption.price}</p>
+                    <p className="tabular mt-4 text-2xl font-semibold">{formatUsd(Number(selectedOption.price))}</p>
                     <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>
                   </div>
                   <FavoriteButton productId={product.id} size="lg" />
@@ -261,13 +269,13 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="prose prose-sm max-w-none">
-                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                <p className="text-lg leading-relaxed text-foreground">{product.description}</p>
               </div>
 
               {/* Pricing Tiers / Available Options */}
               {product.pricingTiers && product.pricingTiers.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-foreground">Available Options:</h3>
+                  <h2 className="text-lg font-semibold text-foreground">Choose an option</h2>
                   
                   {/* Original Tiers */}
                   {product.pricingTiers.filter(tier => tier.type === 'Original').length > 0 && (
@@ -284,12 +292,12 @@ export default function ProductDetailPage() {
                           return (
                             <div 
                               key={tier.id} 
-                              className={`border rounded-lg p-4 transition-all ${
+                              className={`border p-4 transition-colors ${
                                 isOriginalSold
                                   ? 'border-border bg-muted/50 opacity-60 cursor-not-allowed'
                                   : selectedTierId === tier.id 
-                                    ? 'border-2 border-primary bg-primary/5 cursor-pointer' 
-                                    : 'border-border hover:border-primary/50 cursor-pointer'
+                                    ? 'border-foreground bg-secondary cursor-pointer' 
+                                    : 'border-border hover:border-muted-foreground cursor-pointer'
                               }`}
                               onClick={() => !isOriginalSold && setSelectedTierId(tier.id)}
                               data-testid={`tier-option-${tier.id}`}
@@ -298,7 +306,7 @@ export default function ProductDetailPage() {
                                 <p className="text-base text-foreground">{tier.size}</p>
                                 {isOriginalSold
                                   ? <span className="text-sm font-semibold text-destructive">Sold</span>
-                                  : <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                                  : <p className="tabular text-lg font-semibold text-foreground">{formatUsd(Number(tier.price))}</p>
                                 }
                               </div>
                             </div>
@@ -316,17 +324,17 @@ export default function ProductDetailPage() {
                         {product.pricingTiers.filter(tier => tier.type === 'Print').map((tier) => (
                           <div 
                             key={tier.id} 
-                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            className={`border p-4 cursor-pointer transition-colors ${
                               selectedTierId === tier.id 
-                                ? 'border-2 border-primary bg-primary/5' 
-                                : 'border-border hover:border-primary/50'
+                                ? 'border-foreground bg-secondary' 
+                                : 'border-border hover:border-muted-foreground'
                             }`}
                             onClick={() => setSelectedTierId(tier.id)}
                             data-testid={`tier-option-${tier.id}`}
                           >
                             <div className="flex items-center justify-between">
                               <p className="text-base text-foreground">{tier.size}</p>
-                              <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                              <p className="tabular text-lg font-semibold text-foreground">{formatUsd(Number(tier.price))}</p>
                             </div>
                           </div>
                         ))}
@@ -342,17 +350,17 @@ export default function ProductDetailPage() {
                         {product.pricingTiers.filter(tier => tier.type === 'Canvas Print').map((tier) => (
                           <div 
                             key={tier.id} 
-                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            className={`border p-4 cursor-pointer transition-colors ${
                               selectedTierId === tier.id 
-                                ? 'border-2 border-primary bg-primary/5' 
-                                : 'border-border hover:border-primary/50'
+                                ? 'border-foreground bg-secondary' 
+                                : 'border-border hover:border-muted-foreground'
                             }`}
                             onClick={() => setSelectedTierId(tier.id)}
                             data-testid={`tier-option-${tier.id}`}
                           >
                             <div className="flex items-center justify-between">
                               <p className="text-base text-foreground">{tier.size}</p>
-                              <p className="text-xl font-bold text-foreground">${tier.price}</p>
+                              <p className="tabular text-lg font-semibold text-foreground">{formatUsd(Number(tier.price))}</p>
                             </div>
                           </div>
                         ))}
@@ -373,26 +381,6 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {product.dimensions && (
-                  <div>
-                    <span className="font-medium">Dimensions: </span>
-                    <span className="text-muted-foreground">{product.dimensions}</span>
-                  </div>
-                )}
-
-                {product.medium && (
-                  <div>
-                    <span className="font-medium">Medium: </span>
-                    <span className="text-muted-foreground">{product.medium}</span>
-                  </div>
-                )}
-
-                {product.year && (
-                  <div>
-                    <span className="font-medium">Year: </span>
-                    <span className="text-muted-foreground">{product.year}</span>
-                  </div>
-                )}
               </div>
 
               {/* Add to Cart */}
@@ -403,7 +391,7 @@ export default function ProductDetailPage() {
                 const isDisabled = selectedOption.stock === 0 || addToCartMutation.isPending || isSelectedOriginalSold;
                 return (
                   <Button 
-                    className="w-full py-3 text-lg font-semibold flex items-center justify-center gap-2"
+                    className="h-12 w-full text-base font-semibold flex items-center justify-center gap-2"
                     disabled={isDisabled}
                     onClick={handleAddToCart}
                     data-testid="add-to-cart-button"

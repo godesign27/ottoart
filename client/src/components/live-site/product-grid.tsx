@@ -2,34 +2,42 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { DraftBadge } from "@/components/live-site/draft-badge";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
+import { artSrc, artSrcSet } from "@/components/marketing/art";
 import type { Product } from "@shared/schema";
 
-function formatProductPricing(product: Product): string {
-  if (!product.pricingTiers || product.pricingTiers.length === 0) {
-    return `$${parseFloat(product.price).toFixed(2)}`;
-  }
+const usd = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
 
-  const originalTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'original');
-  const printTier = product.pricingTiers.find(tier => tier.type?.toLowerCase() === 'print');
+/** "Original $3,227 · Prints from $185": the original's price and the lowest print price, when there are tiers. */
+export function formatProductPricing(product: Product): string {
+  const tiers = product.pricingTiers ?? [];
+  if (!tiers.length) return usd(parseFloat(product.price));
+  const original = tiers.find((t) => t.type?.toLowerCase() === "original");
+  const prints = tiers.filter((t) => t.type?.toLowerCase().includes("print")).map((t) => Number(t.price)).filter((n) => n > 0);
+  const parts: string[] = [];
+  if (original && !product.isSold) parts.push(`Original ${usd(Number(original.price))}`);
+  if (prints.length) parts.push(`${prints.length > 1 ? "Prints from" : "Print"} ${usd(Math.min(...prints))}`);
+  return parts.length ? parts.join(" · ") : usd(parseFloat(product.price));
+}
 
-  let priceParts: string[] = [];
+function soldState(product: Product) {
+  const originalTier = product.pricingTiers?.find((tier) => tier.type?.toLowerCase() === "original");
+  const originalSoldOut = (product as any).isSold || (originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false));
+  const hasPrintTiers = product.pricingTiers?.some((tier) => tier.type?.toLowerCase().includes("print")) === true;
+  return { originalSoldOut, hasPrintTiers };
+}
 
-  if (originalTier) {
-    priceParts.push(`$${originalTier.price.toFixed(2)} Original`);
-  }
-  
-  if (printTier) {
-    priceParts.push(`$${printTier.price} Print`);
-  }
-
-  if (priceParts.length > 1) {
-    return priceParts.join(' / ');
-  }
-
-  return priceParts.length > 0 ? priceParts[0] : `$${parseFloat(product.price).toFixed(2)}`;
+function StatusBadges({ product }: { product: Product }) {
+  const { originalSoldOut, hasPrintTiers } = soldState(product);
+  return (
+    <>
+      <DraftBadge product={product} />
+      {originalSoldOut && <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>}
+      {originalSoldOut && hasPrintTiers && <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints available</Badge>}
+    </>
+  );
 }
 
 export type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "name-az" | "name-za";
@@ -104,18 +112,13 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
 
   if (isLoading && !customProducts) {
     return (
-      <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+      <div className={viewMode === "grid" ? "grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"} aria-busy="true">
         {[...Array(6)].map((_, i) => (
-          <Card key={i} className="overflow-hidden">
-            <div className="w-full h-64 bg-muted animate-pulse"></div>
-            <CardContent className="p-4">
-              <div className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
-                <div className="h-6 bg-muted rounded w-1/3"></div>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={i}>
+            <div className="aspect-[4/5] animate-pulse bg-muted" />
+            <div className="mt-4 h-5 w-2/3 animate-pulse bg-muted" />
+            <div className="mt-2 h-4 w-1/2 animate-pulse bg-muted" />
+          </div>
         ))}
       </div>
     );
@@ -123,123 +126,66 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
 
   if (!products?.length) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">No products found.</p>
+      <div className="bg-secondary px-6 py-16 text-center">
+        <p className="text-lg">No artworks match.</p>
+        <p className="mt-2 text-muted-foreground">Try another search or category.</p>
       </div>
     );
   }
 
   if (viewMode === "list") {
     return (
-      <div className="space-y-4">
+      <ul className="flex flex-col gap-2">
         {products.map((product) => (
-          <Link key={product.id} href={`/product/${product.id}`}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-0">
-                <div className="flex gap-4 p-4">
-                  <div className="relative w-24 h-24 flex-shrink-0">
-                    <img
-                      src={product.images?.[0] || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                    <div className="absolute top-1 right-1">
-                      <FavoriteButton 
-                        productId={product.id} 
-                        size="sm" 
-                        iconOnly
-                        className="shadow-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-lg">{product.name}</h3>
-                        {product.dimensions && (
-                          <p className="text-sm text-muted-foreground">{product.dimensions}</p>
-                        )}
-                        <p className="text-sm font-medium text-foreground mt-1">{formatProductPricing(product)}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
-                          const originalSoldOut = (product as any).isSold || (originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false));
-                          const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
-                          
-                          return (
-                            <>
-                              {originalSoldOut && (
-                                <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
-                              )}
-                              {originalSoldOut && hasPrintTiers && (
-                                <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          <li key={product.id}>
+            <Link href={`/product/${product.id}`} className="group flex items-center gap-5 bg-card p-3 transition-colors duration-200 hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+              <div className="h-24 w-20 shrink-0 overflow-hidden bg-secondary">
+                <img src={artSrc(product.images?.[0] || "/placeholder.svg", 160)} alt={product.name} loading="lazy" className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-medium">{product.name}</h3>
+                {product.dimensions && <p className="text-sm text-muted-foreground">{product.dimensions}</p>}
+                <p className="tabular mt-1 text-[0.9375rem]">{formatProductPricing(product)}</p>
+              </div>
+              <div className="hidden flex-wrap justify-end gap-2 sm:flex"><StatusBadges product={product} /></div>
+              <FavoriteButton productId={product.id} size="sm" iconOnly />
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {products.map((product) => (
-        <Link key={product.id} href={`/product/${product.id}`}>
-          <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
-            <div className="relative aspect-square">
-              <img
-                src={product.images?.[0] || "/placeholder.svg"}
-                alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute top-3 right-3">
-                <FavoriteButton 
-                  productId={product.id} 
-                  size="sm" 
-                  iconOnly
-                  className="shadow-sm"
+    <ul className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+      {products.map((product, i) => {
+        const src = product.images?.[0] || "/placeholder.svg";
+        return (
+          <li key={product.id} className="relative">
+            <Link href={`/product/${product.id}`} className="group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" data-testid={`product-card-${product.id}`}>
+              <div className="aspect-[4/5] overflow-hidden bg-secondary">
+                <img
+                  src={artSrc(src, 640)}
+                  srcSet={artSrcSet(src, [480, 640, 960])}
+                  sizes="(min-width: 1024px) 31vw, (min-width: 640px) 47vw, 92vw"
+                  alt={product.name}
+                  loading={i < 3 ? "eager" : "lazy"}
+                  width={640}
+                  height={800}
+                  className="h-full w-full object-cover transition-transform duration-500 [transition-timing-function:var(--ease-out)] group-hover:scale-[1.03]"
                 />
               </div>
+              <h3 className="mt-4 text-lg font-medium leading-snug">{product.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{[product.dimensions, product.medium].filter(Boolean).join(" · ")}</p>
+              <p className="tabular mt-2 text-[0.9375rem]">{formatProductPricing(product)}</p>
+              <div className="mt-3 flex flex-wrap gap-2 empty:hidden"><StatusBadges product={product} /></div>
+            </Link>
+            <div className="absolute right-3 top-3">
+              <FavoriteButton productId={product.id} size="sm" iconOnly className="bg-background/90 hover:bg-background" />
             </div>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">{product.name}</h3>
-                {product.dimensions && (
-                  <p className="text-sm text-muted-foreground">{product.dimensions}</p>
-                )}
-                <p className="text-sm font-medium text-foreground">{formatProductPricing(product)}</p>
-                <div className="flex gap-2 justify-start">
-                  {(() => {
-                    const originalTier = product.pricingTiers?.find(tier => tier.type?.toLowerCase() === 'original');
-                    const originalSoldOut = (product as any).isSold || (originalTier ? originalTier.stock === 0 : (product.isOriginal ? (product.stock ?? 0) === 0 : false));
-                    const hasPrintTiers = product.pricingTiers?.some(tier => tier.type?.toLowerCase() === 'print') === true;
-                    
-                    return (
-                      <>
-                        {originalSoldOut && (
-                          <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
-                        )}
-                        {originalSoldOut && hasPrintTiers && (
-                          <Badge variant="secondary" data-testid={`badge-prints-${product.id}`}>Prints Available</Badge>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
-    </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
