@@ -20,6 +20,8 @@ export function HeroSection() {
   return (
     <MarketingHero
       title="Contemporary art, redefined"
+      wide
+      titleClass="text-[clamp(2rem,6.5vw,4rem)] lg:text-[clamp(2.75rem,4.5vw,4.75rem)]"
       body={<p>Explore a curated collection of original paintings, prints, and artistic expressions that challenge conventional boundaries and inspire new perspectives.</p>}
       actions={<>
         <ActionLink href="/originals" data-testid="shop-originals-button">Shop originals</ActionLink>

@@ -24,7 +24,7 @@ export function MarketingHero({
   return (
     <section aria-labelledby="page-title" className="relative bg-background">
       <div className="grid lg:min-h-[min(calc(100svh-4rem),56rem)] lg:grid-cols-12">
-        <div className={`flex flex-col justify-center px-4 pb-14 pt-10 sm:px-6 lg:col-span-6 lg:py-20 lg:pl-[max(2.5rem,calc((100vw-90rem)/2+2.5rem))] lg:pr-14 xl:pr-16 ${wide ? "xl:col-span-6" : "xl:col-span-5"}`}>
+        <div className={`flex min-w-0 flex-col justify-center px-4 pb-14 pt-10 sm:px-6 lg:col-span-6 lg:py-20 lg:pl-[max(2.5rem,calc((100vw-90rem)/2+2.5rem))] lg:pr-14 xl:pr-16 ${wide ? "xl:col-span-6" : "xl:col-span-5"}`}>
           {crumb && (
             <nav aria-label="Breadcrumb" className="mb-8 text-sm text-muted-foreground">
               <ol className="flex flex-wrap gap-2">
@@ -34,7 +34,7 @@ export function MarketingHero({
               </ol>
             </nav>
           )}
-          <h1 id="page-title" className={cn("font-display tracking-[-0.03em] text-balance", titleClass ?? "text-[3rem] md:text-[4.5rem] xl:text-[5.25rem]", "leading-[0.98]")}>
+          <h1 id="page-title" className={cn("font-display tracking-[-0.03em] text-balance [overflow-wrap:anywhere]", titleClass ?? "text-[3rem] md:text-[4.5rem] xl:text-[5.25rem]", "leading-[0.98]")}>
             {title}
           </h1>
           {lead && <p className="mt-6 text-xl font-semibold leading-snug md:text-2xl">{lead}</p>}
