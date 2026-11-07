@@ -198,6 +198,8 @@ export function EventsManager() {
       apiRequest('PUT', `/api/events/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/featured'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/published'] });
       toast({
         title: "Event updated",
         description: "Your event has been updated successfully!",

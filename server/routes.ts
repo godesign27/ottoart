@@ -14,6 +14,7 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { isAdminRequest, requireAdmin, requireAuth } from "./middlewares/requireAuth";
 import { cartUnitPrice, orderNotification, subscriptionPeriod } from "./payment-utils";
 import { isDraft, withoutDrafts } from "./productVisibility";
+import { eventSaveError } from "./event-errors";
 
 // Initialize Stripe only if the secret key is available
 let stripe: Stripe | null = null;
@@ -760,7 +761,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(event);
     } catch (error) {
       console.error("Failed to create event:", error);
-      res.status(400).json({ message: "Invalid event data" });
+      const failure = eventSaveError(error);
+      res.status(failure.status).json({ message: failure.message });
     }
   });
 
@@ -775,7 +777,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(event);
     } catch (error) {
       console.error("Failed to update event:", error);
-      res.status(400).json({ message: "Invalid event data" });
+      const failure = eventSaveError(error);
+      res.status(failure.status).json({ message: failure.message });
     }
   });
 
