@@ -8,6 +8,7 @@ import { ProductDetails } from "@/components/live-site/product-details";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DraftBadge } from "@/components/live-site/draft-badge";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Star, ShoppingBag, ZoomIn } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -249,6 +250,7 @@ export default function ProductDetailPage() {
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+                      <DraftBadge product={product} className="text-sm px-3 py-1" />
                       {(product as any).isSold && (
                         <Badge variant="destructive" className="text-sm px-3 py-1">Sold</Badge>
                       )}

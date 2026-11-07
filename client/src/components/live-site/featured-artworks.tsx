@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DraftBadge } from "@/components/live-site/draft-badge";
 import type { Product } from "@shared/schema";
 
 export function FeaturedArtworks() {
@@ -79,6 +80,7 @@ export function FeaturedArtworks() {
                           
                           return (
                             <>
+                              <DraftBadge product={product} />
                               {originalSoldOut && (
                                 <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
                               )}

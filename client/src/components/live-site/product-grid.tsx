@@ -2,6 +2,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
+import { DraftBadge } from "@/components/live-site/draft-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
@@ -169,6 +170,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                           
                           return (
                             <>
+                              <DraftBadge product={product} />
                               {originalSoldOut && (
                                 <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
                               )}
@@ -225,6 +227,7 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
                     
                     return (
                       <>
+                        <DraftBadge product={product} />
                         {originalSoldOut && (
                           <Badge variant="destructive" data-testid={`badge-sold-${product.id}`}>Sold</Badge>
                         )}
