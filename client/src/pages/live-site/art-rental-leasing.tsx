@@ -1,3 +1,4 @@
+import { BoardsPromo } from "@/components/marketing/boards-promo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
@@ -69,6 +70,7 @@ export default function ArtRentalLeasingPage() {
         <HowItWorks artworks={artworks} />
         <Terms />
         <Questions />
+        <BoardsPromo className="bg-secondary" />
         <section id="rental-inquiry" aria-labelledby="inquiry-title" className="scroll-mt-20 py-20 md:py-32">
           <Frame>
             <RentalInquiryForm handoff={handoff} />

@@ -1,3 +1,4 @@
+import { BoardsPromo } from "@/components/marketing/boards-promo";
 import { useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
@@ -275,6 +276,8 @@ export default function CorporateBuyersPage() {
             </dl>
           </Frame>
         </section>
+
+        <BoardsPromo />
 
         {/* Prefer to rent? (shown while the rental page is on) */}
         {pageEnabled("art-rental-leasing") && (

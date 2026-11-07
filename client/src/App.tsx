@@ -54,6 +54,8 @@ import CommissionPage from "@/pages/live-site/commission";
 import AdminBoardsPage from "@/pages/admin/boards";
 import AdminBoardDetailPage from "@/pages/admin/board-detail";
 import BoardViewPage from "@/pages/live-site/board-view";
+import MyBoardsPage from "@/pages/live-site/my-boards";
+import MyBoardPage from "@/pages/live-site/my-board";
 import AdminArtShowsPage from "@/pages/admin/art-shows";
 import AdminArtShowDetailPage from "@/pages/admin/art-show-detail";
 import PosCheckoutPage from "@/pages/live-site/pos-checkout";
@@ -81,6 +83,8 @@ function Router() {
       <Route path="/art-rental-leasing" component={ArtRentalLeasingPage} />
       <Route path="/commission" component={CommissionPage} />
       <Route path="/board/:slug" component={BoardViewPage} />
+      <Route path="/boards" component={MyBoardsPage} />
+      <Route path="/boards/:id" component={MyBoardPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/favorites" component={FavoritesPage} />
       <Route path="/orders" component={OrdersPage} />

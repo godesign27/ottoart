@@ -102,6 +102,8 @@ Use these first. All in `client/src/components/marketing/` unless noted.
 | `RentalEstimator` | `rental-estimator.tsx` | Pick a real work (or an average value) and read an itemised receipt slip |
 | `RentalInquiryForm` | `rental-inquiry-form.tsx` | The clip-out coupon form: visible labels, error summary, honest failure states |
 | `PageUnavailable`, `AdminOffNotice` | `page-unavailable.tsx` | Switched-off pages |
+| `BoardsPromo` | `boards-promo.tsx` | "Plan it on a board": the way into buyer boards from Corporate Buyers and Art Rental |
+| `SaveToBoard` | `components/live-site/save-to-board.tsx` | On an artwork: save to one of your boards or start a new one. Signed-out visitors get a sign-in prompt |
 | `artSrc`, `artSrcSet` | `art.ts` | Sized image URLs: uploaded images resize on the server with `?w=` (160–1600), so a thumbnail never loads a 2 MB original |
 | `useReveal` | `hooks/use-reveal.ts` | Entrances for `data-reveal` elements; stagger with `--reveal-i` |
 | `usePageAccess` | `hooks/use-page-access.ts` | On/off switch logic for a page |

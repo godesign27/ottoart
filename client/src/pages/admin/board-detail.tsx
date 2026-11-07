@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { AdminSidebar } from "@/components/admin/sidebar";
@@ -354,6 +354,8 @@ export default function AdminBoardDetailPage() {
             </Card>
           )}
 
+          {board.ownerUserId && <BuyerBoardPanel board={board} />}
+
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-foreground">Board Items ({boardItems.length})</h3>
@@ -404,6 +406,7 @@ export default function AdminBoardDetailPage() {
                       <p className="text-sm font-medium text-foreground truncate">{item.product.name}</p>
                       {item.product.medium && <p className="text-xs text-muted-foreground">{item.product.medium}</p>}
                       {item.product.dimensions && <p className="text-xs text-muted-foreground">{item.product.dimensions}</p>}
+                      {item.note && <p className="mt-2 text-xs text-foreground"><span className="font-medium">Buyer's note:</span> {item.note}</p>}
                     </div>
                     <Button
                       variant="destructive"
@@ -495,5 +498,38 @@ export default function AdminBoardDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+const INTENT_LABEL: Record<string, string> = { rent: "Rent or lease", buy: "Buy", "not-sure": "Not sure yet" };
+
+// A board a buyer made on the site: who made it, and their quote request if they sent one.
+function BuyerBoardPanel({ board }: { board: Board }) {
+  const { data: boards = [] } = useQuery<(Board & { owner: { email: string | null; name: string | null } | null })[]>({ queryKey: ['/api/boards'] });
+  const owner = boards.find((b) => b.id === board.id)?.owner;
+  const q = (board.quoteDetails ?? {}) as { location?: string; timing?: string; phone?: string; message?: string };
+  const rows: [string, string | null | undefined][] = [
+    ["Looking to", board.quoteIntent ? INTENT_LABEL[board.quoteIntent] ?? board.quoteIntent : null],
+    ["Location", q.location], ["Timing", q.timing], ["Phone", q.phone],
+  ];
+  return (
+    <section aria-label="Buyer and quote request" className="mb-8 bg-card border p-5" data-testid="buyer-board-panel">
+      <p className="text-sm text-muted-foreground">Made by a buyer on the site</p>
+      <p className="mt-1 font-semibold">
+        {owner?.name || owner?.email || "Unknown buyer"}
+        {owner?.email && <> · <a href={`mailto:${owner.email}`} className="underline underline-offset-4">{owner.email}</a></>}
+      </p>
+      {board.quoteRequestedAt ? (
+        <div className="mt-4">
+          <p className="font-medium">Quote requested {new Date(board.quoteRequestedAt).toLocaleString()}</p>
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
+            {rows.filter(([, v]) => v).map(([k, v]) => (<Fragment key={k}><dt className="text-muted-foreground">{k}</dt><dd>{v}</dd></Fragment>))}
+          </dl>
+          {q.message && <p className="mt-3 whitespace-pre-wrap text-sm">{q.message}</p>}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">No quote requested yet.</p>
+      )}
+    </section>
   );
 }

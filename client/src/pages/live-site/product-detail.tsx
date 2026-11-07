@@ -10,6 +10,7 @@ import { artSrc, artSrcSet } from "@/components/marketing/art";
 const formatUsd = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
 import { FavoriteButton } from "@/components/live-site/favorite-button";
+import { SaveToBoard } from "@/components/live-site/save-to-board";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DraftBadge } from "@/components/live-site/draft-badge";
@@ -408,6 +409,12 @@ export default function ProductDetailPage() {
                   </Button>
                 );
               })()}
+
+              {/* Corporate and rental buyers plan a space on a board, then send it for a quote */}
+              <div className="space-y-2">
+                <SaveToBoard productId={product.id} productName={product.name} className="w-full" />
+                <p className="text-sm text-muted-foreground">Furnishing an office or renting? Gather works on a board, add notes and send it to Otto for a quote.</p>
+              </div>
 
             </div>
           </div>

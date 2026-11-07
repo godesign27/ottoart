@@ -1,4 +1,4 @@
-import { User as UserIcon, Heart, ShoppingBag, Settings, LogOut, LogIn, UserPlus, Moon, Sun, LayoutDashboard } from "lucide-react";
+import { User as UserIcon, Heart, ShoppingBag, Settings, LogOut, LogIn, UserPlus, Moon, Sun, LayoutDashboard, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,7 +43,7 @@ export function ProfileMenu() {
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="pb-3">
             <div className="text-sm font-normal text-muted-foreground">
-              Sign in to access favorites, orders, and more
+              Sign in for favorites, boards, orders and more
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -166,6 +166,13 @@ export function ProfileMenu() {
           </Link>
         </DropdownMenuItem>
         
+        <DropdownMenuItem asChild data-testid="menu-boards">
+          <Link href="/boards">
+            <LayoutGrid className="mr-2 h-4 w-4" />
+            Boards
+          </Link>
+        </DropdownMenuItem>
+
         <DropdownMenuItem asChild data-testid="menu-orders">
           <Link href="/orders">
             <ShoppingBag className="mr-2 h-4 w-4" />

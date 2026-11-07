@@ -346,22 +346,30 @@ export const rentalInquiries = pgTable("rental_inquiries", {
 
 export type RentalInquiry = typeof rentalInquiries.$inferSelect;
 
-// Boards for curator collaboration
+// Boards. Otto's own curator boards have no owner; buyer boards belong to a signed-in user.
+// status "active" means anyone with the /board/:slug link can view and star it; "draft" is private.
 export const boards = pgTable("boards", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
   slug: text("slug").notNull().unique(),
   status: text("status").default("draft"),
+  ownerUserId: varchar("owner_user_id").references(() => users.id, { onDelete: "cascade" }),
+  quoteRequestedAt: timestamp("quote_requested_at"),
+  quoteIntent: text("quote_intent"), // rent | buy | not-sure
+  quoteDetails: jsonb("quote_details"), // { location, timing, phone, message }
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_boards_owner_user_id").on(table.ownerUserId),
+]);
 
 export const boardItems = pgTable("board_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   boardId: varchar("board_id").notNull().references(() => boards.id, { onDelete: "cascade" }),
   productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
   sortOrder: integer("sort_order").default(0),
+  note: text("note"), // the buyer's note on this piece ("Reception, north wall")
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_board_items_board_id").on(table.boardId),

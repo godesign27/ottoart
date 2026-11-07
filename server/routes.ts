@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { storage } from "./storage";
 import { parseResizeWidth, sendResized } from "./imageResize";
 import { createRentalInquiry, listRentalInquiries, updateRentalInquiry } from "./rentalInquiries";
+import { addMyBoardItem, createMyBoard, deleteMyBoard, getMyBoard, listMyBoards, removeMyBoardItem, requestMyBoardQuote, updateMyBoard, updateMyBoardItem } from "./buyerBoards";
 import { registerSeoRoutes } from "./seo";
 
 // Initialize Resend for email notifications
@@ -2343,6 +2344,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== BUYER BOARDS ====================
+  // Boards signed-in buyers make for themselves (server/buyerBoards.ts). Each handler only touches the caller's own boards.
+  app.get('/api/my/boards', requireAuth, listMyBoards);
+  app.post('/api/my/boards', requireAuth, createMyBoard);
+  app.get('/api/my/boards/:id', requireAuth, getMyBoard);
+  app.patch('/api/my/boards/:id', requireAuth, updateMyBoard);
+  app.delete('/api/my/boards/:id', requireAuth, deleteMyBoard);
+  app.post('/api/my/boards/:id/items', requireAuth, addMyBoardItem);
+  app.patch('/api/my/boards/:id/items/:itemId', requireAuth, updateMyBoardItem);
+  app.delete('/api/my/boards/:id/items/:itemId', requireAuth, removeMyBoardItem);
+  app.post('/api/my/boards/:id/quote', requireAuth, requestMyBoardQuote);
+
   // ==================== BOARDS ====================
 
   // Get all boards (admin)
@@ -2352,7 +2365,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const boardsWithCounts = await Promise.all(allBoards.map(async (board) => {
         const items = await storage.getBoardItems(board.id);
         const stars = await storage.getBoardStars(board.id);
-        return { ...board, itemCount: items.length, starCount: stars.length };
+        // Buyer boards carry who made them, so Otto can follow up.
+        const owner = board.ownerUserId ? await storage.getUser(board.ownerUserId) : undefined;
+        return {
+          ...board, itemCount: items.length, starCount: stars.length,
+          owner: owner ? { email: owner.email, name: [owner.firstName, owner.lastName].filter(Boolean).join(" ") || null } : null,
+        };
       }));
       res.json(boardsWithCounts);
     } catch (error) {
@@ -2381,7 +2399,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Board not found" });
       }
       const items = await storage.getBoardItems(board.id);
-      res.json({ board, items });
+      // Anyone with the link can see this: never the owner or the quote request.
+      const { id, name, description, slug, status } = board;
+      res.json({ board: { id, name, description, slug, status }, items });
     } catch (error) {
       console.error("Error fetching public board:", error);
       res.status(500).json({ message: "Failed to fetch board" });
