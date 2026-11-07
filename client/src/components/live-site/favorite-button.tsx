@@ -35,10 +35,10 @@ export function FavoriteButton({
       onClick={handleClick}
       disabled={isToggling}
       className={cn(
-        "transition-all duration-200 hover:scale-105",
+        "transition-colors duration-200",
         favorite 
-          ? "bg-red-500 hover:bg-red-600 text-white border-red-500" 
-          : "text-muted-foreground hover:text-red-500 border-transparent hover:border-red-200",
+          ? "bg-brand text-brand-foreground hover:bg-brand/90"
+          : "text-muted-foreground hover:text-brand",
         className
       )}
       data-testid={`favorite-button-${productId}`}

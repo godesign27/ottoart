@@ -80,7 +80,8 @@ Use the semantic tokens, never raw hex or Tailwind palette colours (`blue-600`, 
   - Gutters: `px-4` on phones, `sm:px-6`, `lg:px-8`.
 - **Section rhythm:** `py-20 md:py-28`. Alternate `background` and `muted/40` bands to separate sections, without adding colour.
 - **Spacing scale:** 4, 8, 12, 16, 24, 32, 48, 64, 96px (Tailwind 1, 2, 3, 4, 6, 8, 12, 16, 24).
-- **Radius:** every action on the site has **square corners**: the shared `Button` (shop and admin), `ActionLink`/`ActionButton`, and links styled as buttons. Marketing pages also keep tiles, images and fields square. Cards, inputs and menus in the shop and admin keep `--radius` (0.5rem). Round shapes stay only where the shape means something (avatars, radio dots, switches, count badges).
+- **Radius:** square, everywhere. `--radius` is 0, so buttons, inputs, menus, cards, badges, product images and tiles in the shop, marketing pages and admin all have square corners. Round shapes stay only where the shape means something (avatars, radio dots, switches, count badges).
+- **Product cards** (`components/live-site/product-grid.tsx`): no box or shadow. A 4:5 image on a stone ground, then name, size · medium, and one price line ("Original $3,227 · Prints from $250"), then status badges. Images load at card size through `artSrc`.
 - **Shadows:** none on anything at rest. Only things that float (menus, dialogs, a fixed notice) get one.
 - **Lines:** none as decoration. Separate with space or a tone step. Lines belong only in real tables and form fields.
 - **Anchored sections** use `scroll-mt-24` so the sticky header doesn't cover their heading.

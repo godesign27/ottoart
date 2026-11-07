@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, CheckCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 const emailSubscriptionSchema = z.object({
@@ -65,12 +65,9 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
 
   if (isSubmitted) {
     return (
-      <div className={`text-center space-y-4 ${className}`}>
-        <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-          <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-        </div>
+      <div className={`space-y-4 ${className}`} role="status">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Welcome to our community!</h3>
+          <h3 className="font-display text-3xl text-foreground">Welcome to our community!</h3>
           <p className="text-muted-foreground">
             You've successfully subscribed to our newsletter. Check your email for confirmation.
           </p>
@@ -87,19 +84,16 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="text-center space-y-2">
-        <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-          <Mail className="h-6 w-6 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">Stay Connected</h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
+    <div className={`grid gap-10 lg:grid-cols-12 ${className}`}>
+      <div className="lg:col-span-5">
+        <h2 className="font-display text-[2.25rem] leading-[1.05] tracking-[-0.02em] text-foreground md:text-[3rem]">Stay connected</h2>
+        <p className="mt-4 max-w-md text-lg">
           Subscribe to receive updates about new artworks, exhibitions, and exclusive previews.
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-md mx-auto">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 lg:col-span-6 lg:col-start-7">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -110,7 +104,7 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
                   <FormControl>
                     <Input
                       placeholder="John"
-                      className="bg-background border-border focus:border-primary"
+                      className="h-12 bg-background"
                       data-testid="input-firstname"
                       {...field}
                     />
@@ -128,7 +122,7 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
                   <FormControl>
                     <Input
                       placeholder="Doe"
-                      className="bg-background border-border focus:border-primary"
+                      className="h-12 bg-background"
                       data-testid="input-lastname"
                       {...field}
                     />
@@ -149,7 +143,7 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
                   <Input
                     type="email"
                     placeholder="john@example.com"
-                    className="bg-background border-border focus:border-primary"
+                    className="h-12 bg-background"
                     data-testid="input-email"
                     {...field}
                   />
@@ -161,7 +155,7 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
 
           <Button 
             type="submit" 
-            className="w-full" 
+            className="h-12 w-full text-base font-semibold sm:w-auto sm:px-8" 
             disabled={isLoading}
             data-testid="button-subscribe"
           >
@@ -172,13 +166,12 @@ export function EmailSubscriptionForm({ className = "" }: EmailSubscriptionFormP
               </>
             ) : (
               <>
-                <Mail className="mr-2 h-4 w-4" />
-                Subscribe to Newsletter
+                Subscribe to the newsletter
               </>
             )}
           </Button>
 
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-sm text-muted-foreground">
             By subscribing, you agree to receive our newsletter. You can unsubscribe at any time.
           </p>
         </form>

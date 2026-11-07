@@ -43,15 +43,15 @@ export default function ShopAllPage() {
     <div className="min-h-screen bg-background">
       <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
+      <main className="mx-auto w-full max-w-[90rem] px-4 pb-24 pt-12 sm:px-6 lg:px-10 lg:pt-16">
+        <div className="space-y-10">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Our Products</h1>
-            <p className="text-muted-foreground mt-2">Discover our complete collection of artworks and accessories</p>
+            <h1 className="font-display text-[2.5rem] leading-[1.02] tracking-[-0.02em] md:text-[3.5rem]">Shop all art</h1>
+            <p className="mt-3 max-w-[52ch] text-lg text-muted-foreground">Original paintings, prints and accessories by Otto.</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full flex-1 sm:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
@@ -90,7 +90,7 @@ export default function ShopAllPage() {
                   </Badge>
                 )}
               </Button>
-              <div className="flex border border-input rounded-lg">
+              <div className="flex border border-input">
                 <Button
                   variant={gridViewMode === "grid" ? "default" : "ghost"}
                   size="sm"
@@ -112,7 +112,7 @@ export default function ShopAllPage() {
           </div>
 
           {showFilters && (
-            <div className="border border-input rounded-lg p-4 bg-card space-y-4">
+            <div className="space-y-4 bg-secondary p-5">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-foreground">Filter by Category</h3>
                 {hasActiveFilters && (
