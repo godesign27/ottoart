@@ -813,7 +813,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPageSetting(page: string): Promise<PageSettings | undefined> {
-    const [setting] = await db.select().from(pageSettings).where(eq(pageSettings.page, page as "home" | "bio" | "gallery" | "events" | "cv" | "contact"));
+    const [setting] = await db.select().from(pageSettings).where(eq(pageSettings.page, page as PageSettings["page"]));
     return setting || undefined;
   }
 

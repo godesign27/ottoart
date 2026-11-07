@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@clerk/react";
+import type { PageSettings, User as AppUser } from "@shared/schema";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,18 @@ export default function CorporateBuyersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<null | { ok: boolean; msg: string }>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+
+  // The page can be switched off in Admin > Pages. Visitors then get a "not available" page;
+  // an admin still sees it, with a notice, so they can review it before switching it back on.
+  const { data: pageSettings, isLoading: isLoadingSettings } = useQuery<PageSettings[]>({
+    queryKey: ['/api/page-settings'],
+  });
+  const isEnabled = pageSettings?.find(p => p.page === "corporate-buyers")?.enabled ?? true;
+  const { isSignedIn, isLoaded: isUserLoaded } = useUser();
+  const { data: localUser, isLoading: isLoadingUser } = useQuery<AppUser>({
+    queryKey: ["/api/me"], enabled: !!isSignedIn,
+  });
+  const isAdmin = localUser?.role === 'admin';
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
     setViewMode(mode);
@@ -151,8 +166,36 @@ export default function CorporateBuyersPage() {
     }
   ];
 
+  if (!isEnabled) {
+    // Wait for the sign-in check so an admin doesn't see the "not available" page flash first.
+    if (!isUserLoaded || (isSignedIn && isLoadingUser)) return <div className="min-h-screen bg-gray-50 dark:bg-slate-900" />;
+    if (!isAdmin) {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
+          <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
+          <main className="flex-1 flex items-center justify-center px-6 py-24 text-center" data-testid="corporate-page-unavailable">
+            <div className="max-w-md">
+              <h1 className="text-3xl font-bold text-foreground mb-4">This page isn't available</h1>
+              <p className="text-muted-foreground mb-8">For artwork for your business, get in touch and we'll help.</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button asChild><Link href="/contact">Contact us</Link></Button>
+                <Button asChild variant="outline"><Link href="/shop-all">Shop all art</Link></Button>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      {!isLoadingSettings && !isEnabled && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-md border border-amber-500 bg-amber-50 px-4 py-2 text-sm text-amber-900 shadow-md dark:bg-amber-950 dark:text-amber-100" data-testid="corporate-page-disabled-notice">
+          This page is off. Only admins can see it. <Link href="/admin/corporate-buyers" className="underline font-medium">Turn it on</Link>
+        </div>
+      )}
       <style>{`
         @keyframes gradient {
           0% {

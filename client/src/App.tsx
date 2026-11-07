@@ -19,6 +19,7 @@ import AdminEvents from "@/pages/admin/events";
 import AdminCommissions from "@/pages/admin/commissions";
 import AdminCV from "@/pages/admin/cv";
 import AdminContact from "@/pages/admin/contact";
+import AdminCorporateBuyers from "@/pages/admin/corporate-buyers";
 import AdminBio from "@/pages/admin/bio";
 import AdminHome from "@/pages/admin/home";
 import ArtistSettingsPage from "@/pages/admin/settings/artist";
@@ -109,6 +110,7 @@ function Router() {
       <Route path="/admin/commissions" component={AdminCommissions} />
       <Route path="/admin/cv" component={AdminCV} />
       <Route path="/admin/contact" component={AdminContact} />
+      <Route path="/admin/corporate-buyers" component={AdminCorporateBuyers} />
       <Route path="/admin/bio" component={AdminBio} />
       <Route path="/admin/settings/artist" component={ArtistSettingsPage} />
       <Route path="/admin/settings/business" component={BusinessSettingsPage} />

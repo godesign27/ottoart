@@ -35,7 +35,7 @@ export function Footer() {
     { href: "/prints", label: "Prints" },
     { href: "/accessories", label: "Accessories" },
     { href: "/mail-club", label: "Mail Club" },
-    { href: "/corporate-buyers", label: "Corporate Buyers" }
+    ...(getPageEnabled("corporate-buyers") ? [{ href: "/corporate-buyers", label: "Corporate Buyers" }] : [])
   ];
 
   // Page-based navigation items (filtered by page settings)
@@ -195,14 +195,18 @@ export function Footer() {
               © {new Date().getFullYear()} Otto Art. All rights reserved.
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
-              <Link 
-                href="/corporate-buyers" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="footer-corporate-buyers"
-              >
-                Corporate Buyers
-              </Link>
-              <span className="text-muted-foreground">•</span>
+              {getPageEnabled("corporate-buyers") && (
+                <>
+                  <Link 
+                    href="/corporate-buyers" 
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    data-testid="footer-corporate-buyers"
+                  >
+                    Corporate Buyers
+                  </Link>
+                  <span className="text-muted-foreground">•</span>
+                </>
+              )}
               <Link 
                 href="/checkout" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
