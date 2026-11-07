@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PageSettings } from "@shared/schema";
 import { 
+  KeyRound,
   LayoutDashboard, 
   Package, 
   Users,
@@ -166,6 +167,12 @@ const pageItems = [
     href: "/admin/corporate-buyers",
     page: "corporate-buyers",
     icon: Building
+  },
+  {
+    title: "Art Rental",
+    href: "/admin/art-rental-leasing",
+    page: "art-rental-leasing",
+    icon: KeyRound
   }
 ];
 

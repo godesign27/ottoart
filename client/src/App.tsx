@@ -20,6 +20,7 @@ import AdminCommissions from "@/pages/admin/commissions";
 import AdminCV from "@/pages/admin/cv";
 import AdminContact from "@/pages/admin/contact";
 import AdminCorporateBuyers from "@/pages/admin/corporate-buyers";
+import AdminArtRentalLeasing from "@/pages/admin/art-rental-leasing";
 import AdminBio from "@/pages/admin/bio";
 import AdminHome from "@/pages/admin/home";
 import ArtistSettingsPage from "@/pages/admin/settings/artist";
@@ -48,6 +49,7 @@ import OrdersPage from "@/pages/orders";
 import ProfilePage from "@/pages/profile";
 import { ArtWallPage } from "@/pages/live-site/art-wall";
 import CorporateBuyersPage from "@/pages/live-site/corporate-buyers";
+import ArtRentalLeasingPage from "@/pages/live-site/art-rental-leasing";
 import CommissionPage from "@/pages/live-site/commission";
 import AdminBoardsPage from "@/pages/admin/boards";
 import AdminBoardDetailPage from "@/pages/admin/board-detail";
@@ -76,6 +78,7 @@ function Router() {
       <Route path="/cv" component={CVPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/corporate-buyers" component={CorporateBuyersPage} />
+      <Route path="/art-rental-leasing" component={ArtRentalLeasingPage} />
       <Route path="/commission" component={CommissionPage} />
       <Route path="/board/:slug" component={BoardViewPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
@@ -111,6 +114,7 @@ function Router() {
       <Route path="/admin/cv" component={AdminCV} />
       <Route path="/admin/contact" component={AdminContact} />
       <Route path="/admin/corporate-buyers" component={AdminCorporateBuyers} />
+      <Route path="/admin/art-rental-leasing" component={AdminArtRentalLeasing} />
       <Route path="/admin/bio" component={AdminBio} />
       <Route path="/admin/settings/artist" component={ArtistSettingsPage} />
       <Route path="/admin/settings/business" component={BusinessSettingsPage} />

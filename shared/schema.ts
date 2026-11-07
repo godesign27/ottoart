@@ -160,7 +160,7 @@ export const siteSettings = pgTable("site_settings", {
 
 export const pageSettings = pgTable("page_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  page: text("page", { enum: ["home", "bio", "gallery", "events", "cv", "contact", "mail-club", "corporate-buyers"] }).notNull().unique(),
+  page: text("page", { enum: ["home", "bio", "gallery", "events", "cv", "contact", "mail-club", "corporate-buyers", "art-rental-leasing"] }).notNull().unique(),
   enabled: boolean("enabled").default(true).notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -320,6 +320,31 @@ export const commissionRequests = pgTable("commission_requests", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Art rental inquiries from /art-rental-leasing. Saved before the visitor is told it was received.
+export const rentalInquiries = pgTable("rental_inquiries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reference: text("reference").notNull().unique(), // short code shown to the visitor, e.g. R-7KQ2M9
+  idempotencyKey: text("idempotency_key").notNull().unique(), // one per form fill, so a double submit saves once
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  company: text("company"),
+  phone: text("phone"),
+  location: text("location").notNull(),
+  spaceType: text("space_type"),
+  artworkInterest: text("artwork_interest").notNull(), // originals | prints | both | not-sure
+  artworkCount: integer("artwork_count"), // null when the visitor chose "Not sure"
+  preferredTerm: text("preferred_term").notNull(), // 3 | 6 | 12 | not-sure
+  preferredStartDate: text("preferred_start_date"), // YYYY-MM-DD
+  details: text("details"),
+  estimate: jsonb("estimate"), // illustrative estimate, recalculated on the server, with its pricing version
+  sourceRoute: text("source_route"),
+  status: text("status").default("new").notNull(), // new | contacted | quoted | closed
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type RentalInquiry = typeof rentalInquiries.$inferSelect;
 
 // Boards for curator collaboration
 export const boards = pgTable("boards", {

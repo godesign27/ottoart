@@ -17,3 +17,6 @@ vite.config.ts.*
 .claude/skills/
 skills-lock.json
 .env.replit-prod
+
+# design-skill working files (screenshots, direction sheet)
+.taste-skill/

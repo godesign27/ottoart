@@ -5,6 +5,7 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { injectSeo } from "./seo";
 
 const viteLogger = createLogger();
 
@@ -58,7 +59,7 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
+      const page = await injectSeo(await vite.transformIndexHtml(url, template), req);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
@@ -76,10 +77,16 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // index: false so "/" also goes through the page handler below and gets its head tags.
+  app.use(express.static(distPath, { index: false }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // fall through to index.html (with this page's head tags) if the file doesn't exist
+  const indexHtml = fs.readFileSync(path.resolve(distPath, "index.html"), "utf-8");
+  app.use("*", async (req, res, next) => {
+    try {
+      res.status(200).set({ "Content-Type": "text/html" }).end(await injectSeo(indexHtml, req));
+    } catch (e) {
+      next(e);
+    }
   });
 }

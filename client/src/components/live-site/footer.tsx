@@ -35,7 +35,8 @@ export function Footer() {
     { href: "/prints", label: "Prints" },
     { href: "/accessories", label: "Accessories" },
     { href: "/mail-club", label: "Mail Club" },
-    ...(getPageEnabled("corporate-buyers") ? [{ href: "/corporate-buyers", label: "Corporate Buyers" }] : [])
+    ...(getPageEnabled("corporate-buyers") ? [{ href: "/corporate-buyers", label: "Corporate Buyers" }] : []),
+    ...(getPageEnabled("art-rental-leasing") ? [{ href: "/art-rental-leasing", label: "Art Rental & Leasing" }] : [])
   ];
 
   // Page-based navigation items (filtered by page settings)
@@ -113,12 +114,12 @@ export function Footer() {
   );
 
   return (
-    <footer className="bg-background border-t border-border">
+    <footer className="bg-background">
       {/* Service Trust Cards Section */}
       <ServiceTrustCards />
       
       {/* Email Subscription Section */}
-      <div className="bg-muted/30 border-b border-border">
+      <div className="bg-muted/60">
         <div className="max-w-4xl mx-auto px-6 py-8">
           <EmailSubscriptionForm />
         </div>
@@ -189,7 +190,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-8 pt-8 border-t border-border">
+        <div className="mt-12 pt-2">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Otto Art. All rights reserved.

@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@clerk/react";
-import type { PageSettings, User as AppUser } from "@shared/schema";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building2, Hotel, Briefcase, Heart, Plane, Palette, Sparkles, RotateCw, Check } from "lucide-react";
+import { ActionButton, ActionLink, Frame, SectionTitle } from "@/components/marketing/primitives";
+import { SpecimenWall } from "@/components/marketing/specimen-wall";
+import { AdminOffNotice, PageUnavailable } from "@/components/marketing/page-unavailable";
+import { artSrc } from "@/components/marketing/art";
+import { usePageAccess, usePageEnabled } from "@/hooks/use-page-access";
+import { useRentalArtworks } from "@/hooks/use-rental-artworks";
+import { useReveal } from "@/hooks/use-reveal";
+import { useDocumentMeta } from "@/hooks/use-document-meta";
 import officeWallImage from "@assets/office-wall-corporate1_1761342062803.png";
 
 export default function CorporateBuyersPage() {
@@ -24,17 +27,16 @@ export default function CorporateBuyersPage() {
   const [status, setStatus] = useState<null | { ok: boolean; msg: string }>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
-  // The page can be switched off in Admin > Pages. Visitors then get a "not available" page;
-  // an admin still sees it, with a notice, so they can review it before switching it back on.
-  const { data: pageSettings, isLoading: isLoadingSettings } = useQuery<PageSettings[]>({
-    queryKey: ['/api/page-settings'],
+  const access = usePageAccess("corporate-buyers");
+  const pageEnabled = usePageEnabled();
+  const { artworks } = useRentalArtworks();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [preview, setPreview] = useState(0);
+  useReveal(rootRef, [access.canView, artworks.length]);
+  useDocumentMeta({
+    title: "Corporate Art Buyers | Original Art & Prints | Otto Art",
+    description: "Original abstract art, limited edition prints, commissions and rotational programs by Otto for offices, hotels, healthcare and hospitality spaces.",
   });
-  const isEnabled = pageSettings?.find(p => p.page === "corporate-buyers")?.enabled ?? true;
-  const { isSignedIn, isLoaded: isUserLoaded } = useUser();
-  const { data: localUser, isLoading: isLoadingUser } = useQuery<AppUser>({
-    queryKey: ["/api/me"], enabled: !!isSignedIn,
-  });
-  const isAdmin = localUser?.role === 'admin';
 
   const handleViewModeChange = (mode: 'admin' | 'live') => {
     setViewMode(mode);
@@ -98,27 +100,22 @@ export default function CorporateBuyersPage() {
 
   const whoWeWorkWith = [
     {
-      icon: Hotel,
       title: "Hotels & Resorts",
       description: "Enhance guest rooms, lobbies, spas, and restaurants with original art or curated series."
     },
     {
-      icon: Briefcase,
       title: "Corporate Offices",
       description: "Inspire creativity and focus with artwork that reflects your company's brand and culture."
     },
     {
-      icon: Heart,
       title: "Healthcare & Wellness",
       description: "Create calming environments in waiting rooms, clinics, and wellness centers."
     },
     {
-      icon: Plane,
       title: "Airports & Transportation Hubs",
       description: "Transform lounges, concourses, and terminals into vibrant experiences."
     },
     {
-      icon: Palette,
       title: "Architects & Interior Designers",
       description: "Partner on projects with custom commissions and tailored print programs."
     }
@@ -126,22 +123,18 @@ export default function CorporateBuyersPage() {
 
   const options = [
     {
-      icon: Sparkles,
       title: "Originals",
       description: "Unique statement pieces designed to stand out."
     },
     {
-      icon: Building2,
       title: "Limited Edition Prints",
       description: "High-quality, scalable art for multiple rooms or large spaces."
     },
     {
-      icon: Palette,
       title: "Custom Commissions",
       description: "Collaborative, tailored pieces designed around your vision, brand, or space."
     },
     {
-      icon: RotateCw,
       title: "Rotational Programs",
       description: "Seasonal or rotating art collections to keep environments fresh and dynamic."
     }
@@ -166,260 +159,179 @@ export default function CorporateBuyersPage() {
     }
   ];
 
-  if (!isEnabled) {
-    // Wait for the sign-in check so an admin doesn't see the "not available" page flash first.
-    if (!isUserLoaded || (isSignedIn && isLoadingUser)) return <div className="min-h-screen bg-gray-50 dark:bg-slate-900" />;
-    if (!isAdmin) {
-      return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
-          <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-          <main className="flex-1 flex items-center justify-center px-6 py-24 text-center" data-testid="corporate-page-unavailable">
-            <div className="max-w-md">
-              <h1 className="text-3xl font-bold text-foreground mb-4">This page isn't available</h1>
-              <p className="text-muted-foreground mb-8">For artwork for your business, get in touch and we'll help.</p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button asChild><Link href="/contact">Contact us</Link></Button>
-                <Button asChild variant="outline"><Link href="/shop-all">Shop all art</Link></Button>
-              </div>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      );
-    }
+  if (access.isDeciding) return <div className="min-h-svh bg-background" />;
+  if (!access.canView) {
+    return <PageUnavailable suggestion="For artwork for your business, get in touch and we’ll help." />;
   }
 
+  const studio = artworks.filter((x) => x.studioKnown).map((x) => x.studio);
+  const rooms = artworks.map((x) => x.room).filter((r): r is string => !!r);
+  const previews = [officeWallImage, ...rooms];
+  const fields = ["bg-secondary", "bg-[hsl(336_60%_93%)]", "bg-[hsl(188_28%_88%)]", "bg-[hsl(38_18%_84%)]"];
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
-      {!isLoadingSettings && !isEnabled && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-md border border-amber-500 bg-amber-50 px-4 py-2 text-sm text-amber-900 shadow-md dark:bg-amber-950 dark:text-amber-100" data-testid="corporate-page-disabled-notice">
-          This page is off. Only admins can see it. <Link href="/admin/corporate-buyers" className="underline font-medium">Turn it on</Link>
-        </div>
-      )}
-      <style>{`
-        @keyframes gradient {
-          0% {
-            background-position: 0% 0%;
-          }
-          50% {
-            background-position: 100% 100%;
-          }
-          100% {
-            background-position: 0% 0%;
-          }
-        }
-
-        @keyframes wave {
-          2% {
-            transform: translateX(1);
-          }
-          25% {
-            transform: translateX(-25%);
-          }
-          50% {
-            transform: translateX(-50%);
-          }
-          75% {
-            transform: translateX(-25%);
-          }
-          100% {
-            transform: translateX(1);
-          }
-        }
-
-        .hero-gradient {
-          background: linear-gradient(315deg, rgba(101,0,94,1) 3%, rgba(40,90,150,1) 38%, rgba(30,120,115,1) 68%, rgba(120,15,15,1) 98%);
-          animation: gradient 15s ease infinite;
-          background-size: 400% 400%;
-        }
-
-        .wave {
-          background: rgb(255 255 255 / 25%);
-          border-radius: 1000% 1000% 0 0;
-          position: absolute;
-          width: 200%;
-          height: 12em;
-          animation: wave 10s -3s linear infinite;
-          transform: translate3d(0, 0, 0);
-          opacity: 0.8;
-          bottom: 0;
-          left: 0;
-          z-index: 1;
-        }
-
-        .wave:nth-of-type(2) {
-          bottom: -1.25em;
-          animation: wave 18s linear reverse infinite;
-          opacity: 0.8;
-        }
-
-        .wave:nth-of-type(3) {
-          bottom: -2.5em;
-          animation: wave 20s -1s reverse infinite;
-          opacity: 0.9;
-        }
-      `}</style>
+    <div ref={rootRef} className="min-h-svh bg-background text-foreground">
+      {access.showAdminNotice && <AdminOffNotice adminHref="/admin/corporate-buyers" />}
       <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-      
-      {/* Hero Section */}
-      <section 
-        className="hero-gradient relative min-h-[70vh] flex items-center justify-center text-center overflow-hidden"
-        data-testid="corporate-hero-section"
-      >
-        <div className="wave"></div>
-        <div className="wave"></div>
-        <div className="wave"></div>
-        <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
-          <Badge className="mb-6 text-sm font-semibold px-4 py-2 bg-white/20 text-white border-white/30" data-testid="hero-badge">
-            Corporate Buyers
-          </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight" data-testid="hero-headline">
-            Elevate Your Space with Original Art
-          </h1>
-          <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-4xl mx-auto" data-testid="hero-description">
-            Art is more than decoration — it's a powerful way to shape how people feel in your space. 
-            My work brings bold design, texture, and energy into environments where people gather, work, and travel.
-          </p>
-        </div>
-      </section>
 
-      {/* Office Wall Image */}
-      <section className="py-16 bg-white dark:bg-slate-950">
-        <div className="max-w-6xl mx-auto px-6">
-          <img 
-            src={officeWallImage} 
-            alt="Abstract art prints displayed in a modern corporate office setting" 
-            className="w-full h-auto rounded-lg shadow-2xl"
-            data-testid="office-wall-image"
-          />
-        </div>
-      </section>
+      <main>
+        {/* Hero: the same specimen wall as the rental page, so the two read as one family */}
+        <SpecimenWall images={studio} label="Corporate Buyers">
+          <div className="w-full max-w-[66rem] bg-ink p-6 text-ink-foreground sm:p-8 md:p-10" data-testid="corporate-hero-section">
+            <nav aria-label="Breadcrumb" className="mb-5 text-sm text-ink-muted">
+              <ol className="flex flex-wrap gap-2">
+                <li><Link href="/" className="underline-offset-4 hover:underline">Home</Link></li>
+                <li aria-hidden>→</li>
+                <li aria-current="page">Corporate Buyers</li>
+              </ol>
+            </nav>
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <h1 className="font-display text-[2.25rem] leading-[0.98] tracking-[-0.03em] sm:text-[2.75rem] md:text-[4.5rem] xl:text-[5.5rem]" data-testid="hero-headline">
+                  Elevate your space with original art
+                </h1>
+                <p className="mt-5 max-w-[50ch] text-base leading-relaxed text-ink-foreground/85 md:text-lg" data-testid="hero-description">
+                  Art is more than decoration — it’s a powerful way to shape how people feel in your space. My work brings bold design,
+                  texture, and energy into environments where people gather, work, and travel.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <ActionButton variant="paper" onClick={() => setIsFormOpen(true)} data-testid="button-hero-lets-talk">Let’s talk</ActionButton>
+                <ActionLink href="#corporate-options" variant="quietInk">See the options</ActionLink>
+              </div>
+            </div>
+          </div>
+        </SpecimenWall>
 
-      {/* Introduction */}
-      <section className="py-20 bg-gray-50 dark:bg-slate-900">
-        <div className="max-w-4xl mx-auto px-6">
-          <p className="text-xl text-muted-foreground leading-relaxed text-center">
-            Whether you're curating a welcoming lobby, energizing a boardroom, or creating memorable guest experiences, 
-            the right artwork makes a lasting impression.
-          </p>
-        </div>
-      </section>
+        {/* The work in a real setting, with the introduction beside it */}
+        <section aria-labelledby="impression-title" className="py-24 md:py-36">
+          <Frame className="grid items-center gap-12 lg:grid-cols-12">
+            <figure className="lg:col-span-7" data-reveal>
+              <img src={officeWallImage} alt="Otto Art prints on an office wall, digital visualisation" width={896} height={812} className="w-full" data-testid="office-wall-image" />
+              <figcaption className="mt-3 text-sm text-muted-foreground">Digital visualisation; artwork scale and placement may vary.</figcaption>
+            </figure>
+            <div className="lg:col-span-5">
+              <SectionTitle id="impression-title">Make a lasting impression</SectionTitle>
+              <p data-reveal style={{ ["--reveal-i" as string]: 1 }} className="mt-6 text-[1.375rem] leading-[1.4] md:text-[1.625rem]">
+                Whether you’re curating a welcoming lobby, energizing a boardroom, or creating memorable guest experiences, the right artwork
+                makes a lasting impression.
+              </p>
+            </div>
+          </Frame>
+        </section>
 
-      {/* Who I Work With */}
-      <section className="py-20 bg-gray-100 dark:bg-slate-800">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16" data-testid="who-we-work-with-heading">
-            Who I Work With
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {whoWeWorkWith.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div 
-                  key={index}
-                  className="bg-white dark:bg-slate-950 p-8 rounded-lg shadow-sm border border-border hover:shadow-lg transition-shadow"
+        {/* Who I work with: an index; pointing at a row shows that kind of space */}
+        <section aria-labelledby="who-title" className="bg-muted/50 py-24 md:py-36">
+          <Frame className="grid gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <div className="lg:sticky lg:top-28">
+              <SectionTitle id="who-title">Who I work with</SectionTitle>
+              <div className="relative mt-10 hidden aspect-[4/3] overflow-hidden bg-secondary lg:block" aria-hidden>
+                {previews.slice(0, whoWeWorkWith.length).map((src, i) => (
+                  <img key={src + i} src={artSrc(src, 960)} alt="" loading="lazy"
+                    className={`absolute inset-0 h-full w-full object-cover transition-opacity [transition-duration:240ms] [transition-timing-function:var(--ease-out)] ${preview === i ? "opacity-100" : "opacity-0"}`} />
+                ))}
+              </div>
+              </div>
+            </div>
+            <ul className="lg:col-span-7">
+              {whoWeWorkWith.map((item, index) => (
+                <li
+                  key={item.title}
+                  data-reveal
+                  style={{ ["--reveal-i" as string]: index }}
+                  onMouseEnter={() => setPreview(index)}
+                  className="py-7"
                   data-testid={`work-with-card-${index}`}
                 >
-                  <Icon className="h-12 w-12 text-primary mb-4" />
-                  <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{item.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                  <h3 className={`font-display text-[1.75rem] leading-tight tracking-[-0.01em] transition-colors duration-200 md:text-[2.25rem] ${preview === index ? "text-foreground" : "lg:text-foreground/55"}`}>
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 max-w-[52ch] text-lg leading-relaxed">{item.description}</p>
+                </li>
+              ))}
+            </ul>
+          </Frame>
+        </section>
 
-      {/* Options for Corporate Buyers */}
-      <section className="py-20 bg-gray-50 dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16" data-testid="options-heading">
-            Options for Corporate Buyers
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {options.map((option, index) => {
-              const Icon = option.icon;
-              return (
-                <div 
-                  key={index}
-                  className="flex gap-6 p-8 bg-white dark:bg-slate-950 rounded-lg border border-border shadow-sm"
-                  data-testid={`option-card-${index}`}
-                >
-                  <div className="flex-shrink-0">
-                    <Icon className="h-10 w-10 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-semibold mb-2">{option.title}</h3>
-                    <p className="text-muted-foreground text-lg leading-relaxed">{option.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        {/* Options: each its own tile, like the specimens */}
+        <section id="corporate-options" aria-labelledby="options-heading" className="scroll-mt-20 py-24 md:py-36">
+          <Frame>
+            <SectionTitle id="options-heading" className="max-w-[18ch]">Options for corporate buyers</SectionTitle>
+            <ul className="mt-14 grid gap-x-3 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+              {options.map((option, index) => {
+                const art = artworks.filter((x) => x.studioKnown)[index * 3];
+                return (
+                  <li key={option.title} data-reveal style={{ ["--reveal-i" as string]: index }} data-testid={`option-card-${index}`}>
+                    <div className={`grid aspect-square place-items-center ${fields[index % fields.length]}`}>
+                      {art && <img src={artSrc(art.studio, 480)} alt="" loading="lazy" className="h-[70%] w-[70%] object-contain" />}
+                    </div>
+                    <h3 className="mt-5 text-xl font-semibold">{option.title}</h3>
+                    <p className="mt-2 text-base leading-relaxed">{option.description}</p>
+                  </li>
+                );
+              })}
+            </ul>
+          </Frame>
+        </section>
 
-      {/* Why Partner With Me */}
-      <section className="py-20 bg-gray-100 dark:bg-slate-800">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16" data-testid="benefits-heading">
-            Why Partner With Me
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {benefits.map((benefit, index) => (
-              <div 
-                key={index}
-                className="flex gap-4"
-                data-testid={`benefit-item-${index}`}
-              >
-                <div className="flex-shrink-0 mt-1">
-                  <Check className="h-6 w-6 text-primary" />
+        {/* Why partner */}
+        <section aria-labelledby="benefits-heading" className="bg-secondary py-24 md:py-32">
+          <Frame className="grid gap-12 lg:grid-cols-12">
+            <SectionTitle id="benefits-heading" className="lg:col-span-4">Why partner with me</SectionTitle>
+            <dl className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:col-span-8">
+              {benefits.map((benefit, index) => (
+                <div key={benefit.title} data-reveal style={{ ["--reveal-i" as string]: index }} data-testid={`benefit-item-${index}`}>
+                  <dt className="text-2xl font-semibold leading-tight">{benefit.title}</dt>
+                  <dd className="mt-3 text-lg leading-relaxed">{benefit.description}</dd>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
+              ))}
+            </dl>
+          </Frame>
+        </section>
+
+        {/* Prefer to rent? (shown while the rental page is on) */}
+        {pageEnabled("art-rental-leasing") && (
+          <section aria-labelledby="rent-title" className="overflow-hidden py-24 md:py-32">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-12 md:gap-3">
+              <div className="order-2 h-32 bg-ink md:order-none md:col-span-2 md:h-[22rem]" aria-hidden />
+              <div data-reveal className="col-span-2 flex flex-col justify-center bg-brand p-8 text-brand-foreground md:col-span-8 md:h-[22rem] md:p-12">
+                <h2 id="rent-title" className="font-display text-[2rem] leading-[1.05] tracking-[-0.02em] md:text-[2.75rem]">Prefer to rent your artwork?</h2>
+                <p className="mt-4 max-w-[56ch] text-base leading-relaxed">
+                  Explore original artwork and print rentals for 3, 6, or 12 months. See monthly pricing, collection discounts, and the details to consider before requesting a quote.
+                </p>
+                <div className="mt-8">
+                  <ActionLink href="/art-rental-leasing" variant="paper" data-testid="link-art-rental">Explore art rental &amp; leasing</ActionLink>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <div className="order-3 h-32 overflow-hidden md:order-none md:col-span-2 md:h-[22rem]">
+                {rooms[0] && <img src={artSrc(rooms[0], 640)} alt="" loading="lazy" className="h-full w-full object-cover" />}
+              </div>
+            </div>
+          </section>
+        )}
 
-      {/* Call to Action */}
-      <section 
-        className="relative py-24 text-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
-        data-testid="cta-section"
-      >
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-        <div className="relative z-10 max-w-4xl mx-auto px-6">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" data-testid="cta-headline">
-            Let's Talk About Your Space
-          </h2>
-          <p className="text-xl text-white/80 leading-relaxed mb-10 max-w-3xl mx-auto" data-testid="cta-description">
-            I offer complimentary consultations to explore how my art can enhance your environment.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-6 text-lg font-semibold"
-              data-testid="button-schedule-consultation"
-              onClick={() => window.open('https://cal.com/ottoart', '_blank')}
-            >
-              Schedule a Consultation
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold"
-              data-testid="button-lets-talk"
-              onClick={() => setIsFormOpen(true)}
-            >
-              Let's Talk
-            </Button>
-          </div>
-        </div>
-      </section>
-      
+        {/* Call to action */}
+        <section aria-labelledby="cta-headline" className="bg-ink py-24 text-ink-foreground md:py-32" data-testid="cta-section">
+          <Frame className="grid gap-10 lg:grid-cols-12 lg:items-end">
+            <div className="lg:col-span-7">
+              <h2 id="cta-headline" data-reveal className="font-display text-[2.5rem] leading-[1.02] tracking-[-0.03em] md:text-[4rem]" data-testid="cta-headline">
+                Let’s talk about your space
+              </h2>
+              <p data-reveal style={{ ["--reveal-i" as string]: 1 }} className="mt-6 max-w-[48ch] text-xl leading-relaxed text-ink-foreground/85" data-testid="cta-description">
+                I offer complimentary consultations to explore how my art can enhance your environment.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:col-span-5 lg:justify-end">
+              <ActionButton variant="paper" onClick={() => setIsFormOpen(true)} data-testid="button-lets-talk">Let’s talk</ActionButton>
+              <ActionLink href="https://cal.com/ottoart" variant="quietInk" target="_blank" rel="noopener noreferrer" data-testid="button-schedule-consultation">
+                Schedule a consultation
+              </ActionLink>
+            </div>
+          </Frame>
+        </section>
+      </main>
+
       <Footer />
 
       {/* Corporate Inquiry Form Sheet */}
@@ -433,7 +345,6 @@ export default function CorporateBuyersPage() {
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           {status?.ok ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-6">
-              <div className="text-6xl mb-6">✅</div>
               <h2 className="text-2xl font-bold text-foreground mb-4">
                 Thank you for your inquiry!
               </h2>
