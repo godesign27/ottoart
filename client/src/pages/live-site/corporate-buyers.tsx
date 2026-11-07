@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ActionButton, ActionLink, Frame, SectionTitle } from "@/components/marketing/primitives";
-import { SpecimenWall } from "@/components/marketing/specimen-wall";
+import { MarketingHero } from "@/components/marketing/hero";
 import { AdminOffNotice, PageUnavailable } from "@/components/marketing/page-unavailable";
 import { artSrc } from "@/components/marketing/art";
 import { usePageAccess, usePageEnabled } from "@/hooks/use-page-access";
@@ -164,9 +164,8 @@ export default function CorporateBuyersPage() {
     return <PageUnavailable suggestion="For artwork for your business, get in touch and we’ll help." />;
   }
 
-  const studio = artworks.filter((x) => x.studioKnown).map((x) => x.studio);
   const rooms = artworks.map((x) => x.room).filter((r): r is string => !!r);
-  const previews = [officeWallImage, ...rooms];
+  const previews = [...rooms.slice(2), officeWallImage];
   const fields = ["bg-secondary", "bg-[hsl(336_60%_93%)]", "bg-[hsl(188_28%_88%)]", "bg-[hsl(38_18%_84%)]"];
 
   return (
@@ -175,39 +174,26 @@ export default function CorporateBuyersPage() {
       <LiveSiteNavigation viewMode={viewMode} onViewModeChange={handleViewModeChange} />
 
       <main>
-        {/* Hero: the same specimen wall as the rental page, so the two read as one family */}
-        <SpecimenWall images={studio} label="Corporate Buyers">
-          <div className="w-full max-w-[66rem] bg-ink p-6 text-ink-foreground sm:p-8 md:p-10" data-testid="corporate-hero-section">
-            <nav aria-label="Breadcrumb" className="mb-5 text-sm text-ink-muted">
-              <ol className="flex flex-wrap gap-2">
-                <li><Link href="/" className="underline-offset-4 hover:underline">Home</Link></li>
-                <li aria-hidden>→</li>
-                <li aria-current="page">Corporate Buyers</li>
-              </ol>
-            </nav>
-            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div>
-                <h1 className="font-display text-[2.25rem] leading-[0.98] tracking-[-0.03em] sm:text-[2.75rem] md:text-[4.5rem] xl:text-[5.5rem]" data-testid="hero-headline">
-                  Elevate your space with original art
-                </h1>
-                <p className="mt-5 max-w-[50ch] text-base leading-relaxed text-ink-foreground/85 md:text-lg" data-testid="hero-description">
-                  Art is more than decoration — it’s a powerful way to shape how people feel in your space. My work brings bold design,
-                  texture, and energy into environments where people gather, work, and travel.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                <ActionButton variant="paper" onClick={() => setIsFormOpen(true)} data-testid="button-hero-lets-talk">Let’s talk</ActionButton>
-                <ActionLink href="#corporate-options" variant="quietInk">See the options</ActionLink>
-              </div>
-            </div>
-          </div>
-        </SpecimenWall>
+        <MarketingHero
+          crumb="Corporate Buyers"
+          title="Elevate your space with original art"
+          titleClass="text-[2.5rem] md:text-[3.75rem] xl:text-[4.25rem]"
+          wide
+          body={<p data-testid="hero-description">Art is more than decoration — it’s a powerful way to shape how people feel in your space. My work brings bold design, texture, and energy into environments where people gather, work, and travel.</p>}
+          actions={<>
+            <ActionButton onClick={() => setIsFormOpen(true)} data-testid="button-hero-lets-talk">Let’s talk</ActionButton>
+            <ActionLink href="#corporate-options" variant="quiet">See the options</ActionLink>
+          </>}
+          image={officeWallImage}
+          imageAlt="Otto Art prints on an office wall"
+          caption="Digital visualisation; artwork scale and placement may vary."
+        />
 
         {/* The work in a real setting, with the introduction beside it */}
         <section aria-labelledby="impression-title" className="py-24 md:py-36">
           <Frame className="grid items-center gap-12 lg:grid-cols-12">
             <figure className="lg:col-span-7" data-reveal>
-              <img src={officeWallImage} alt="Otto Art prints on an office wall, digital visualisation" width={896} height={812} className="w-full" data-testid="office-wall-image" />
+              <img src={rooms[1] ? artSrc(rooms[1], 1280) : officeWallImage} alt="An Otto Art work in a room, digital visualisation" width={896} height={812} loading="lazy" className="aspect-[4/3] w-full object-cover" data-testid="office-wall-image" />
               <figcaption className="mt-3 text-sm text-muted-foreground">Digital visualisation; artwork scale and placement may vary.</figcaption>
             </figure>
             <div className="lg:col-span-5">
@@ -294,7 +280,7 @@ export default function CorporateBuyersPage() {
         {pageEnabled("art-rental-leasing") && (
           <section aria-labelledby="rent-title" className="overflow-hidden py-24 md:py-32">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-12 md:gap-3">
-              <div className="order-2 h-32 bg-ink md:order-none md:col-span-2 md:h-[22rem]" aria-hidden />
+              <div className="order-2 h-32 bg-[hsl(188_28%_88%)] md:order-none md:col-span-2 md:h-[22rem]" aria-hidden />
               <div data-reveal className="col-span-2 flex flex-col justify-center bg-brand p-8 text-brand-foreground md:col-span-8 md:h-[22rem] md:p-12">
                 <h2 id="rent-title" className="font-display text-[2rem] leading-[1.05] tracking-[-0.02em] md:text-[2.75rem]">Prefer to rent your artwork?</h2>
                 <p className="mt-4 max-w-[56ch] text-base leading-relaxed">
@@ -312,19 +298,19 @@ export default function CorporateBuyersPage() {
         )}
 
         {/* Call to action */}
-        <section aria-labelledby="cta-headline" className="bg-ink py-24 text-ink-foreground md:py-32" data-testid="cta-section">
+        <section aria-labelledby="cta-headline" className="bg-secondary py-24 md:py-32" data-testid="cta-section">
           <Frame className="grid gap-10 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-7">
               <h2 id="cta-headline" data-reveal className="font-display text-[2.5rem] leading-[1.02] tracking-[-0.03em] md:text-[4rem]" data-testid="cta-headline">
                 Let’s talk about your space
               </h2>
-              <p data-reveal style={{ ["--reveal-i" as string]: 1 }} className="mt-6 max-w-[48ch] text-xl leading-relaxed text-ink-foreground/85" data-testid="cta-description">
+              <p data-reveal style={{ ["--reveal-i" as string]: 1 }} className="mt-6 max-w-[48ch] text-xl leading-relaxed" data-testid="cta-description">
                 I offer complimentary consultations to explore how my art can enhance your environment.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:col-span-5 lg:justify-end">
-              <ActionButton variant="paper" onClick={() => setIsFormOpen(true)} data-testid="button-lets-talk">Let’s talk</ActionButton>
-              <ActionLink href="https://cal.com/ottoart" variant="quietInk" target="_blank" rel="noopener noreferrer" data-testid="button-schedule-consultation">
+              <ActionButton onClick={() => setIsFormOpen(true)} data-testid="button-lets-talk">Let’s talk</ActionButton>
+              <ActionLink href="https://cal.com/ottoart" variant="quiet" target="_blank" rel="noopener noreferrer" data-testid="button-schedule-consultation">
                 Schedule a consultation
               </ActionLink>
             </div>

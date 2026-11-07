@@ -116,30 +116,30 @@ export function RentalInquiryForm({ handoff }: { handoff: EstimateHandoff | null
   const errorList = ORDER.filter((f) => errors[f]);
 
   return (
-    <div className="coupon grid bg-ink text-ink-foreground lg:grid-cols-[38%_62%]">
+    <div className="coupon grid bg-secondary text-foreground lg:grid-cols-[38%_62%]">
       <div className="flex flex-col justify-between gap-8 p-8 md:p-12">
         <div>
           <h2 id="inquiry-title" className="font-display text-[2.25rem] leading-[1.05] tracking-[-0.02em] md:text-[3rem]">
             Let’s plan art for your space
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-ink-foreground/90">
+          <p className="mt-5 text-lg leading-relaxed text-foreground">
             Tell us what you’re working on. Share your location, approximate artwork count, and preferred term so we can discuss availability and prepare a quote.
           </p>
         </div>
-        <p className="text-sm leading-relaxed text-ink-muted">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           This is an inquiry, not a booking or rental agreement. Please don’t include payment details or sensitive information.
           We’ll use the details you provide to respond to your inquiry.
         </p>
       </div>
 
-      <div className="border-ink-foreground/25 bg-[hsl(30_6%_13%)] p-6 sm:p-8 md:p-12 lg:border-l-[5px] lg:border-dotted">
+      <div className="border-background bg-card p-6 sm:p-8 md:p-12 lg:border-l-[5px] lg:border-dotted">
         {state.kind === "done" ? (
           <div ref={doneRef} tabIndex={-1} className="outline-none" data-testid="inquiry-success">
             <p className="font-display text-3xl leading-tight">Your rental inquiry has been received.</p>
             <p className="mt-4 text-lg leading-relaxed">
               Thank you for sharing your project. Otto Art will review your inquiry and follow up using the email address you provided.
             </p>
-            <p className="mt-6 text-ink-muted">Reference: <span className="tabular font-semibold text-ink-foreground">{state.reference}</span></p>
+            <p className="mt-6 text-muted-foreground">Reference: <span className="tabular font-semibold text-foreground">{state.reference}</span></p>
           </div>
         ) : (
           <form noValidate onSubmit={submit} aria-labelledby="inquiry-title" className="grid gap-6 sm:grid-cols-2" data-testid="rental-inquiry-form">
@@ -185,7 +185,7 @@ export function RentalInquiryForm({ handoff }: { handoff: EstimateHandoff | null
               value={v.preferredTerm} onChange={set("preferredTerm")} options={PREFERRED_TERMS} />
 
             <fieldset id="inquiry-artworkCount" className="min-w-0 sm:col-span-2" aria-describedby={errors.artworkCount ? "inquiry-artworkCount-err" : undefined}>
-              <legend className="mb-2 text-sm font-semibold">Approximate artwork count <span className="font-normal text-ink-muted">(required)</span></legend>
+              <legend className="mb-2 text-sm font-semibold">Approximate artwork count <span className="font-normal text-muted-foreground">(required)</span></legend>
               <div className="flex flex-wrap items-center gap-3">
                 <input
                   aria-label="Number of artworks"
@@ -196,12 +196,12 @@ export function RentalInquiryForm({ handoff }: { handoff: EstimateHandoff | null
                   aria-invalid={!!errors.artworkCount}
                   className={cn(inputCls, "w-32")}
                 />
-                <label className="flex min-h-12 cursor-pointer items-center gap-3 bg-white/10 px-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink-foreground">
+                <label className="flex min-h-12 cursor-pointer items-center gap-3 bg-secondary px-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring">
                   <input type="checkbox" checked={v.countMode === "not-sure"} onChange={(e) => {
                     started.current = true;
                     setV((cur) => ({ ...cur, countMode: e.target.checked ? "not-sure" : "number" }));
                     setErrors((er) => { const n = { ...er }; delete n.artworkCount; return n; });
-                  }} className="h-5 w-5 accent-[hsl(40_23%_97%)]" />
+                  }} className="h-5 w-5 accent-[var(--foreground)]" />
                   Not sure
                 </label>
               </div>
@@ -209,9 +209,9 @@ export function RentalInquiryForm({ handoff }: { handoff: EstimateHandoff | null
             </fieldset>
 
             {estimate && (
-              <div className="bg-white/10 p-5 sm:col-span-2" data-testid="inquiry-estimate">
+              <div className="bg-secondary p-5 sm:col-span-2" data-testid="inquiry-estimate">
                 <p className="font-semibold">Illustrative estimate</p>
-                <p className="mt-1 text-sm leading-relaxed text-ink-foreground/90">
+                <p className="mt-1 text-sm leading-relaxed text-foreground">
                   {estimate.count} × {estimate.type === "original" ? "original" : "print"}
                   {estimate.artworkName ? ` (${estimate.artworkName})` : ""}, {estimate.term} months, reference value {formatCents(estimate.referenceValueCents)} each
                   {estimate.monthlyCents !== undefined
@@ -239,7 +239,7 @@ export function RentalInquiryForm({ handoff }: { handoff: EstimateHandoff | null
             )}
 
             <div className="sm:col-span-2">
-              <ActionButton type="submit" variant="paper" className="w-full sm:w-auto" disabled={state.kind === "sending"} aria-disabled={state.kind === "sending"} data-testid="button-send-inquiry">
+              <ActionButton type="submit" className="w-full sm:w-auto" disabled={state.kind === "sending"} aria-disabled={state.kind === "sending"} data-testid="button-send-inquiry">
                 {state.kind === "sending" ? "Sending…" : "Send rental inquiry"}
               </ActionButton>
             </div>
@@ -250,8 +250,8 @@ export function RentalInquiryForm({ handoff }: { handoff: EstimateHandoff | null
   );
 }
 
-const inputCls = "h-12 w-full bg-white px-4 text-base text-ink placeholder:text-neutral-500 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-foreground aria-[invalid=true]:outline aria-[invalid=true]:outline-[3px] aria-[invalid=true]:outline-[hsl(336_85%_72%)] disabled:opacity-50";
-const errCls = "mt-2 text-sm font-medium text-[hsl(336_85%_80%)]";
+const inputCls = "h-12 w-full border border-input bg-background px-4 text-base text-foreground placeholder:text-muted-foreground outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[invalid=true]:border-destructive aria-[invalid=true]:outline aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-destructive disabled:opacity-50";
+const errCls = "mt-2 text-sm font-medium text-destructive";
 
 function aria(field: string, errors: Record<string, string>, hint = false) {
   const ids = [hint ? `inquiry-${field}-hint` : "", errors[field] ? `inquiry-${field}-err` : ""].filter(Boolean).join(" ");
@@ -264,9 +264,9 @@ function Field({ id, label, hint, required, error, wide, children }: {
   return (
     <div className={wide ? "sm:col-span-2" : undefined}>
       <label htmlFor={`inquiry-${id}`} className="mb-2 block text-sm font-semibold">
-        {label} {required ? <span className="font-normal text-ink-muted">(required)</span> : <span className="font-normal text-ink-muted">(optional)</span>}
+        {label} {required ? <span className="font-normal text-muted-foreground">(required)</span> : <span className="font-normal text-muted-foreground">(optional)</span>}
       </label>
-      {hint && <p id={`inquiry-${id}-hint`} className="-mt-1 mb-2 text-[0.875rem] text-ink-muted">{hint}</p>}
+      {hint && <p id={`inquiry-${id}-hint`} className="-mt-1 mb-2 text-[0.875rem] text-muted-foreground">{hint}</p>}
       {children}
       {error && <p id={`inquiry-${id}-err`} className={errCls}>{error}</p>}
     </div>
@@ -280,13 +280,13 @@ function Choice({ id, legend, required, error, value, onChange, options }: {
   return (
     <fieldset id={`inquiry-${id}`} className="min-w-0 sm:col-span-2" aria-describedby={error ? `inquiry-${id}-err` : undefined}>
       <legend className="mb-2 text-sm font-semibold">
-        {legend} {required && <span className="font-normal text-ink-muted">(required)</span>}
+        {legend} {required && <span className="font-normal text-muted-foreground">(required)</span>}
       </legend>
       <div className="flex flex-wrap gap-1">
         {options.map((o) => (
           <label key={o.value} className={cn(
-            "min-h-12 cursor-pointer px-4 py-3 text-base font-medium transition-colors duration-200 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink-foreground",
-            value === o.value ? "bg-ink-foreground text-ink" : "bg-white/10 hover:bg-white/20",
+            "min-h-12 cursor-pointer px-4 py-3 text-base font-medium transition-colors duration-200 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring",
+            value === o.value ? "bg-foreground text-background" : "bg-secondary hover:bg-accent",
           )}>
             <input type="radio" name={id} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} className="sr-only" />
             {o.label}

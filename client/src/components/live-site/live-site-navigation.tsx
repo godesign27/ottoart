@@ -13,6 +13,7 @@ import {
 import { User, ShoppingCart, Menu, X, Settings, Eye, ChevronDown } from "lucide-react";
 import type { PageSettings, CartItem } from "@shared/schema";
 import { ProfileMenu } from "./profile-menu";
+import { ThemeToggle } from "./theme-toggle";
 import { useUser } from "@clerk/react";
 import type { User as AppUser } from "@shared/schema";
 
@@ -155,7 +156,7 @@ export function LiveSiteNavigation({
             <Link 
               key={item.href}
               href={item.href}
-              className={`block py-3 px-2 rounded-md transition-colors ${
+              className={`block py-3 px-2 transition-colors ${
                 location === item.href 
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-foreground hover:bg-muted hover:text-primary'
@@ -177,7 +178,7 @@ export function LiveSiteNavigation({
                 <Link 
                   key={item.href}
                   href={item.href}
-                  className={`block py-3 px-4 ml-2 rounded-md transition-colors ${
+                  className={`block py-3 px-4 ml-2 transition-colors ${
                     location === item.href 
                       ? 'bg-primary/10 text-primary font-medium' 
                       : 'text-foreground hover:bg-muted hover:text-primary'
@@ -249,7 +250,7 @@ export function LiveSiteNavigation({
             <Menu className="h-5 w-5" />
           </Button>
 
-          <Link href="/" className="text-xl font-bold text-foreground" data-testid="logo">
+          <Link href="/" className="whitespace-nowrap text-xl font-bold text-foreground" data-testid="logo">
             Otto Art
           </Link>
 
@@ -310,7 +311,7 @@ export function LiveSiteNavigation({
 
         <div className="hidden lg:flex items-center space-x-4">
           {onViewModeChange && isAdmin ? (
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className="flex bg-muted p-1">
               <Button
                 size="sm"
                 variant={viewMode === 'admin' ? 'default' : 'ghost'}
@@ -331,6 +332,8 @@ export function LiveSiteNavigation({
               </Button>
             </div>
           ) : null}
+
+          <ThemeToggle />
 
           <Link href="/checkout">
             <Button 
@@ -353,9 +356,10 @@ export function LiveSiteNavigation({
 
         {/* Mobile-only Icons */}
         <div className="flex lg:hidden items-center space-x-2">
+          <ThemeToggle />
           {/* Mobile View Switcher */}
           {onViewModeChange && isAdmin ? (
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className="flex bg-muted p-1">
               <Button
                 size="sm"
                 variant={viewMode === 'admin' ? 'default' : 'ghost'}

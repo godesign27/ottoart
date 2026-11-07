@@ -28,6 +28,12 @@ When two principles conflict, the higher one wins.
    - Width: holds up at 320px, and at 200% zoom.
    - Motion: honours reduced-motion settings.
 
+## Light first
+
+The site is designed in light mode and opens in light mode for everyone (it does not follow the device setting).
+A sun/moon button in the header switches to dark mode, remembered per browser. Every page must still work in dark
+mode, but no section is designed as a dark block: no black heroes, black form panels or black closing bands.
+
 ## Colour
 
 Use the semantic tokens, never raw hex or Tailwind palette colours (`blue-600`, `gray-50`) in new work.
@@ -39,7 +45,7 @@ Use the semantic tokens, never raw hex or Tailwind palette colours (`blue-600`, 
 | `muted`, `muted-foreground` | Quiet bands and secondary text (meets 4.5:1 on `background` and `card`) |
 | `primary` | Primary buttons and key UI (near-black; inverts in dark mode) |
 | `brand`, `brand-soft` | The one accent (pink from the artwork). The closing call-to-action tile, an open FAQ answer, a list marker. Never body text or a whole section |
-| `ink`, `ink-foreground`, `ink-muted` | The inverted "gallery night" surface for heroes and closing calls to action |
+| `ink`, `ink-foreground` | Reserved. Don't use for whole sections (see "Light first") |
 | `border`, `input`, `ring` | Hairlines, field outlines, focus rings |
 | `destructive` | Errors and destructive actions only |
 
@@ -74,7 +80,7 @@ Use the semantic tokens, never raw hex or Tailwind palette colours (`blue-600`, 
   - Gutters: `px-4` on phones, `sm:px-6`, `lg:px-8`.
 - **Section rhythm:** `py-20 md:py-28`. Alternate `background` and `muted/40` bands to separate sections, without adding colour.
 - **Spacing scale:** 4, 8, 12, 16, 24, 32, 48, 64, 96px (Tailwind 1, 2, 3, 4, 6, 8, 12, 16, 24).
-- **Radius:** `--radius` is 0.5rem for the shop and admin components. Marketing pages use **square corners** for buttons, tiles, images and fields — decided once, used everywhere on those pages.
+- **Radius:** every action on the site has **square corners**: the shared `Button` (shop and admin), `ActionLink`/`ActionButton`, and links styled as buttons. Marketing pages also keep tiles, images and fields square. Cards, inputs and menus in the shop and admin keep `--radius` (0.5rem). Round shapes stay only where the shape means something (avatars, radio dots, switches, count badges).
 - **Shadows:** none on anything at rest. Only things that float (menus, dialogs, a fixed notice) get one.
 - **Lines:** none as decoration. Separate with space or a tone step. Lines belong only in real tables and form fields.
 - **Anchored sections** use `scroll-mt-24` so the sticky header doesn't cover their heading.
@@ -90,7 +96,7 @@ Use these first. All in `client/src/components/marketing/` unless noted.
 | `ActionLink`, `ActionButton` | `primitives.tsx` | Square, 48px tall. Variants: `solid` (near-black), `paper` (on ink/brand), `quiet` and `quietInk` (tone step, never an outline) |
 | `Frame` | `primitives.tsx` | The page's one pair of margins (`max-w-[90rem]`, 16/24/40px gutters) |
 | `SectionTitle` | `primitives.tsx` | Section H2 in the display face, with an entrance |
-| `SpecimenWall` | `specimen-wall.tsx` | The first screen: Otto's works as specimens on flat tiles, brick-offset, slowly drifting, with the docked ink panel holding the H1 and actions |
+| `MarketingHero` | `hero.tsx` | The first screen: breadcrumb, H1, lead, body and actions on the light ground (left), one large room picture running to the screen edge (right). `wide` gives a longer headline half the width. On a phone the words and actions come first |
 | `FaqTiles` | `faq.tsx` | Questions as filled tiles; native `details`, one open at a time; open tile turns brand pink |
 | `RentalEstimator` | `rental-estimator.tsx` | Pick a real work (or an average value) and read an itemised receipt slip |
 | `RentalInquiryForm` | `rental-inquiry-form.tsx` | The clip-out coupon form: visible labels, error summary, honest failure states |
@@ -113,7 +119,7 @@ Section patterns already in use (pick a different one for neighbouring sections)
 
 Use these for buttons, inputs, selects, radio groups, tables and so on: `client/src/components/ui/`.
 
-**Buttons:** on marketing pages use `ActionLink`/`ActionButton` (above). In the shop and admin, the shadcn `Button` stays as it is.
+**Buttons:** on marketing pages use `ActionLink`/`ActionButton` (above). In the shop and admin, use the shadcn `Button`. Both are square, with the same near-black primary fill and a tone-step secondary.
 
 **Forms:**
 - Visible label above every field; never placeholder-only.

@@ -194,26 +194,6 @@ html { scroll-behavior: smooth; }
   transform: none;
 }
 
-/* The specimen wall: square tiles, brick-offset rows drifting slowly sideways. */
-.specimen-wall-vars, [data-testid="specimen-wall"] {
-  --tile: clamp(84px, 8.4vw, 132px);
-}
-.specimen-tile {
-  width: var(--tile);
-  height: var(--tile);
-}
-.specimen-row {
-  animation: specimen-drift 90s ease-in-out infinite alternate;
-  will-change: transform;
-}
-@keyframes specimen-drift {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(var(--tile) * -2)); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .specimen-row { animation: none; }
-}
-
 /* The receipt slip: zigzag foot. */
 .receipt-slip {
   --zig: 14px;

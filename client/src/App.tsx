@@ -130,7 +130,7 @@ function App() {
   return (
     <WouterRouter base={basePath}>
     <ClerkProviderWithRoutes>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <TooltipProvider>
           <Toaster />
           <AccessBoundary><AdminGate><Router /></AdminGate></AccessBoundary>

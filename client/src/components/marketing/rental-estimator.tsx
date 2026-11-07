@@ -93,8 +93,8 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
   return (
     <Frame className="grid gap-12 py-24 md:py-32 lg:grid-cols-12">
       <div className="min-w-0 lg:col-span-6">
-        <SectionTitle id={ids.title} className="text-ink-foreground">Estimate your rental fees</SectionTitle>
-        <p id={ids.help} data-reveal style={{ ["--reveal-i" as string]: 1 }} className="mt-6 max-w-[54ch] text-lg leading-relaxed text-ink-foreground/90">
+        <SectionTitle id={ids.title}>Estimate your rental fees</SectionTitle>
+        <p id={ids.help} data-reveal style={{ ["--reveal-i" as string]: 1 }} className="mt-6 max-w-[54ch] text-lg leading-relaxed">
           Use an original artwork’s retail value to explore an illustrative rental cost. For a print, enter the retail value of the
           corresponding original. Your final quote will use the values of the artworks selected.
         </p>
@@ -123,7 +123,7 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
                   return (
                     <label key={art.id} className={cn(
                       "group min-w-0 cursor-pointer p-2 transition-colors duration-200",
-                      on ? "bg-ink-foreground text-ink" : "bg-white/5 text-ink-foreground hover:bg-white/10",
+                      on ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-accent",
                     )}>
                       <input
                         type="radio"
@@ -133,7 +133,7 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
                         onChange={() => touch(setWorkId)(art.id)}
                         className="sr-only"
                       />
-                      <span className={cn("grid aspect-square place-items-center bg-white", "group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-ink-foreground")}>
+                      <span className={cn("grid aspect-square place-items-center bg-white dark:bg-neutral-200", "group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-ring")}>
                         <img src={artSrc(art.studio, 160)} alt="" width={96} height={96} loading="lazy" className="h-[84%] w-[84%] object-contain" />
                       </span>
                       <span className="mt-2 block truncate text-sm font-medium">{art.name}</span>
@@ -142,15 +142,15 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
                   );
                 })}
               </div>
-              {errors.value && <p className="mt-2 text-sm font-medium text-[hsl(336_85%_80%)]" role="alert">{errors.value}</p>}
+              {errors.value && <p className="mt-2 text-sm font-medium text-destructive" role="alert">{errors.value}</p>}
             </fieldset>
           ) : (
             <div>
               <label htmlFor={ids.value} className="block text-base font-semibold">Average original retail value per artwork (USD)</label>
-              <p id={`${ids.value}-help`} className="mt-1 text-sm text-ink-foreground/80">
+              <p id={`${ids.value}-help`} className="mt-1 text-sm text-muted-foreground">
                 Use an average only for an illustration. For prints, use the average retail value of the corresponding originals.
               </p>
-              <div className="mt-3 flex h-12 max-w-xs items-center bg-white text-ink">
+              <div className="mt-3 flex h-12 max-w-xs items-center border border-input bg-background text-foreground focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring">
                 <span aria-hidden className="pl-4 pr-1 text-lg">$</span>
                 <input
                   id={ids.value}
@@ -164,7 +164,7 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
                   placeholder="2,000"
                 />
               </div>
-              {errors.value && <p id={`${ids.value}-err`} className="mt-2 text-sm font-medium text-[hsl(336_85%_80%)]">{errors.value}</p>}
+              {errors.value && <p id={`${ids.value}-err`} className="mt-2 text-sm font-medium text-destructive">{errors.value}</p>}
             </div>
           )}
 
@@ -184,16 +184,16 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
               onChange={(e) => touch(setCount)(e.target.value)}
               aria-invalid={!!errors.count}
               aria-describedby={errors.count ? `${ids.count}-err` : undefined}
-              className="tabular mt-3 h-12 w-32 bg-white px-4 text-lg text-ink outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-foreground"
+              className="tabular mt-3 h-12 w-32 border border-input bg-background px-4 text-lg text-foreground outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             />
-            {errors.count && <p id={`${ids.count}-err`} className="mt-2 text-sm font-medium text-[hsl(336_85%_80%)]">{errors.count}</p>}
+            {errors.count && <p id={`${ids.count}-err`} className="mt-2 text-sm font-medium text-destructive">{errors.count}</p>}
           </div>
 
           <div>
-            <ActionButton type="submit" variant="paper" data-testid="button-calculate-estimate">Calculate estimate</ActionButton>
+            <ActionButton type="submit" data-testid="button-calculate-estimate">Calculate estimate</ActionButton>
           </div>
           {type === "print" && effectiveBasis === "work" && (
-            <p className="text-sm text-ink-foreground/80">Print rent uses this work’s original retail value, not the print’s price.</p>
+            <p className="text-sm text-muted-foreground">Print rent uses this work’s original retail value, not the print’s price.</p>
           )}
         </form>
       </div>
@@ -286,8 +286,8 @@ function Segmented<T extends string>({ legend, value, onChange, options }: {
           const on = o.value === value;
           return (
             <label key={o.value} className={cn(
-              "cursor-pointer px-4 py-3 text-base font-medium transition-colors duration-200 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink-foreground",
-              on ? "bg-ink-foreground text-ink" : "bg-white/10 text-ink-foreground hover:bg-white/20",
+              "cursor-pointer px-4 py-3 text-base font-medium transition-colors duration-200 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring",
+              on ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-accent",
             )}>
               <input type="radio" name={name} value={o.value} checked={on} onChange={() => onChange(o.value)} className="sr-only" />
               {o.label}

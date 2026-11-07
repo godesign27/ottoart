@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
 import { ActionLink, Frame, SectionTitle } from "@/components/marketing/primitives";
-import { SpecimenWall } from "@/components/marketing/specimen-wall";
+import { MarketingHero } from "@/components/marketing/hero";
 import { FaqTiles } from "@/components/marketing/faq";
 import { AdminOffNotice, PageUnavailable } from "@/components/marketing/page-unavailable";
 import { artSrc, artSrcSet } from "@/components/marketing/art";
@@ -59,11 +59,11 @@ export default function ArtRentalLeasingPage() {
       {access.showAdminNotice && <AdminOffNotice adminHref="/admin/art-rental-leasing" />}
 
       <main>
-        <Hero images={studio} />
+        <Hero image={rooms[0] ?? null} />
         <Intro rooms={rooms} />
         <OriginalsOrPrints artworks={artworks} onPrice={priceThis} />
         <Pricing />
-        <section id="rental-estimator" aria-labelledby="estimator-title" className="scroll-mt-20 bg-ink text-ink-foreground">
+        <section id="rental-estimator" aria-labelledby="estimator-title" className="scroll-mt-20 bg-secondary">
           <RentalEstimator artworks={artworks} picked={picked} onRequestQuote={sendToInquiry} />
         </section>
         <HowItWorks artworks={artworks} />
@@ -83,34 +83,22 @@ export default function ArtRentalLeasingPage() {
 
 /* ---------- Hero ---------- */
 
-function Hero({ images }: { images: string[] }) {
+function Hero({ image }: { image: string | null }) {
   return (
-    <SpecimenWall images={images} label="Art Rental & Leasing">
-      <div className="w-full max-w-[66rem] bg-ink p-6 text-ink-foreground sm:p-8 md:p-10">
-        <nav aria-label="Breadcrumb" className="mb-5 text-sm text-ink-muted">
-          <ol className="flex flex-wrap gap-2">
-            <li><Link href="/" className="underline-offset-4 hover:underline">Home</Link></li>
-            <li aria-hidden>→</li>
-            <li aria-current="page">Art Rental &amp; Leasing</li>
-          </ol>
-        </nav>
-        <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <h1 className="font-display text-[2.75rem] leading-[0.98] tracking-[-0.03em] md:text-[4.5rem] xl:text-[5.5rem]">Art Rental &amp; Leasing</h1>
-            <p className="mt-4 text-xl font-semibold leading-snug md:text-2xl">Bring Otto Art into your space for a defined term.</p>
-            <p className="mt-3 max-w-[46ch] text-base leading-relaxed text-ink-foreground/85">
-              Rent original artwork or prints for 3, 6, or 12 months. Compare monthly rates, explore a collection for your space,
-              and request a quote based on the artworks you choose.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            <ActionLink href="#rental-inquiry" variant="paper" data-testid="hero-request-quote">Request a rental quote</ActionLink>
-            <ActionLink href="#rental-pricing" variant="quietInk">Explore rental pricing</ActionLink>
-          </div>
-        </div>
-        <p className="mt-8 text-sm text-ink-muted">Originals and prints · Fixed rental terms · Collection discounts from 11 artworks</p>
-      </div>
-    </SpecimenWall>
+    <MarketingHero
+      crumb="Art Rental & Leasing"
+      title={<>Art Rental &amp;&nbsp;Leasing</>}
+      lead="Bring Otto Art into your space for a defined term."
+      body={<p>Rent original artwork or prints for 3, 6, or 12 months. Compare monthly rates, explore a collection for your space, and request a quote based on the artworks you choose.</p>}
+      actions={<>
+        <ActionLink href="#rental-inquiry" data-testid="hero-request-quote">Request a rental quote</ActionLink>
+        <ActionLink href="#rental-pricing" variant="quiet">Explore rental pricing</ActionLink>
+      </>}
+      facts="Originals and prints · Fixed rental terms · Collection discounts from 11 artworks"
+      image={image}
+      imageAlt="An original Otto Art work in a furnished room"
+      caption="Illustrative room visualisation; artwork scale and placement may vary."
+    />
   );
 }
 
@@ -237,7 +225,7 @@ function WorkFrame({ art, tall, onPrice }: { art: RentalArtwork; tall?: boolean;
 function Pricing() {
   const examples = useMemo(() => (["original", "print"] as const).flatMap((type) =>
     RENTAL_TERMS.map((term) => ({ type, term, q: quoteUniform(type, term, 1, EXAMPLE_VALUE) as RentalQuote }))), []);
-  const tone = ["bg-secondary", "bg-[hsl(38_18%_84%)]", "bg-[hsl(30_6%_30%)] text-ink-foreground", "bg-ink text-ink-foreground"];
+  const tone = ["bg-secondary", "bg-[hsl(38_18%_86%)] dark:bg-accent", "bg-brand-soft", "bg-brand text-brand-foreground"];
 
   return (
     <section id="rental-pricing" aria-labelledby="pricing-title" className="scroll-mt-20 py-24 md:py-36">
@@ -482,7 +470,7 @@ function ConsiderPurchase({ feature }: { feature?: string }) {
             </div>
           )}
         </div>
-        <div className="order-3 h-32 bg-ink md:order-none md:col-span-2 md:h-[22rem]" aria-hidden />
+        <div className="order-3 h-32 bg-[hsl(188_28%_88%)] md:order-none md:col-span-2 md:h-[22rem]" aria-hidden />
       </div>
     </section>
   );
