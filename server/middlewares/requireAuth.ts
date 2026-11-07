@@ -81,6 +81,7 @@ export const requireAdmin: RequestHandler = (req, res, next) => {
 // Whether a signed-in admin sent this request. For public routes that show admins more; it never responds, and
 // anything unexpected counts as not an admin.
 export async function isAdminRequest(req: Request): Promise<boolean> {
+  if (process.env.LOCAL_DEV === "1") return true; // the local admin (see requireAuth)
   try {
     const auth = getAuth(req);
     if (!auth.userId) return false;

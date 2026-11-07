@@ -9,7 +9,18 @@ Branch: `supabase-migration`
 | 1. Database | Done and tested: schema, Data API lock-down, live catalogue loaded; shop, admin rules and product edits work | `npm run import:live:supabase`, then `npm run dev:supabase` |
 | 2. Image storage | Done and tested: private `artwork` bucket holds all 85 images, uploads go straight to Supabase, public/private visibility enforced | `npm run images:to-supabase` |
 | Full data copy | Done and tested: all 26 tables copied from the Replit production database (sessions excluded). Row counts match, no broken links between records, all 85 referenced images present. Orders, messages, commissions, art shows with QR codes, boards, mailing list and dashboard all work. | `npm run copy:replit-to-supabase` (dry run), then `-- --apply` |
-| 3. Sign-in | Not started (the local one-click dev login is still in use) | — |
+| 3. Sign-in | Replaced by Replit-managed Clerk (on `main`) | — |
+| Switch-over | Done: the live site runs on Supabase. The one-off copy scripts were removed because they would now overwrite live data. | — |
+
+## Local development (after the switch-over)
+
+`.env.supabase` now points at the **live** database and image bucket, so nothing runs against it locally. Work on a copy instead:
+
+1. `npm run db:push:local` — bring the local Postgres schema up to date.
+2. `npm run db:pull-live` — replace local data with a copy of live and download any new images to `.local-storage` (reads live only; refuses to write anywhere but localhost).
+3. `npm run dev:local` — run the site at http://127.0.0.1:5050 as the local admin (`LOCAL_DEV=1`, never set on Replit).
+
+Never run `SET` commands (for example `set default_transaction_read_only`) on a live connection: the Supabase pooler hands that connection to the site afterwards. Use `begin transaction read only` instead, which ends with the transaction.
 
 Known data note: one delivered order (Oct 2025) lists a product that was later deleted. It's the same on Replit, so it isn't a copy problem.
 
