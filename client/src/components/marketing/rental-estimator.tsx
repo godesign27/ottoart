@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { artSrc } from "./art";
 import { ActionButton, Frame, SectionTitle } from "./primitives";
@@ -39,8 +39,6 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
   const [term, setTerm] = useState<RentalTerm>(6);
   const [count, setCount] = useState("1");
   const [average, setAverage] = useState("");
-  const [errors, setErrors] = useState<{ count?: string; value?: string }>({});
-  const [result, setResult] = useState<Result>(null);
   const slipRef = useRef<HTMLDivElement>(null);
 
   const hasWorks = artworks.length > 0;
@@ -51,42 +49,38 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
     if (!workId && artworks[0]) setWorkId(artworks[0].id);
   }, [artworks, workId]);
 
-  // A work chosen elsewhere on the page ("see rental prices for…") is selected and priced at once.
+  // A work chosen elsewhere on the page ("see rental prices for…") is selected here.
   useEffect(() => {
     if (!picked) return;
     setBasis("work");
     setWorkId(picked.id);
-    const art = artworks.find((a) => a.id === picked.id);
-    if (art) calculate({ basisOverride: "work", artOverride: art });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picked?.at]);
 
-  // Any change makes the last result stale: clear it rather than show numbers for other inputs.
-  const touch = <T,>(set: (v: T) => void) => (v: T) => { set(v); setResult(null); };
-
-  function calculate(opts: { basisOverride?: "work" | "average"; artOverride?: RentalArtwork } = {}) {
-    const useBasis = opts.basisOverride ?? effectiveBasis;
-    const next: typeof errors = {};
-    const n = /^\d+$/.test(count.trim()) ? Number(count.trim()) : NaN;
-    if (!Number.isInteger(n) || n < 1 || n > MAX_ARTWORK_COUNT) next.count = "Enter a whole number of artworks, from 1.";
+  // The slip is worked out from the current choices on every change, so there is no button to find.
+  // A field only shows an error once it has something wrong typed in it; an empty field just leaves the slip waiting.
+  const { result, errors } = useMemo(() => {
+    const errors: { count?: string; value?: string } = {};
+    const countText = count.trim();
+    const n = /^\d+$/.test(countText) ? Number(countText) : NaN;
+    if (countText && (!Number.isInteger(n) || n < 1 || n > MAX_ARTWORK_COUNT)) errors.count = "Enter a whole number of artworks, from 1.";
     let value: number | null = null;
     let artworkName: string | undefined;
-    if (useBasis === "work") {
-      const art = opts.artOverride ?? work;
-      if (!art) next.value = "Choose a work.";
-      else { value = art.originalValueCents; artworkName = art.name; }
-    } else {
+    if (effectiveBasis === "work") {
+      if (work) { value = work.originalValueCents; artworkName = work.name; }
+    } else if (average.trim()) {
       value = parseDollarsToCents(average);
-      if (value === null) next.value = "Enter the average original retail value in US dollars, for example 2,000.";
+      if (value === null) errors.value = "Enter the average original retail value in US dollars, for example 2,000.";
     }
-    setErrors(next);
-    if (next.count || next.value || value === null) { setResult(null); return; }
+    if (!countText || errors.count || value === null) return { result: null as Result, errors };
 
     const input: EstimateHandoff = { type, term, count: n, referenceValueCents: value, artworkName, version: RENTAL_PRICING_VERSION };
-    if (n >= CUSTOM_QUOTE_FROM) { setResult({ kind: "custom", input }); return; }
+    if (n >= CUSTOM_QUOTE_FROM) return { result: { kind: "custom", input } as Result, errors };
     const q = quoteUniform(type, term, n, value) as RentalQuote;
-    setResult({ kind: "priced", q, input: { ...input, monthlyCents: q.monthlySubtotalCents, termCents: q.termSubtotalCents, discountBps: q.discountBps } });
-  }
+    return {
+      result: { kind: "priced", q, input: { ...input, monthlyCents: q.monthlySubtotalCents, termCents: q.termSubtotalCents, discountBps: q.discountBps } } as Result,
+      errors,
+    };
+  }, [effectiveBasis, work, average, count, type, term]);
 
   const rate = MONTHLY_RATE_BPS[type][term] / 100;
 
@@ -102,14 +96,14 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
         <form
           className="mt-10 flex flex-col gap-8"
           noValidate
-          onSubmit={(e) => { e.preventDefault(); calculate(); }}
+          onSubmit={(e) => e.preventDefault()}
           aria-describedby={ids.help}
         >
           {hasWorks && (
             <Segmented
               legend="Price from"
               value={effectiveBasis}
-              onChange={touch(setBasis)}
+              onChange={setBasis}
               options={[{ value: "work", label: "One of Otto’s works" }, { value: "average", label: "An average value" }]}
             />
           )}
@@ -130,7 +124,7 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
                         name="estimator-work"
                         value={art.id}
                         checked={on}
-                        onChange={() => touch(setWorkId)(art.id)}
+                        onChange={() => setWorkId(art.id)}
                         className="sr-only"
                       />
                       <span className={cn("grid aspect-square place-items-center bg-white dark:bg-neutral-200", "group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-ring")}>
@@ -157,7 +151,7 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
                   inputMode="decimal"
                   autoComplete="off"
                   value={average}
-                  onChange={(e) => touch(setAverage)(e.target.value)}
+                  onChange={(e) => setAverage(e.target.value)}
                   aria-invalid={!!errors.value}
                   aria-describedby={`${ids.value}-help${errors.value ? ` ${ids.value}-err` : ""}`}
                   className="tabular h-full w-full bg-transparent pr-4 text-lg outline-none"
@@ -169,9 +163,9 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
           )}
 
           <div className="grid gap-8 sm:grid-cols-2">
-            <Segmented legend="Artwork type" value={type} onChange={touch(setType)}
+            <Segmented legend="Artwork type" value={type} onChange={setType}
               options={[{ value: "original", label: "Original" }, { value: "print", label: "Print" }]} />
-            <Segmented legend="Term" value={String(term)} onChange={(v) => touch(setTerm)(Number(v) as RentalTerm)}
+            <Segmented legend="Term" value={String(term)} onChange={(v) => setTerm(Number(v) as RentalTerm)}
               options={RENTAL_TERMS.map((t) => ({ value: String(t), label: `${t} months` }))} />
           </div>
 
@@ -181,7 +175,7 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
               id={ids.count}
               inputMode="numeric"
               value={count}
-              onChange={(e) => touch(setCount)(e.target.value)}
+              onChange={(e) => setCount(e.target.value)}
               aria-invalid={!!errors.count}
               aria-describedby={errors.count ? `${ids.count}-err` : undefined}
               className="tabular mt-3 h-12 w-32 border border-input bg-background px-4 text-lg text-foreground outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -189,9 +183,6 @@ export function RentalEstimator({ artworks, picked, onRequestQuote }: {
             {errors.count && <p id={`${ids.count}-err`} className="mt-2 text-sm font-medium text-destructive">{errors.count}</p>}
           </div>
 
-          <div>
-            <ActionButton type="submit" data-testid="button-calculate-estimate">Calculate estimate</ActionButton>
-          </div>
           {type === "print" && effectiveBasis === "work" && (
             <p className="text-sm text-muted-foreground">Print rent uses this work’s original retail value, not the print’s price.</p>
           )}
@@ -219,7 +210,7 @@ function Slip({ result, rate, onRequestQuote }: { result: Result; rate: number; 
   if (!result) {
     return (
       <p className="mt-10 pb-4 text-center text-base leading-relaxed text-muted-foreground">
-        Choose a work or enter a value, then calculate.
+        Choose a work or enter an average value to see the estimate.
       </p>
     );
   }
