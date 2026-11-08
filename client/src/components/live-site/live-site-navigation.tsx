@@ -126,7 +126,7 @@ export function LiveSiteNavigation({
 
       {/* Mobile Sidebar */}
       <div 
-        className={`fixed left-0 top-0 bottom-0 w-64 bg-background z-50 transform transition-transform duration-200 lg:hidden ${
+        className={`fixed left-0 top-0 bottom-0 flex w-64 flex-col overflow-y-auto overscroll-contain bg-background z-50 transform transition-transform duration-200 lg:hidden ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         id="mobile-navigation"
@@ -135,7 +135,7 @@ export function LiveSiteNavigation({
         aria-label={isMobileMenuOpen ? "Mobile navigation menu" : undefined}
       >
         {/* Mobile Header */}
-        <div className="flex items-center justify-between p-6 bg-secondary">
+        <div className="flex shrink-0 items-center justify-between p-6 bg-secondary">
           <Link href="/" className="text-xl font-bold text-foreground" onClick={handleMobileMenuClose}>
             Otto Art
           </Link>

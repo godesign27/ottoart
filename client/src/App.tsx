@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import { ClerkProviderWithRoutes, SignInPage, SignUpPage, basePath } from "@/components/auth/clerk-provider";
 import { AccessBoundary } from "@/components/auth/access-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -65,6 +66,8 @@ import MailingListPage from "@/pages/admin/mailing-list";
 
 function Router() {
   return (
+    <>
+    <ScrollToTop />
     <Switch>
       <Route path="/" component={LiveSiteHome} />
       <Route path="/sign-in/*?" component={SignInPage} />
@@ -127,6 +130,7 @@ function Router() {
       <Route path="/admin/settings/tech-stack" component={TechStackPage} />
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 
