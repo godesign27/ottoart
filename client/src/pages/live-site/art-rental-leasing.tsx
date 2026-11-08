@@ -6,6 +6,7 @@ import { Footer } from "@/components/live-site/footer";
 import { ActionLink, Frame, SectionTitle } from "@/components/marketing/primitives";
 import { MarketingHero } from "@/components/marketing/hero";
 import { FaqTiles } from "@/components/marketing/faq";
+import { RENTAL_FAQ } from "@shared/seoContent";
 import { AdminOffNotice, PageUnavailable } from "@/components/marketing/page-unavailable";
 import { artSrc, artSrcSet } from "@/components/marketing/art";
 import { RentalEstimator, type EstimateHandoff } from "@/components/marketing/rental-estimator";
@@ -430,16 +431,12 @@ function Questions() {
         <div className="lg:col-span-8">
           <FaqTiles
             name="rental-faq"
-            items={[
-              { q: "How much does it cost to rent original artwork?", a: <p>For 1–10 artworks, original rentals cost 15% of each original’s retail value per month for a 3-month term, 12% per month for 6 months, or 9% per month for 12 months. Collection discounts begin at 11 artworks. Other charges are quoted separately.</p> },
-              { q: "How are print rentals priced?", a: <p>For 1–10 artworks, print rentals cost 5% of the corresponding original’s retail value per month for 3 months, 4% per month for 6 months, or 3% per month for 12 months. The basis is the original’s retail value, not the print’s purchase price. Collection discounts begin at 11 artworks.</p> },
-              { q: "Are there discounts for larger collections?", a: <p>Yes. Collections of 11–20 artworks receive 10% off rental fees, and collections of 21–30 receive 15% off. Collections of 1–10 use standard rates. For 31 or more artworks, request a custom quote.</p> },
-              { q: "Does a longer term mean a lower total cost?", a: <p>No. A longer term lowers the monthly percentage rate but increases the number of payments. At standard rates, a 12-month original rental totals 108% of the original’s retail value before other charges. Compare the full-term cost as well as the monthly fee.</p> },
-              { q: "Are delivery, installation, and insurance included?", a: <p>The displayed rates cover rental fees only. Any applicable delivery, installation, collection, insurance, and other requirements are addressed separately in your quote and agreement. Share your location so the available arrangements can be discussed.</p> },
-              { q: "Can I buy the artwork or apply rent toward a purchase?", a: <p>Ask about purchasing if ownership is your goal. Rental payments do not automatically count toward a purchase, and buying requires a separate agreement. <Link href="/corporate-buyers">Explore art for corporate buyers</Link>.</p> },
-              { q: "Can I change the artwork or end the rental early?", a: <p>Artwork changes, early returns, and cancellations depend on the written agreement. Do not assume that changes, refunds, or early termination are included.</p> },
-              { q: "What happens at the end of the rental?", a: <p>Return and collection arrangements are defined in your agreement. Any extension or purchase requires a separate agreement; neither is automatic.</p> },
-            ]}
+            items={RENTAL_FAQ.map(({ q, a }) => ({
+              q,
+              a: q.startsWith("Can I buy")
+                ? <p>{a} <Link href="/corporate-buyers">Explore art for corporate buyers</Link>.</p>
+                : <p>{a}</p>,
+            }))}
           />
         </div>
       </Frame>
