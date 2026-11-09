@@ -149,6 +149,7 @@ export default function ShopAllPage() {
             viewMode={gridViewMode} 
             sortBy={sortBy}
             category={selectedCategory !== "all" ? selectedCategory : undefined}
+            showArtTypes
           />
         </div>
       </main>

@@ -42,7 +42,7 @@ export default function OriginalsPage() {
               </SelectContent>
             </Select>
           </div>
-          <ProductGrid category="Originals" sortBy={sortBy} />
+          <ProductGrid category="Originals" sortBy={sortBy} showArtTypes />
         </div>
       </main>
       

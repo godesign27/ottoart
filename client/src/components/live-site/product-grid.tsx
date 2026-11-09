@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { DraftBadge } from "@/components/live-site/draft-badge";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import { artSrc, artSrcSet } from "@/components/marketing/art";
+import { ArtTypeFilter, isArtType, useArtType, useArtTypeTagIds } from "@/components/live-site/art-type-filter";
 import type { Product } from "@shared/schema";
 
 const usd = (n: number) =>
@@ -49,6 +50,8 @@ interface ProductGridProps {
   filterByPrintTiers?: boolean;
   products?: Product[];
   sortBy?: SortOption;
+  /** Show All / Abstract / Animal above the grid, once both kinds have works on this page. */
+  showArtTypes?: boolean;
 }
 
 function sortProducts(products: Product[], sortBy: SortOption): Product[] {
@@ -72,7 +75,34 @@ function sortProducts(products: Product[], sortBy: SortOption): Product[] {
   });
 }
 
-export function ProductGrid({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false, products: customProducts, sortBy = "newest" }: ProductGridProps) {
+export function ProductGrid({ showArtTypes = false, ...props }: ProductGridProps) {
+  const [artType, setArtType] = useArtType();
+  const typeIds = useArtTypeTagIds();
+  if (!showArtTypes) return <ProductGridBody {...props} />;
+  return (
+    <ProductGridBody
+      {...props}
+      renderFilter={(all) => {
+        const counts = {
+          all: all.length,
+          abstract: all.filter((p) => isArtType(p, typeIds.abstract)).length,
+          animal: all.filter((p) => isArtType(p, typeIds.animal)).length,
+        };
+        // One kind on its own is not a choice, so the control waits until both have works here.
+        if (!counts.abstract || !counts.animal) return null;
+        return <ArtTypeFilter value={artType} onChange={setArtType} counts={counts} />;
+      }}
+      typeFilter={artType === "all" || !typeIds.abstract.length || !typeIds.animal.length ? undefined : typeIds[artType]}
+    />
+  );
+}
+
+interface ProductGridBodyProps extends Omit<ProductGridProps, "showArtTypes"> {
+  renderFilter?: (all: Product[]) => React.ReactNode;
+  typeFilter?: string[];
+}
+
+function ProductGridBody({ category, searchQuery = "", viewMode = "grid", filterByPrintTiers = false, products: customProducts, sortBy = "newest", renderFilter, typeFilter }: ProductGridBodyProps) {
   const categorySlug = category ? category.toLowerCase().replace(/\s+/g, '-') : undefined;
   
   const { data: fetchedProducts, isLoading } = useQuery<Product[]>({
@@ -107,10 +137,21 @@ export function ProductGrid({ category, searchQuery = "", viewMode = "grid", fil
     enabled: !customProducts
   });
 
-  const rawProducts = customProducts || fetchedProducts;
-  const products = rawProducts ? sortProducts(rawProducts, sortBy) : [];
+  const rawProducts = customProducts || fetchedProducts || [];
+  const filter = renderFilter?.(rawProducts);
+  const typed = filter && typeFilter ? rawProducts.filter((p) => isArtType(p, typeFilter)) : rawProducts;
+  const products = sortProducts(typed, sortBy);
+  return (
+    <div className="space-y-8">
+      {filter}
+      <GridItems products={products} isLoading={isLoading && !customProducts} viewMode={viewMode} />
+    </div>
+  );
+}
 
-  if (isLoading && !customProducts) {
+function GridItems({ products, isLoading, viewMode }: { products: Product[]; isLoading: boolean; viewMode: "grid" | "list" }) {
+
+  if (isLoading) {
     return (
       <div className={viewMode === "grid" ? "grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"} aria-busy="true">
         {[...Array(6)].map((_, i) => (

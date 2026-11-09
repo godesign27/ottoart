@@ -42,7 +42,7 @@ export default function PrintsPage() {
               </SelectContent>
             </Select>
           </div>
-          <ProductGrid filterByPrintTiers={true} sortBy={sortBy} />
+          <ProductGrid filterByPrintTiers={true} sortBy={sortBy} showArtTypes />
         </div>
       </main>
       
