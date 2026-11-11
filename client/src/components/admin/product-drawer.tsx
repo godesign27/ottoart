@@ -25,23 +25,72 @@ interface ProductDrawerProps {
 }
 
 // Pricing tier schema
+/** A number field that treats a blank box as missing (not 0), with one message for blank and not-a-number. */
+const num = (message: string) =>
+  z.preprocess(
+    (v) => (v === "" || v === null || v === undefined || (typeof v === "number" && Number.isNaN(v)) ? undefined : Number(v)),
+    z.number({ required_error: message, invalid_type_error: message }),
+  );
+
+// Every message says what to enter and gives an example, so the fix is obvious from the message alone.
 const pricingTierSchema = z.object({
   id: z.string(),
-  size: z.string().min(1, "Size is required"),
-  price: z.coerce.number().positive("Price must be greater than 0"),
-  type: z.string().min(1, "Type is required"),
-  stock: z.coerce.number().nonnegative("Stock must be 0 or greater"),
-  description: z.string().min(1, "Description is required"),
+  size: z.string().trim().min(1, "Choose a size, or pick Custom size and enter one, e.g. 24 x 30 inches"),
+  price: num("Enter a price in dollars, e.g. 275").pipe(z.number().positive("Enter a price above $0, e.g. 275")),
+  type: z.string().min(1, "Choose a type, e.g. Print"),
+  stock: num("Enter how many are in stock, e.g. 5").pipe(z.number().int("Enter a whole number, e.g. 5").nonnegative("Enter 0 or more, e.g. 5")),
+  // Optional: several live works have tiers without one, and the shop doesn't need it.
+  description: z.string().optional().default(""),
 });
 
 // Form schema based on the product schema with proper coercion
 const productFormSchema = insertProductSchema.extend({
-  price: z.coerce.number().nonnegative(),
+  name: z.string().trim().min(1, "Enter the artwork's name, e.g. Wolf Moon"),
+  price: num("Enter a price in dollars, e.g. 3227").pipe(z.number().nonnegative("Enter a price of $0 or more, e.g. 3227")),
+  stock: z.coerce.number({ invalid_type_error: "Enter a whole number, e.g. 1" }).int("Enter a whole number, e.g. 1").nonnegative("Enter 0 or more, e.g. 1").optional(),
+  year: z.coerce.number({ invalid_type_error: "Enter a 4-digit year, e.g. 2024" }).int("Enter a 4-digit year, e.g. 2024").min(1900, "Enter a 4-digit year, e.g. 2024").max(2100, "Enter a 4-digit year, e.g. 2024").optional().nullable(),
   images: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]), // Will store tag IDs
   pricingTiers: z.array(pricingTierSchema).default([]),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+  slug: z.string().min(1, "Enter a URL slug, e.g. wolf-moon").regex(/^[a-z0-9-]+$/, "Use only lowercase letters, numbers and hyphens, no spaces, e.g. wolf-moon"),
 });
+
+/** Which tab each field lives on, so a failed save can open the right one. */
+function tabForField(path: string): "content" | "pricing" | "images" | "categories" {
+  if (path.startsWith("pricingTiers")) return "pricing";
+  if (path.startsWith("images")) return "images";
+  if (path === "categoryId" || path.startsWith("tags")) return "categories";
+  return "content";
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  name: "Product name", slug: "URL slug", sku: "SKU", stock: "Quantity in stock", price: "Price", status: "Status",
+  description: "Description", year: "Year created", medium: "Method/medium", dimensions: "Dimensions", rarity: "Rarity",
+  frame: "Frame", packaging: "Packaging", authenticity: "Authenticity", images: "Images", categoryId: "Category", tags: "Tags",
+  size: "Size", type: "Type",
+};
+
+/** Flatten react-hook-form errors into [{ path, label }] in form order: "Pricing › Tier 2 › Price". */
+function listErrors(errors: Record<string, any>, prefix = ""): Array<{ path: string; label: string }> {
+  const out: Array<{ path: string; label: string }> = [];
+  for (const [key, value] of Object.entries(errors ?? {})) {
+    if (!value) continue;
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof value.message === "string" && value.message) {
+      const tier = path.match(/^pricingTiers\.(\d+)\.(\w+)$/);
+      const label = tier ? `Pricing › Tier ${Number(tier[1]) + 1} › ${FIELD_LABELS[tier[2]] ?? tier[2]}` : FIELD_LABELS[key] ?? key;
+      out.push({ path, label });
+    } else if (typeof value === "object") {
+      out.push(...listErrors(value, path));
+    }
+  }
+  return out;
+}
+
+/** "(required)" in text, not just an asterisk. */
+function Required() {
+  return <span className="ml-1 font-normal text-muted-foreground">(required)</span>;
+}
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
@@ -59,7 +108,7 @@ function ContentTab({ form }: { form: any }) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Product Name</FormLabel>
+                <FormLabel>Product Name<Required /></FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Enter product name" 
@@ -77,7 +126,7 @@ function ContentTab({ form }: { form: any }) {
             name="slug"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>URL Slug</FormLabel>
+                <FormLabel>URL Slug<Required /></FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="e.g., abstract-art-painting"
@@ -122,7 +171,8 @@ function ContentTab({ form }: { form: any }) {
                     type="number"
                     min="0"
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.valueAsNumber)}
                     data-testid="input-stock"
                   />
                 </FormControl>
@@ -136,14 +186,14 @@ function ContentTab({ form }: { form: any }) {
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Price</FormLabel>
+                <FormLabel>Price<Required /></FormLabel>
                 <FormControl>
                   <Input 
                     type="number"
                     step="0.01"
                     min="0"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value === "" ? "" : e.target.valueAsNumber)}
                     data-testid="input-price"
                   />
                 </FormControl>
@@ -288,7 +338,8 @@ function ContentTab({ form }: { form: any }) {
                         max="2100"
                         placeholder="e.g., 2023"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? null : e.target.valueAsNumber)}
                         data-testid="input-year"
                       />
                     </FormControl>
@@ -463,6 +514,35 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
     },
   });
 
+  // Open tiers on the Pricing tab; a failed save opens the tier that needs fixing.
+  const [openTiers, setOpenTiers] = useState<string[]>([]);
+  const errorList = listErrors(form.formState.errors);
+  const tabErrors = (tab: string) => errorList.filter((e) => tabForField(e.path) === tab).length;
+
+  const handleInvalid = (errors: Record<string, any>) => {
+    const list = listErrors(errors);
+    if (!list.length) return;
+    const first = list[0];
+    setActiveTab(tabForField(first.path));
+    const tierIndexes = Array.from(new Set(list.map((e) => e.path.match(/^pricingTiers\.(\d+)\./)?.[1]).filter(Boolean))) as string[];
+    if (tierIndexes.length) {
+      const ids = tierIndexes.map((i) => form.getValues(`pricingTiers.${Number(i)}.id`) as string).filter(Boolean);
+      setOpenTiers((open) => Array.from(new Set([...open, ...ids])));
+    }
+    // After the tab and tier have rendered, bring the first field into view and put the cursor in it.
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-drawer-form] [aria-invalid="true"]`);
+      el?.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+      el?.focus({ preventScroll: true });
+    }, 80);
+    const names = list.map((e) => e.label);
+    toast({
+      title: list.length === 1 ? "1 field needs fixing" : `${list.length} fields need fixing`,
+      description: names.length > 3 ? `${names.slice(0, 3).join(", ")} and ${names.length - 3} more. Each one is marked in red.` : `${names.join(", ")}. ${list.length === 1 ? "It's" : "Each one is"} marked in red.`,
+      variant: "destructive",
+    });
+  };
+
   // Mutation for creating/updating products
   const createProductMutation = useMutation({
     mutationFn: (data: any) => {
@@ -497,6 +577,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
 
   // Reset form when editProduct changes
   useEffect(() => {
+    setOpenTiers([]);
     if (editProduct) {
       // Reset form with edit product data
       form.reset({
@@ -605,22 +686,15 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
           {/* Form Content */}
           <div className="flex-1 min-h-0 overflow-hidden">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit, (errors) => {
-                console.log('Form validation errors:', errors);
-                toast({
-                  title: "Validation Error",
-                  description: "Please check all fields for errors.",
-                  variant: "destructive",
-                });
-              })} className="h-full flex flex-col">
+              <form onSubmit={form.handleSubmit(handleSubmit, handleInvalid)} noValidate data-drawer-form className="h-full flex flex-col">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   {/* Tab Navigation */}
                   <div className="shrink-0 px-4 sm:px-6 pt-4 border-b">
                     <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="content" data-testid="tab-content" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Content</TabsTrigger>
-                      <TabsTrigger value="pricing" data-testid="tab-pricing" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Pricing</TabsTrigger>
-                      <TabsTrigger value="images" data-testid="tab-images" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Images</TabsTrigger>
-                      <TabsTrigger value="categories" data-testid="tab-categories" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Categories</TabsTrigger>
+                      <TabsTrigger value="content" data-testid="tab-content" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Content<TabErrorMark count={tabErrors("content")} /></TabsTrigger>
+                      <TabsTrigger value="pricing" data-testid="tab-pricing" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Pricing<TabErrorMark count={tabErrors("pricing")} /></TabsTrigger>
+                      <TabsTrigger value="images" data-testid="tab-images" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Images<TabErrorMark count={tabErrors("images")} /></TabsTrigger>
+                      <TabsTrigger value="categories" data-testid="tab-categories" className="text-xs sm:text-sm px-1 sm:px-3 py-2">Categories<TabErrorMark count={tabErrors("categories")} /></TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -631,7 +705,7 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
                     </TabsContent>
 
                     <TabsContent value="pricing" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
-                      <PricingTab form={form} />
+                      <PricingTab form={form} openTiers={openTiers} setOpenTiers={setOpenTiers} />
                     </TabsContent>
 
                     <TabsContent value="images" className="space-y-6 mt-0 p-4 sm:p-6 pb-24">
@@ -687,7 +761,16 @@ export function ProductDrawer({ isOpen, onClose, editProduct }: ProductDrawerPro
 }
 
 // Pricing Tab Component
-function PricingTab({ form }: { form: any }) {
+function TabErrorMark({ count }: { count: number }) {
+  if (!count) return null;
+  return (
+    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.6875rem] font-semibold leading-none text-destructive-foreground">
+      {count}<span className="sr-only"> {count === 1 ? "field needs" : "fields need"} fixing</span>
+    </span>
+  );
+}
+
+function PricingTab({ form, openTiers, setOpenTiers }: { form: any; openTiers: string[]; setOpenTiers: (v: string[]) => void }) {
   const price = form.watch("price");
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -701,7 +784,7 @@ function PricingTab({ form }: { form: any }) {
       price: 100,
       type: "Original",
       stock: 1,
-      description: "Enter description"
+      description: ""
     });
   };
 
@@ -741,20 +824,22 @@ function PricingTab({ form }: { form: any }) {
           </p>
         )}
 
-        <Accordion type="multiple" className="space-y-4">
+        <Accordion type="multiple" value={openTiers} onValueChange={setOpenTiers} className="space-y-4">
           {fields.map((field, index) => {
             const tierData = form.watch(`pricingTiers.${index}`);
+            const tierHasError = !!form.formState.errors?.pricingTiers?.[index];
             return (
-              <AccordionItem key={field.id} value={field.id} className="border rounded-lg">
+              <AccordionItem key={field.id} value={(tierData?.id as string) || field.id} className={`border rounded-lg ${tierHasError ? "border-destructive" : ""}`}>
                 <div className="flex items-center justify-between pr-4">
                   <AccordionTrigger className="flex-1 py-3 pl-4 pr-0 hover:no-underline justify-start [&>svg]:order-first [&>svg]:mr-3" data-testid={`tier-trigger-${index}`}>
                     <div className="flex items-center gap-3">
                       <span className="font-medium">Tier {index + 1}</span>
                       {tierData?.type && (
                         <span className="text-sm text-muted-foreground">
-                          {tierData.type} - ${(tierData.price || 0).toFixed(2)}
+                          {tierData.type} - ${(Number(tierData.price) || 0).toFixed(2)}
                         </span>
                       )}
+                      {tierHasError && <span className="text-sm font-medium text-destructive">Needs fixing</span>}
                     </div>
                   </AccordionTrigger>
                   <Button
@@ -822,7 +907,7 @@ function PricingTab({ form }: { form: any }) {
                         
                         return (
                           <FormItem>
-                            <FormLabel>Size</FormLabel>
+                            <FormLabel>Size<Required /></FormLabel>
                             <Select 
                               onValueChange={(value) => {
                                 if (value !== "custom") {
@@ -869,14 +954,14 @@ function PricingTab({ form }: { form: any }) {
                       name={`pricingTiers.${index}.price`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Price ($)</FormLabel>
+                          <FormLabel>Price ($)<Required /></FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min="0"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => field.onChange(e.target.value === "" ? "" : e.target.valueAsNumber)}
                               data-testid={`tier-price-${index}`}
                             />
                           </FormControl>
@@ -919,7 +1004,7 @@ function PricingTab({ form }: { form: any }) {
                         
                         return (
                           <FormItem>
-                            <FormLabel>Type</FormLabel>
+                            <FormLabel>Type<Required /></FormLabel>
                             <Select 
                               onValueChange={(value) => {
                                 field.onChange(value);
@@ -955,13 +1040,13 @@ function PricingTab({ form }: { form: any }) {
                       name={`pricingTiers.${index}.stock`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stock</FormLabel>
+                          <FormLabel>Stock<Required /></FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               min="0"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              onChange={(e) => field.onChange(e.target.value === "" ? "" : e.target.valueAsNumber)}
                               data-testid={`tier-stock-${index}`}
                             />
                           </FormControl>
@@ -976,7 +1061,7 @@ function PricingTab({ form }: { form: any }) {
                     name={`pricingTiers.${index}.description`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Description <span className="font-normal text-muted-foreground">(optional)</span></FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="e.g., 42x42 original"
