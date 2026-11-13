@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -5,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { DraftBadge } from "@/components/live-site/draft-badge";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import { artSrc, artSrcSet } from "@/components/marketing/art";
+import { saveTrail } from "@/components/live-site/browse-trail";
 import { ArtTypeFilter, isArtType, useArtType, useArtTypeTagIds } from "@/components/live-site/art-type-filter";
 import type { Product } from "@shared/schema";
 
@@ -141,6 +143,10 @@ function ProductGridBody({ category, searchQuery = "", viewMode = "grid", filter
   const filter = renderFilter?.(rawProducts);
   const typed = filter && typeFilter ? rawProducts.filter((p) => isArtType(p, typeFilter)) : rawProducts;
   const products = sortProducts(typed, sortBy);
+  const trailIds = products.map((p) => p.id).join(",");
+  useEffect(() => {
+    if (trailIds) saveTrail(trailIds.split(","), window.location.pathname + window.location.search);
+  }, [trailIds]);
   return (
     <div className="space-y-8">
       {filter}

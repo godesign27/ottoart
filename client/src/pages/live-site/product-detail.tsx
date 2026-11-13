@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useParams } from "wouter";
+import { Link, useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { LiveSiteNavigation } from "@/components/live-site/live-site-navigation";
 import { Footer } from "@/components/live-site/footer";
@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DraftBadge } from "@/components/live-site/draft-badge";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Star, ShoppingBag, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, ShoppingBag, ZoomIn } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
+import { useNeighbours } from "@/components/live-site/browse-trail";
 
 export default function ProductDetailPage() {
   const [, setLocation] = useLocation();
@@ -27,6 +28,7 @@ export default function ProductDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const { toast } = useToast();
+  const neighbours = useNeighbours(params.id);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ['/api/products', params.id],
@@ -135,7 +137,7 @@ export default function ProductDetailPage() {
   };
 
   const handleBack = () => {
-    setLocation('/shop-all');
+    setLocation(neighbours?.backTo ?? '/shop-all');
   };
 
   if (isLoading) {
@@ -182,14 +184,40 @@ export default function ProductDetailPage() {
       
       <main className="mx-auto w-full max-w-[90rem] px-4 pb-24 pt-8 sm:px-6 lg:px-10">
         <div className="space-y-6">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to Shop
-          </Button>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back to Shop
+            </Button>
+
+            {neighbours && (
+              <nav aria-label="More artworks" className="flex items-center gap-1" data-testid="artwork-pager">
+                {neighbours.previous ? (
+                  <Button asChild variant="ghost" className="min-h-11 gap-2 text-muted-foreground hover:text-foreground">
+                    <Link href={`/product/${neighbours.previous.id}`} aria-label={`Previous artwork: ${neighbours.previous.name}`} data-testid="artwork-previous">
+                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                      Previous
+                    </Link>
+                  </Button>
+                ) : null}
+                <span className="tabular px-2 text-sm text-muted-foreground">
+                  {neighbours.position} of {neighbours.total}
+                </span>
+                {neighbours.next ? (
+                  <Button asChild variant="secondary" className="min-h-11 gap-2">
+                    <Link href={`/product/${neighbours.next.id}`} aria-label={`Next artwork: ${neighbours.next.name}`} data-testid="artwork-next">
+                      Next
+                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                ) : null}
+              </nav>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
             {/* Product Images */}

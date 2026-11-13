@@ -105,6 +105,7 @@ Use these first. All in `client/src/components/marketing/` unless noted.
 | `BoardsPromo` | `boards-promo.tsx` | "Plan it on a board": the way into buyer boards from Corporate Buyers and Art Rental |
 | `SaveToBoard` | `components/live-site/save-to-board.tsx` | On an artwork: save to one of your boards or start a new one. Signed-out visitors get a sign-in prompt |
 | `ArtTypeFilter` | `components/live-site/art-type-filter.tsx` | All / Abstract / Animal on the shop pages (`ProductGrid showArtTypes`). Reads the Abstract and Animal tags, keeps the choice in `?type=`, and only appears once both kinds have works on that page |
+| Artwork pager | `components/live-site/browse-trail.ts` | Previous / "3 of 38" / Next on an artwork. Walks the list the visitor last saw (Originals filtered to Animal, say) and Back returns to it; with no list, all live works, newest first |
 | `artSrc`, `artSrcSet` | `art.ts` | Sized image URLs: uploaded images resize on the server with `?w=` (160–1600), so a thumbnail never loads a 2 MB original |
 | `useReveal` | `hooks/use-reveal.ts` | Entrances for `data-reveal` elements; stagger with `--reveal-i` |
 | `usePageAccess` | `hooks/use-page-access.ts` | On/off switch logic for a page |
@@ -130,6 +131,8 @@ Use these for buttons, inputs, selects, radio groups, tables and so on: `client/
 - Required fields are marked in text ("required"), not just with an asterisk.
 - Errors sit under the field (`text-destructive`, with `aria-describedby`), plus an error summary that gets focus on submit.
 - Never clear what someone typed after an error.
+
+**Toasts** appear at the top centre, so they never cover a drawer's or form's primary button at the bottom.
 
 ## Motion
 
