@@ -10,15 +10,18 @@ export const ART_TYPES = [
 
 export type ArtType = (typeof ART_TYPES)[number]["value"];
 
-/** The chosen type lives in the address (?type=animal), so a filtered page can be shared and survives Back. */
-export function useArtType(): [ArtType | "all", (next: ArtType | "all") => void] {
+/**
+ * The chosen type lives in the address (?type=animal), so a filtered page can be shared and survives Back.
+ * A page can open on a type other than All; the address then only carries a choice that differs from it.
+ */
+export function useArtType(defaultType: ArtType | "all" = "all"): [ArtType | "all", (next: ArtType | "all") => void] {
   const search = useSearch();
   const [path, navigate] = useLocation();
   const raw = new URLSearchParams(search).get("type");
-  const current = ART_TYPES.some((t) => t.value === raw) ? (raw as ArtType) : "all";
+  const current = raw === "all" || ART_TYPES.some((t) => t.value === raw) ? (raw as ArtType | "all") : defaultType;
   const set = (next: ArtType | "all") => {
     const params = new URLSearchParams(search);
-    if (next === "all") params.delete("type");
+    if (next === defaultType) params.delete("type");
     else params.set("type", next);
     const qs = params.toString();
     navigate(qs ? `${path}?${qs}` : path, { replace: true });

@@ -7,7 +7,7 @@ import { DraftBadge } from "@/components/live-site/draft-badge";
 import { FavoriteButton } from "@/components/live-site/favorite-button";
 import { artSrc, artSrcSet } from "@/components/marketing/art";
 import { saveTrail } from "@/components/live-site/browse-trail";
-import { ArtTypeFilter, isArtType, useArtType, useArtTypeTagIds } from "@/components/live-site/art-type-filter";
+import { ArtTypeFilter, isArtType, useArtType, useArtTypeTagIds, type ArtType } from "@/components/live-site/art-type-filter";
 import type { Product } from "@shared/schema";
 
 const usd = (n: number) =>
@@ -54,6 +54,8 @@ interface ProductGridProps {
   sortBy?: SortOption;
   /** Show All / Abstract / Animal above the grid, once both kinds have works on this page. */
   showArtTypes?: boolean;
+  /** Which type the page opens on when the address doesn't say. */
+  defaultArtType?: ArtType | "all";
 }
 
 function sortProducts(products: Product[], sortBy: SortOption): Product[] {
@@ -77,8 +79,8 @@ function sortProducts(products: Product[], sortBy: SortOption): Product[] {
   });
 }
 
-export function ProductGrid({ showArtTypes = false, ...props }: ProductGridProps) {
-  const [artType, setArtType] = useArtType();
+export function ProductGrid({ showArtTypes = false, defaultArtType = "all", ...props }: ProductGridProps) {
+  const [artType, setArtType] = useArtType(defaultArtType);
   const typeIds = useArtTypeTagIds();
   if (!showArtTypes) return <ProductGridBody {...props} />;
   return (
@@ -99,7 +101,7 @@ export function ProductGrid({ showArtTypes = false, ...props }: ProductGridProps
   );
 }
 
-interface ProductGridBodyProps extends Omit<ProductGridProps, "showArtTypes"> {
+interface ProductGridBodyProps extends Omit<ProductGridProps, "showArtTypes" | "defaultArtType"> {
   renderFilter?: (all: Product[]) => React.ReactNode;
   typeFilter?: string[];
 }

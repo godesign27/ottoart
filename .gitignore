@@ -20,3 +20,5 @@ skills-lock.json
 
 # design-skill working files (screenshots, direction sheet)
 .taste-skill/
+node_modules.nosync
+node_modules.old-icloud

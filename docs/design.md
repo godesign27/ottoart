@@ -104,7 +104,7 @@ Use these first. All in `client/src/components/marketing/` unless noted.
 | `PageUnavailable`, `AdminOffNotice` | `page-unavailable.tsx` | Switched-off pages |
 | `BoardsPromo` | `boards-promo.tsx` | "Plan it on a board": the way into buyer boards from Corporate Buyers and Art Rental |
 | `SaveToBoard` | `components/live-site/save-to-board.tsx` | On an artwork: save to one of your boards or start a new one. Signed-out visitors get a sign-in prompt |
-| `ArtTypeFilter` | `components/live-site/art-type-filter.tsx` | All / Abstract / Animal on the shop pages (`ProductGrid showArtTypes`). Reads the Abstract and Animal tags, keeps the choice in `?type=`, and only appears once both kinds have works on that page |
+| `ArtTypeFilter` | `components/live-site/art-type-filter.tsx` | All / Abstract / Animal on the shop pages (`ProductGrid showArtTypes`). Reads the Abstract and Animal tags, keeps the choice in `?type=`, and only appears once both kinds have works on that page. Originals opens on Abstract (`defaultArtType`); Shop All and Prints open on All |
 | Artwork pager | `components/live-site/browse-trail.ts` | Previous / "3 of 38" / Next on an artwork. Walks the list the visitor last saw (Originals filtered to Animal, say) and Back returns to it; with no list, all live works, newest first |
 | `artSrc`, `artSrcSet` | `art.ts` | Sized image URLs: uploaded images resize on the server with `?w=` (160–1600), so a thumbnail never loads a 2 MB original |
 | `useReveal` | `hooks/use-reveal.ts` | Entrances for `data-reveal` elements; stagger with `--reveal-i` |
