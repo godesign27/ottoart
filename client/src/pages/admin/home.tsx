@@ -112,6 +112,32 @@ export default function AdminHomePage() {
     setIsPreview(!isPreview);
   };
 
+  // Hooks must run on every render, so these sit above the loading return below.
+  // Handle mobile menu body scroll lock
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  // Handle Escape key to close mobile menu
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobileMenuOpen]);
+
   // Show loading state while any queries are loading
   if (isLoadingSettings || isLoadingSiteSettings) {
     return (
@@ -189,30 +215,6 @@ export default function AdminHomePage() {
     localStorage.setItem('admin-sidebar-collapsed', newCollapsed.toString());
   };
 
-  // Handle mobile menu body scroll lock
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isMobileMenuOpen]);
-
-  // Handle Escape key to close mobile menu
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileMenuOpen) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isMobileMenuOpen]);
 
   return (
     <div className="flex h-screen bg-background">
