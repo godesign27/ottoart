@@ -117,6 +117,7 @@ Section patterns already in use (pick a different one for neighbouring sections)
 - **Tiles that grow** — numbered process as an `<ol>` of colour tiles that get taller step by step.
 - **Index with preview** — large row titles; pointing at one dims the rest and swaps a picture.
 - **Action tile row** — a closing call to action on a brand tile, flanked by a picture and an ink tile, cropped by the screen edges.
+- **Body of work with picker** (Bio) — one large framed work on a tile ground with its thumbnails under it; pointing at or tapping a thumbnail swaps the picture, and the paragraph about that work sits below. Two sit side by side, the second set lower.
 
 **Never:** small labels above headings, tiny spaced-out capitals, rows of icon-topped cards, gradients, glass panels, emoji, a styled accent word inside a headline, or more than two typefaces.
 
