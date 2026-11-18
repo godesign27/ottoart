@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { storage } from "./storage";
 import { parseResizeWidth, sendResized } from "./imageResize";
 import { createRentalInquiry, listRentalInquiries, updateRentalInquiry } from "./rentalInquiries";
+import { getAnalytics, trackPageView } from "./pageViews";
 import { addMyBoardItem, createMyBoard, deleteMyBoard, getMyBoard, listMyBoards, removeMyBoardItem, requestMyBoardQuote, updateMyBoard, updateMyBoardItem } from "./buyerBoards";
 import { registerSeoRoutes } from "./seo";
 
@@ -823,6 +824,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerSeoRoutes(app); // robots.txt and sitemap.xml
 
   // Art rental inquiries (/art-rental-leasing). Public submit; reading and updating is admin only.
+  // Visit tracking (Admin › Analytics)
+  app.post("/api/track", trackPageView);
+  app.get("/api/analytics", requireAdmin, getAnalytics);
+
   app.post("/api/rental-inquiries", createRentalInquiry);
   app.get("/api/rental-inquiries", requireAdmin, listRentalInquiries);
   app.patch("/api/rental-inquiries/:id", requireAdmin, updateRentalInquiry);

@@ -35,7 +35,8 @@ import {
   ScanLine,
   Award,
   Send,
-  BookUser
+  BookUser,
+  BarChart3
 } from "lucide-react";
 
 const navItems = [
@@ -44,6 +45,12 @@ const navItems = [
     icon: LayoutDashboard,
     href: "/admin/dashboard",
     view: "dashboard"
+  },
+  {
+    title: "Analytics",
+    icon: BarChart3,
+    href: "/admin/analytics",
+    view: "analytics"
   },
   {
     title: "Product Listings",

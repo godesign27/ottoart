@@ -634,3 +634,18 @@ export type InsertBoardItem = z.infer<typeof insertBoardItemSchema>;
 
 export type BoardStar = typeof boardStars.$inferSelect;
 export type InsertBoardStar = z.infer<typeof insertBoardStarSchema>;
+
+// One row per page a visitor opens on the live site (Admin › Analytics). No cookies and no IP address are kept:
+// `visitor` is a hash of the IP and browser that changes every day, so it counts people within a day only.
+// Admins' own visits and known bots are not recorded.
+export const pageViews = pgTable("page_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  path: text("path").notNull(), // e.g. /product/abc, without the query string
+  productId: varchar("product_id"), // set for artwork pages
+  referrer: text("referrer"), // the other site's host name, only when the visit came from outside
+  visitor: text("visitor").notNull(),
+  device: text("device").notNull(), // mobile | tablet | desktop
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_page_views_created_at").on(table.createdAt)]);
+
+export type PageView = typeof pageViews.$inferSelect;

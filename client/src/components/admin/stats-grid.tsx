@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, ShoppingBag, Package, Eye } from "lucide-react";
+import type { AnalyticsSummary } from "@shared/pageViews";
+
+const TZ = (() => {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
+})();
 
 export function StatsGrid() {
   const { data: stats, isLoading } = useQuery<{
@@ -9,6 +14,15 @@ export function StatsGrid() {
     activeProducts: number;
   }>({
     queryKey: ['/api/dashboard/stats'],
+  });
+  // Real visitor numbers from Admin › Analytics (the last 7 days).
+  const { data: week } = useQuery<AnalyticsSummary>({
+    queryKey: ["/api/analytics", { days: 7, tz: TZ }],
+    queryFn: async () => {
+      const res = await fetch(`/api/analytics?days=7&tz=${encodeURIComponent(TZ)}`, { credentials: "include" });
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json();
+    },
   });
 
   if (isLoading) {
@@ -33,7 +47,7 @@ export function StatsGrid() {
     {
       title: "Total Revenue",
       value: `$${stats?.totalRevenue?.toFixed(2) || '0.00'}`,
-      change: "+12% from last month",
+      change: "All orders, all time",
       icon: DollarSign,
       color: "green",
       testId: "stat-revenue"
@@ -41,7 +55,7 @@ export function StatsGrid() {
     {
       title: "Total Orders", 
       value: stats?.totalOrders?.toString() || '0',
-      change: "+3 new orders",
+      change: "All time",
       icon: ShoppingBag,
       color: "blue",
       testId: "stat-orders"
@@ -49,15 +63,15 @@ export function StatsGrid() {
     {
       title: "Active Products",
       value: stats?.activeProducts?.toString() || '0',
-      change: "5 categories",
+      change: "Live in the shop",
       icon: Package,
       color: "purple",
       testId: "stat-products"
     },
     {
       title: "Site Visitors",
-      value: "1,247",
-      change: "+8% this week",
+      value: week ? week.visitors.toLocaleString() : "–",
+      change: week ? `Last 7 days · ${week.views.toLocaleString()} page views` : "Last 7 days",
       icon: Eye,
       color: "orange",
       testId: "stat-visitors"
@@ -75,7 +89,7 @@ export function StatsGrid() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                   <p className="text-3xl font-bold text-foreground">{stat.value}</p>
-                  <p className={`text-sm text-${stat.color}-600`}>{stat.change}</p>
+                  <p className="text-sm text-muted-foreground">{stat.change}</p>
                 </div>
                 <div className={`p-3 bg-${stat.color}-100 dark:bg-${stat.color}-900/20 rounded-full`}>
                   <Icon className={`h-6 w-6 text-${stat.color}-600`} />

@@ -63,11 +63,14 @@ import PosCheckoutPage from "@/pages/live-site/pos-checkout";
 import CertificatesPage from "@/pages/admin/certificates";
 import PostsPage from "@/pages/admin/posts";
 import MailingListPage from "@/pages/admin/mailing-list";
+import AdminAnalyticsPage from "@/pages/admin/analytics";
+import { PageViewTracker } from "@/components/live-site/page-view-tracker";
 
 function Router() {
   return (
     <>
     <ScrollToTop />
+    <PageViewTracker />
     <Switch>
       <Route path="/" component={LiveSiteHome} />
       <Route path="/sign-in/*?" component={SignInPage} />
@@ -122,6 +125,7 @@ function Router() {
       <Route path="/admin/contact" component={AdminContact} />
       <Route path="/admin/corporate-buyers" component={AdminCorporateBuyers} />
       <Route path="/admin/art-rental-leasing" component={AdminArtRentalLeasing} />
+      <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route path="/admin/bio" component={AdminBio} />
       <Route path="/admin/settings/artist" component={ArtistSettingsPage} />
       <Route path="/admin/settings/business" component={BusinessSettingsPage} />
