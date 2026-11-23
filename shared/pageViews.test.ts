@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanPath, deviceOf, isBot, productIdOf, referrerHost } from "./pageViews";
+import { artworkOpenedOn, cleanPath, deviceOf, isBot, productIdOf, referrerHost } from "./pageViews";
 
 test("cleanPath keeps the page, drops the query and skips private pages", () => {
   assert.equal(cleanPath("/originals?type=animal#top"), "/originals");
@@ -42,4 +42,12 @@ test("isBot and deviceOf", () => {
   assert.equal(deviceOf("Mozilla/5.0 (Linux; Android 14; SM-X710)"), "tablet");
   assert.equal(deviceOf("Mozilla/5.0 (Linux; Android 14; Pixel 8) Mobile Safari"), "mobile");
   assert.equal(deviceOf("Mozilla/5.0 (Windows NT 10.0; Win64; x64)"), "desktop");
+});
+
+test("artworkOpenedOn accepts a well-formed id from a page that isn't an artwork page", () => {
+  assert.equal(artworkOpenedOn("/board/summer-picks", "3f2a-99"), "3f2a-99");
+  assert.equal(artworkOpenedOn("/product/3f2a-99", "3f2a-99"), null); // already counted as the page itself
+  assert.equal(artworkOpenedOn("/board/summer-picks", "../etc"), null);
+  assert.equal(artworkOpenedOn("/board/summer-picks", 7), null);
+  assert.equal(artworkOpenedOn("/board/summer-picks", undefined), null);
 });

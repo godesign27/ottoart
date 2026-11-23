@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import { createHmac } from "node:crypto";
-import { and, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, isNull, like, or, sql } from "drizzle-orm";
 import { db } from "./db";
 import { pageViews, products } from "@shared/schema";
 import {
-  ANALYTICS_RANGES, cleanPath, deviceOf, isBot, productIdOf, referrerHost,
+  ANALYTICS_RANGES, artworkOpenedOn, cleanPath, deviceOf, isBot, productIdOf, referrerHost,
   type AnalyticsRange, type AnalyticsSummary,
 } from "@shared/pageViews";
 import { isAdminRequest } from "./middlewares/requireAuth";
@@ -32,7 +32,10 @@ function rateLimited(ip: string, now = Date.now()) {
   return recent.length > MAX_PER_WINDOW;
 }
 
-/** POST /api/track { path, referrer }. Always answers 204: tracking never gets in a visitor's way. */
+/**
+ * POST /api/track { path, referrer } for a page, or { path, artworkId } for an artwork opened in a popup on that page.
+ * Always answers 204: tracking never gets in a visitor's way.
+ */
 export async function trackPageView(req: Request, res: Response) {
   res.status(204).end();
   try {
@@ -41,10 +44,17 @@ export async function trackPageView(req: Request, res: Response) {
     const ip = req.ip ?? "";
     if (!path || isBot(ua) || rateLimited(ip)) return;
     if (await isAdminRequest(req)) return; // your own visits don't count
+    const opened = artworkOpenedOn(path, req.body?.artworkId);
+    if (req.body?.artworkId !== undefined) {
+      // An artwork popup: only count artworks that exist, so made-up ids never reach Top artworks.
+      if (!opened) return;
+      const [found] = await db.select({ id: products.id }).from(products).where(eq(products.id, opened)).limit(1);
+      if (!found) return;
+    }
     await db.insert(pageViews).values({
       path,
-      productId: productIdOf(path),
-      referrer: referrerHost(req.body?.referrer, req.get("host") ?? ""),
+      productId: opened ?? productIdOf(path),
+      referrer: opened ? null : referrerHost(req.body?.referrer, req.get("host") ?? ""),
       visitor: visitorOf(ip, ua),
       device: deviceOf(ua),
     });
@@ -73,24 +83,26 @@ export async function getAnalytics(req: Request, res: Response) {
     const today = sql`(now() AT TIME ZONE ${tz})::date`;
     const inRange = gte(sql`${local}::date`, sql`${today} - ${days - 1}::int`);
     const views = sql<number>`count(*)::int`;
+    // Page views leave out artworks opened in a popup (a page path with an artwork id); those count in Top artworks only.
+    const pageOnly = and(inRange, or(isNull(pageViews.productId), like(pageViews.path, "/product/%")));
 
     const [daily, topPages, topArtworks, referrers, devices, [first], [since]] = await Promise.all([
       db.select({
         date: sql<string>`to_char(${local}::date, 'YYYY-MM-DD')`,
         views,
         visitors: sql<number>`count(distinct ${pageViews.visitor})::int`,
-      }).from(pageViews).where(inRange).groupBy(sql`1`).orderBy(sql`1`),
+      }).from(pageViews).where(pageOnly).groupBy(sql`1`).orderBy(sql`1`),
       db.select({ path: pageViews.path, name: products.name, views }).from(pageViews)
-        .leftJoin(products, eq(products.id, pageViews.productId)).where(inRange)
+        .leftJoin(products, eq(products.id, pageViews.productId)).where(pageOnly)
         .groupBy(pageViews.path, products.name).orderBy(desc(views)).limit(10),
       db.select({ productId: sql<string>`${pageViews.productId}`, name: products.name, views }).from(pageViews)
         .leftJoin(products, eq(products.id, pageViews.productId))
         .where(and(inRange, isNotNull(pageViews.productId)))
         .groupBy(pageViews.productId, products.name).orderBy(desc(views)).limit(10),
       db.select({ host: sql<string>`${pageViews.referrer}`, views }).from(pageViews)
-        .where(and(inRange, isNotNull(pageViews.referrer)))
+        .where(and(pageOnly, isNotNull(pageViews.referrer)))
         .groupBy(pageViews.referrer).orderBy(desc(views)).limit(10),
-      db.select({ device: pageViews.device, views }).from(pageViews).where(inRange)
+      db.select({ device: pageViews.device, views }).from(pageViews).where(pageOnly)
         .groupBy(pageViews.device).orderBy(desc(views)),
       db.select({ at: sql<string | null>`min(${pageViews.createdAt})` }).from(pageViews),
       db.select({ d: sql<string>`to_char(${today} - ${days - 1}::int, 'YYYY-MM-DD')` }).from(sql`(select 1) as one`),

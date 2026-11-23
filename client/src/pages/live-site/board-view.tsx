@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Star } from "lucide-react";
+import { trackArtworkOpened } from "@/components/live-site/page-view-tracker";
 import type { Board, Product, BoardItem, BoardStar } from "@shared/schema";
 
 type BoardItemWithProduct = BoardItem & { product: Product };
@@ -152,7 +153,10 @@ export default function BoardViewPage() {
                       src={item.product.images?.[0] || '/placeholder.svg'}
                       alt={item.product.name}
                       className="w-full h-auto block cursor-pointer"
-                      onClick={() => setSelectedImage({ src: item.product.images?.[0] || '', name: item.product.name })}
+                      onClick={() => {
+                        setSelectedImage({ src: item.product.images?.[0] || '', name: item.product.name });
+                        trackArtworkOpened(item.productId);
+                      }}
                     />
                     <button
                       onClick={() => handleStarClick(item.productId)}

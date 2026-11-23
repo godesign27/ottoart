@@ -11,10 +11,22 @@ export function cleanPath(raw: unknown): string | null {
   return path;
 }
 
+const ID = /^[A-Za-z0-9-]{1,64}$/;
+
 /** The artwork id on an artwork page (/product/:id), else null. */
 export function productIdOf(path: string): string | null {
   const m = /^\/product\/([A-Za-z0-9-]{1,64})$/.exec(path);
   return m ? m[1] : null;
+}
+
+/**
+ * An artwork opened without leaving the page (the image popup on a shared board). Saved as its own row with the
+ * page's path and the artwork's id, so it counts in Top artworks but not as another page view.
+ * Returns the id when it's a well-formed id sent from a page that isn't an artwork page, else null.
+ */
+export function artworkOpenedOn(path: string, raw: unknown): string | null {
+  if (typeof raw !== "string" || !ID.test(raw) || productIdOf(path)) return null;
+  return raw;
 }
 
 /** The other site's host when the visit came from outside ottoart.app (www. removed), else null. */
