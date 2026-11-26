@@ -649,3 +649,67 @@ export const pageViews = pgTable("page_views", {
 }, (table) => [index("idx_page_views_created_at").on(table.createdAt)]);
 
 export type PageView = typeof pageViews.$inferSelect;
+
+// ==================== CORPORATE OUTREACH ====================
+// Admin › Outreach: companies Otto writes to, each with its own board at /for/:slug (see docs/outreach-setup.md).
+// Statuses and the rules that use them live in shared/outreach.ts.
+export const prospects = pgTable("prospects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  company: text("company").notNull(),
+  category: text("category").notNull(),
+  contactName: text("contact_name"),
+  title: text("title"),
+  email: text("email"),
+  website: text("website"),
+  city: text("city").default("Boulder, CO").notNull(),
+  hook: text("hook"), // why they fit (the spreadsheet's "Why they fit / hook")
+  notes: text("notes"),
+  plannedWeek: text("planned_week"), // YYYY-MM-DD, the Monday of the week Otto planned to write
+  status: text("status").default("not_contacted").notNull(),
+  boardId: varchar("board_id").references(() => boards.id, { onDelete: "set null" }),
+  optedOutAt: timestamp("opted_out_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_prospects_category").on(table.category),
+]);
+
+// One row per prospect per email step (1 = first email, 2 = the follow-up in the same thread).
+export const outreachSteps = pgTable("outreach_steps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  prospectId: varchar("prospect_id").notNull().references(() => prospects.id, { onDelete: "cascade" }),
+  step: integer("step").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(), // the merged text as it was drafted, footer included
+  productIds: jsonb("product_ids").$type<string[]>().default([]).notNull(),
+  gmailDraftId: text("gmail_draft_id"),
+  gmailMessageId: text("gmail_message_id"),
+  gmailThreadId: text("gmail_thread_id"),
+  rfcMessageId: text("rfc_message_id"), // the Message-ID header, for In-Reply-To on the follow-up
+  draftCreatedAt: timestamp("draft_created_at"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_outreach_steps_prospect_id").on(table.prospectId),
+]);
+
+export const outreachTemplates = pgTable("outreach_templates", {
+  step: integer("step").primaryKey(), // 1 or 2
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// The connected Gmail account. Only the server reads this table; the refresh token is encrypted with
+// OUTREACH_TOKEN_KEY and never leaves the server. There is at most one row (id "default").
+export const gmailConnection = pgTable("gmail_connection", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  refreshTokenEnc: text("refresh_token_enc").notNull(),
+  scopes: text("scopes").notNull(),
+  connectedAt: timestamp("connected_at").defaultNow().notNull(),
+});
+
+export type Prospect = typeof prospects.$inferSelect;
+export type OutreachStep = typeof outreachSteps.$inferSelect;
+export type OutreachTemplate = typeof outreachTemplates.$inferSelect;

@@ -16,7 +16,7 @@ const PUBLIC = new Set([
   "get /public-objects/:filePath(*)", "get /objects/:objectPath(*)",
   "get /api/room-backgrounds", "get /api/room-backgrounds/:id", "get /api/art-wall-simulations", "get /api/art-wall-simulations/:id",
   "post /api/stripe-webhook", "post /api/rental-inquiries", "post /api/track", "get /api/boards/public/:slug", "post /api/boards/public/:slug/star",
-  "get /api/boards/public/:slug/stars", "get /api/pos/:codeId", "post /api/pos/send-receipt", "post /api/pos/:codeId/payment-intent",
+  "get /api/boards/public/:slug/stars", "get /api/for/:slug", "get /api/admin/gmail/callback", "get /api/pos/:codeId", "post /api/pos/send-receipt", "post /api/pos/:codeId/payment-intent",
 ]);
 
 const source = readFileSync(new URL("./routes.ts", import.meta.url), "utf8");
@@ -37,6 +37,8 @@ test("nothing on the public list has lost its reason to be public", () => {
 test("changing the catalog or reading customers needs an admin", () => {
   for (const id of ["post /api/products", "put /api/products/:id", "delete /api/products/:id", "post /api/products/:id/duplicate",
     "get /api/orders", "patch /api/orders/:id", "get /api/messages", "get /api/mailing-list", "get /api/commissions", "get /api/rental-inquiries", "patch /api/rental-inquiries/:id", "get /api/analytics",
+    "get /api/outreach/prospects", "post /api/outreach/prospects/import", "post /api/outreach/prospects/:id/steps/:step/draft",
+    "post /api/outreach/prospects/:id/steps/:step/send", "put /api/outreach/templates", "get /api/admin/gmail", "post /api/admin/gmail/connect",
     "post /api/objects/upload", "put /api/objects/finalize", "get /api/user-subscriptions/all", "post /api/subscription-plans"]) {
     assert.equal(routes.find((r) => r.id === id)?.guard, "requireAdmin", id);
   }

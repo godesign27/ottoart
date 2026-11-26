@@ -65,6 +65,8 @@ import CertificatesPage from "@/pages/admin/certificates";
 import PostsPage from "@/pages/admin/posts";
 import MailingListPage from "@/pages/admin/mailing-list";
 import AdminAnalyticsPage from "@/pages/admin/analytics";
+import AdminOutreachPage from "@/pages/admin/outreach";
+import ProspectBoardPage from "@/pages/live-site/prospect-board";
 import { PageViewTracker } from "@/components/live-site/page-view-tracker";
 
 function Router() {
@@ -91,6 +93,7 @@ function Router() {
       <Route path="/commission" component={CommissionPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/board/:slug" component={BoardViewPage} />
+      <Route path="/for/:slug" component={ProspectBoardPage} />
       <Route path="/boards" component={MyBoardsPage} />
       <Route path="/boards/:id" component={MyBoardPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
@@ -128,6 +131,8 @@ function Router() {
       <Route path="/admin/corporate-buyers" component={AdminCorporateBuyers} />
       <Route path="/admin/art-rental-leasing" component={AdminArtRentalLeasing} />
       <Route path="/admin/analytics" component={AdminAnalyticsPage} />
+      <Route path="/admin/outreach">{() => <AdminOutreachPage />}</Route>
+      <Route path="/admin/settings/outreach">{() => <AdminOutreachPage initialTab="settings" />}</Route>
       <Route path="/admin/bio" component={AdminBio} />
       <Route path="/admin/settings/artist" component={ArtistSettingsPage} />
       <Route path="/admin/settings/business" component={BusinessSettingsPage} />

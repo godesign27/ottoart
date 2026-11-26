@@ -10,6 +10,11 @@ import { createRentalInquiry, listRentalInquiries, updateRentalInquiry } from ".
 import { getAnalytics, trackPageView } from "./pageViews";
 import { addMyBoardItem, createMyBoard, deleteMyBoard, getMyBoard, listMyBoards, removeMyBoardItem, requestMyBoardQuote, updateMyBoard, updateMyBoardItem } from "./buyerBoards";
 import { registerSeoRoutes } from "./seo";
+import {
+  createDraft, createProspect, deleteProspect, getDashboard, getForBoard, getProspect, getTemplates, gmailCallback, gmailConnect,
+  gmailDisconnect, gmailStatus, importProspects, listPickableWorks, listProspects, listReusableBoards, previewEmail, sendStep,
+  setProspectBoard, syncWithGmail, updateProspect, updateTemplates,
+} from "./outreach";
 
 // Initialize Resend for email notifications
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -2360,6 +2365,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/my/boards/:id/items/:itemId', requireAuth, updateMyBoardItem);
   app.delete('/api/my/boards/:id/items/:itemId', requireAuth, removeMyBoardItem);
   app.post('/api/my/boards/:id/quote', requireAuth, requestMyBoardQuote);
+
+  // ==================== CORPORATE OUTREACH ====================
+  // Admin › Outreach (server/outreach.ts). Drafts are created on a click; a draft is sent only by the confirmed "Send now".
+  app.get('/api/outreach/dashboard', requireAdmin, getDashboard);
+  app.get('/api/outreach/prospects', requireAdmin, listProspects);
+  app.post('/api/outreach/prospects', requireAdmin, createProspect);
+  app.post('/api/outreach/prospects/import', requireAdmin, importProspects);
+  app.get('/api/outreach/prospects/:id', requireAdmin, getProspect);
+  app.patch('/api/outreach/prospects/:id', requireAdmin, updateProspect);
+  app.delete('/api/outreach/prospects/:id', requireAdmin, deleteProspect);
+  app.put('/api/outreach/prospects/:id/board', requireAdmin, setProspectBoard);
+  app.post('/api/outreach/prospects/:id/steps/:step/preview', requireAdmin, previewEmail);
+  app.post('/api/outreach/prospects/:id/steps/:step/draft', requireAdmin, createDraft);
+  app.post('/api/outreach/prospects/:id/steps/:step/send', requireAdmin, sendStep);
+  app.get('/api/outreach/works', requireAdmin, listPickableWorks);
+  app.get('/api/outreach/boards', requireAdmin, listReusableBoards);
+  app.get('/api/outreach/templates', requireAdmin, getTemplates);
+  app.put('/api/outreach/templates', requireAdmin, updateTemplates);
+  app.post('/api/outreach/sync', requireAdmin, syncWithGmail);
+  app.get('/api/admin/gmail', requireAdmin, gmailStatus);
+  app.post('/api/admin/gmail/connect', requireAdmin, gmailConnect);
+  app.post('/api/admin/gmail/disconnect', requireAdmin, gmailDisconnect);
+  // Google's redirect back after "Connect Gmail". It can't carry the admin's login reliably, so it accepts only a
+  // signed, single-use state that /api/admin/gmail/connect gave an admin (server/gmail.ts).
+  app.get('/api/admin/gmail/callback', gmailCallback);
+  // A prospect's board at /for/:slug: works and live prices only, nothing about the prospect.
+  app.get('/api/for/:slug', getForBoard);
 
   // ==================== BOARDS ====================
 

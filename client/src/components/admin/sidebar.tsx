@@ -36,7 +36,8 @@ import {
   Award,
   Send,
   BookUser,
-  BarChart3
+  BarChart3,
+  Megaphone
 } from "lucide-react";
 
 const navItems = [
@@ -93,6 +94,12 @@ const navItems = [
     icon: Mail,
     href: "/admin/mail-club",
     view: "mail-club"
+  },
+  {
+    title: "Outreach",
+    icon: Megaphone,
+    href: "/admin/outreach",
+    view: "outreach"
   },
   {
     title: "Boards",
@@ -267,6 +274,11 @@ export function AdminSidebar({ onNavigate, isCollapsed = false, isMobileMenuOpen
       title: "Tech Stack",
       href: "/admin/settings/tech-stack",
       icon: Layers
+    },
+    {
+      title: "Outreach & Gmail",
+      href: "/admin/settings/outreach",
+      icon: Mail
     }
   ];
 

@@ -212,7 +212,8 @@ export async function injectSeo(html: string, req: Request): Promise<string> {
   const path = (req.originalUrl || "/").split(/[?#]/)[0].replace(/\/+$/, "") || "/";
   const meta = PAGES[path];
   const tags: string[] = [];
-  let noindex = !isCanonicalHost(req);
+  // Prospect boards (/for/:slug) are private links for one company: never indexed.
+  let noindex = !isCanonicalHost(req) || path.startsWith("/for/");
 
   if (meta) {
     if (meta.page) {
