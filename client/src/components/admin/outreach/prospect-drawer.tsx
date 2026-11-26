@@ -17,7 +17,7 @@ import { artSrc } from "@/components/marketing/art";
 import { cn } from "@/lib/utils";
 import { OUTREACH_CATEGORIES, OUTREACH_STATUSES } from "@shared/outreach";
 import {
-  boardViewsLabel, errorText, refreshOutreach, send, shortDate, useGmailStatus, useProspects, useTemplates,
+  boardViewsLabel, errorText, refreshOutreach, send, shortDate, useGmailStatus, useProspect, useProspects, useTemplates,
   type ProspectRow, type Work,
 } from "./api";
 
@@ -25,14 +25,26 @@ const usd = (v: string | number) => new Intl.NumberFormat("en-US", { style: "cur
 
 /** One prospect: details, their board, and the two emails. */
 export function ProspectDrawer({ prospectId, initialStep, onClose }: { prospectId: string | null; initialStep?: 1 | 2; onClose: () => void }) {
+  // The prospect comes from the server; the list row (if already loaded) only fills in while it arrives.
   const { data: list } = useProspects();
-  const prospect = list?.find((p) => p.id === prospectId) ?? null;
+  const single = useProspect(prospectId);
+  const prospect = single.data ?? list?.find((p) => p.id === prospectId) ?? null;
   return (
     <Sheet open={!!prospectId} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
-        {prospect ? <DrawerBody key={prospect.id} prospect={prospect} initialStep={initialStep} onClose={onClose} /> : (
-          <SheetHeader><SheetTitle>Prospect</SheetTitle><SheetDescription>Loading…</SheetDescription></SheetHeader>
-        )}
+        {prospect ? <DrawerBody key={prospect.id} prospect={prospect} initialStep={initialStep} onClose={onClose} />
+          : single.isError ? (
+            <div className="space-y-4">
+              <SheetHeader><SheetTitle>Prospect</SheetTitle><SheetDescription>This prospect couldn't be loaded.</SheetDescription></SheetHeader>
+              <p className="text-sm text-muted-foreground">{errorText(single.error)}</p>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => single.refetch()}>Try again</Button>
+                <Button variant="ghost" onClick={onClose}>Close</Button>
+              </div>
+            </div>
+          ) : (
+            <SheetHeader><SheetTitle>Prospect</SheetTitle><SheetDescription className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Loading…</SheetDescription></SheetHeader>
+          )}
       </SheetContent>
     </Sheet>
   );

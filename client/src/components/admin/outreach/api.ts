@@ -70,8 +70,12 @@ export interface Work {
   image: string | null; isSold: boolean; isOriginal: boolean;
 }
 
-export const useProspects = () => useQuery<ProspectRow[]>({ queryKey: ["/api/outreach/prospects"] });
-export const useDashboard = () => useQuery<Dashboard>({ queryKey: ["/api/outreach/dashboard"] });
+// The app caches queries forever by default; outreach lists refetch whenever they're shown, so a tab
+// opened before an import (or before Gmail noticed a reply) never shows stale prospects.
+export const useProspects = () => useQuery<ProspectRow[]>({ queryKey: ["/api/outreach/prospects"], staleTime: 0 });
+export const useDashboard = () => useQuery<Dashboard>({ queryKey: ["/api/outreach/dashboard"], staleTime: 0 });
+export const useProspect = (id: string | null) =>
+  useQuery<ProspectRow>({ queryKey: [`/api/outreach/prospects/${id}`], enabled: !!id, staleTime: 0, retry: 1 });
 export const useTemplates = () => useQuery<Templates>({ queryKey: ["/api/outreach/templates"] });
 export const useGmailStatus = () => useQuery<GmailStatus>({ queryKey: ["/api/admin/gmail"] });
 
