@@ -1,5 +1,6 @@
 import type { Express, Request } from "express";
 import { storage } from "./storage";
+import { PRIVACY_POLICY } from "@shared/privacyPolicy";
 import { CORPORATE_AUDIENCES, CORPORATE_OPTIONS, RENTAL_FAQ, pageSummary } from "@shared/seoContent";
 
 // What search engines and link previews see before any JavaScript runs: a page-specific title, description,
@@ -28,6 +29,10 @@ const breadcrumb = (path: string, name: string) => ({
 });
 
 const PAGES: Record<string, PageMeta> = {
+  "/privacy": {
+    title: "Privacy Policy | Otto Art",
+    description: "How Otto Art collects, uses and protects information on ottoart.app and in Email Processor, including Google user data.",
+  },
   "/": {
     title: "Otto Art | Original Art and Prints",
     description: "Original abstract paintings and art prints by Otto. Shop the collection, commission a piece, or bring Otto Art into your space.",
@@ -183,6 +188,7 @@ function organization(f: SiteFacts) {
 // Readable page text for crawlers that don't run JavaScript (most AI assistants). It sits inside #root, so the
 // app replaces it on load; a class set by an inline script hides it until then, so visitors never see it flash.
 function fallbackBody(path: string, f: SiteFacts): string {
+  if (path === "/privacy") return privacyBody();
   const sum = pageSummary(path, { artist: f.artist, location: f.location });
   if (!sum) return "";
   const p = (t: string) => `<p>${esc(t)}</p>`;
@@ -191,6 +197,14 @@ function fallbackBody(path: string, f: SiteFacts): string {
   ).join("");
   const links = `<nav aria-label="Related pages"><ul>${sum.links.map((l) => `<li><a href="${esc(l.href)}">${esc(l.label)}</a></li>`).join("")}</ul></nav>`;
   return `<div class="seo-fallback"><main><h1>${esc(sum.h1)}</h1>${sum.intro.map(p).join("")}${sections}${links}</main></div>`;
+}
+
+// The whole policy, so reviewers and crawlers that don't run JavaScript read it in the HTML.
+function privacyBody(): string {
+  const pol = PRIVACY_POLICY;
+  const sections = pol.sections.map((s) => `<section><h2>${esc(s.heading)}</h2>${s.blocks.map((b) =>
+    "p" in b ? `<p>${esc(b.p)}</p>` : `<ul>${b.ul.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`).join("")}</section>`).join("");
+  return `<div class="seo-fallback"><main><h1>${esc(pol.title)}</h1><p>Last updated: ${esc(pol.lastUpdated)}</p><p>${esc(pol.intro)}</p>${sections}</main></div>`;
 }
 
 /** Write page-specific head tags (and readable page text) into index.html for this request. */
@@ -247,7 +261,7 @@ const STATIC_ROUTES: Array<{ path: string; page?: string }> = [
   { path: "/" }, { path: "/shop-all" }, { path: "/originals" }, { path: "/prints" }, { path: "/accessories" },
   { path: "/mail-club" }, { path: "/bio", page: "bio" }, { path: "/gallery", page: "gallery" }, { path: "/events", page: "events" },
   { path: "/cv", page: "cv" }, { path: "/contact" }, { path: "/corporate-buyers", page: "corporate-buyers" },
-  { path: "/art-rental-leasing", page: "art-rental-leasing" },
+  { path: "/art-rental-leasing", page: "art-rental-leasing" }, { path: "/privacy" },
 ];
 
 /** robots.txt and sitemap.xml. Registered before the page catch-all. */

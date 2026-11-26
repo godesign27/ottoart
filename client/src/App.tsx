@@ -52,6 +52,7 @@ import { ArtWallPage } from "@/pages/live-site/art-wall";
 import CorporateBuyersPage from "@/pages/live-site/corporate-buyers";
 import ArtRentalLeasingPage from "@/pages/live-site/art-rental-leasing";
 import CommissionPage from "@/pages/live-site/commission";
+import PrivacyPage from "@/pages/live-site/privacy";
 import AdminBoardsPage from "@/pages/admin/boards";
 import AdminBoardDetailPage from "@/pages/admin/board-detail";
 import BoardViewPage from "@/pages/live-site/board-view";
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/corporate-buyers" component={CorporateBuyersPage} />
       <Route path="/art-rental-leasing" component={ArtRentalLeasingPage} />
       <Route path="/commission" component={CommissionPage} />
+      <Route path="/privacy" component={PrivacyPage} />
       <Route path="/board/:slug" component={BoardViewPage} />
       <Route path="/boards" component={MyBoardsPage} />
       <Route path="/boards/:id" component={MyBoardPage} />
